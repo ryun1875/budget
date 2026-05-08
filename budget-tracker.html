@@ -692,7 +692,15 @@ function updateSummary(){
   document.getElementById('alert-banner').classList.toggle('show',pct>=80);
 }
 
+// 입력 중인지 확인하는 헬퍼 — input/textarea/select에 포커스 중이면 true
+function isEditing(){
+  const el=document.activeElement;
+  if(!el)return false;
+  return ['INPUT','TEXTAREA','SELECT'].includes(el.tagName);
+}
+
 function renderAll(){
+  if(isEditing())return;
   const[y,m]=curMonth.split('-').map(Number);
   document.getElementById('month-label').textContent=`${y}년 ${m}월`;
   const tB=Object.values(budgets).reduce((s,v)=>s+(Number(v)||0),0);
@@ -715,6 +723,7 @@ function renderAll(){
 }
 
 function renderList(){
+  if(isEditing())return;
   const fe=document.getElementById('cat-filter');fe.innerHTML='';
   const all=document.createElement('div');
   all.className='cat-chip'+(filterCat==='all'?' active':'');
@@ -753,6 +762,7 @@ function renderList(){
 }
 
 function renderCalendar(){
+  if(isEditing())return;
   const[y,m]=curMonth.split('-').map(Number);
   const firstDay=new Date(y,m-1,1).getDay();
   const dim=new Date(y,m,0).getDate();
@@ -803,6 +813,13 @@ function openCalModal(ds,day){
 }
 
 function renderBudget(){
+  if(isEditing())return;
+
+  // 현재 펼쳐진 카테고리 기억
+  const openIds=new Set();
+  document.querySelectorAll('.budget-detail.open').forEach(el=>{
+    openIds.add(el.id.replace('bd-',''));
+  });
   const le=document.getElementById('budget-list');le.innerHTML='';
   CATS.forEach(cat=>{
     const b=Number(budgets[cat.id])||0;
@@ -850,6 +867,12 @@ function renderBudget(){
           onblur="updateMemo('${cat.id}',this.value)">${meta.memo||''}</textarea>
       </div>`;
     le.appendChild(div);
+
+    // 이전에 펼쳐진 상태 복원
+    if(openIds.has(cat.id)){
+      div.querySelector('.budget-detail').classList.add('open');
+      div.querySelector('.budget-expand-btn').textContent='▴';
+    }
   });
 }
 
@@ -862,23 +885,46 @@ window.toggleBudgetDetail=function(catId,btn){
 window.addFixedItem=function(catId){
   if(!budgetMeta[catId])budgetMeta[catId]={fixedItems:[],memo:''};
   budgetMeta[catId].fixedItems.push({name:'',amt:''});
-  renderBudget();
-  // 방금 추가된 항목의 detail 열기
-  const detail=document.getElementById('bd-'+catId);
-  detail.classList.add('open');
-  const btn=detail.previousElementSibling.querySelector('.budget-expand-btn');
-  if(btn)btn.textContent='▴';
+  // renderBudget 대신 고정 항목 영역만 직접 업데이트
+  refreshFixedItems(catId);
   scheduleBudgetMetaSave();
 };
 
 window.removeFixedItem=function(catId,i){
   if(!budgetMeta[catId])return;
   budgetMeta[catId].fixedItems.splice(i,1);
-  renderBudget();
-  const detail=document.getElementById('bd-'+catId);
-  detail.classList.add('open');
+  refreshFixedItems(catId);
   scheduleBudgetMetaSave();
 };
+
+function refreshFixedItems(catId){
+  const fiEl=document.getElementById('fi-'+catId);
+  if(!fiEl)return;
+  const meta=budgetMeta[catId]||{fixedItems:[],memo:''};
+  fiEl.innerHTML=(meta.fixedItems||[]).map((fi,i)=>`
+    <div class="fixed-item">
+      <input class="fi-name" type="text" placeholder="항목명 (예: 넷플릭스)" value="${fi.name||''}"
+        onblur="updateFixedItem('${catId}',${i},'name',this.value)">
+      <input class="fi-amt" type="number" placeholder="0" value="${fi.amt||''}"
+        onblur="updateFixedItem('${catId}',${i},'amt',this.value)">
+      <span style="font-size:11px;color:var(--text3)">원</span>
+      <button class="act-btn del" onclick="removeFixedItem('${catId}',${i})">✕</button>
+    </div>`).join('');
+  // 고정 합계도 업데이트
+  const fixedTotal=(meta.fixedItems||[]).reduce((s,fi)=>s+(Number(fi.amt)||0),0);
+  let totEl=fiEl.parentElement.querySelector('.fixed-total');
+  if(fixedTotal>0){
+    if(!totEl){totEl=document.createElement('div');totEl.className='fixed-total';fiEl.after(totEl);}
+    totEl.innerHTML=`고정 합계: <span>${fmt(fixedTotal)}</span>`;
+  } else if(totEl){totEl.remove();}
+  // detail 열린 상태 유지
+  const detail=document.getElementById('bd-'+catId);
+  if(detail){
+    detail.classList.add('open');
+    const btn=detail.closest('.budget-item').querySelector('.budget-expand-btn');
+    if(btn)btn.textContent='▴';
+  }
+}
 
 window.updateFixedItem=function(catId,i,field,val){
   if(!budgetMeta[catId])budgetMeta[catId]={fixedItems:[],memo:''};
@@ -905,6 +951,7 @@ function scheduleBudgetMetaSave(){
 }
 
 function renderRecurring(){
+  if(isEditing())return;
   const le=document.getElementById('recurring-list');le.innerHTML='';
   if(!recurring.length){le.innerHTML=`<div class="empty-state"><div class="ic">📌</div>등록된 고정 지출이 없어요</div>`;return;}
   recurring.forEach(r=>{
@@ -1002,6 +1049,7 @@ window.setRange=function(n,btn){
 
 // ── 카테고리 관리 ─────────────────────────────────────────
 function renderCatManage(){
+  if(isEditing())return;
   const le=document.getElementById('cat-manage-list');le.innerHTML='';
   CATS.forEach((cat,i)=>{
     const div=document.createElement('div');div.className='cat-item';
