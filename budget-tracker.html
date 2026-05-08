@@ -163,7 +163,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .empty-state .ic{font-size:38px;margin-bottom:10px;}
 
 /* 예산 */
-.budget-item{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+.budget-item{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin-bottom:7px;}
+.budget-item-row{display:flex;align-items:center;gap:10px;}
 .budget-info{flex:1;}
 .budget-name{font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;}
 .budget-spent{font-size:10px;color:var(--text3);margin-top:2px;}
@@ -171,6 +172,27 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .mini-bar-fill{height:100%;border-radius:99px;}
 .budget-input{width:100px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text);font-family:'Gmarket Sans',sans-serif;font-size:13px;text-align:right;outline:none;transition:var(--tr);}
 .budget-input:focus{border-color:var(--accent);}
+.budget-expand-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 4px;transition:var(--tr);flex-shrink:0;}
+.budget-expand-btn:hover{color:var(--accent);}
+/* 접었다 펼치기 영역 */
+.budget-detail{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.budget-detail.open{display:block;}
+/* 고정 항목 */
+.fixed-items{display:flex;flex-direction:column;gap:5px;margin-bottom:8px;}
+.fixed-item{display:flex;align-items:center;gap:7px;}
+.fixed-item input{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 8px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:12px;outline:none;transition:var(--tr);}
+.fixed-item input:focus{border-color:var(--accent);}
+.fixed-item input.fi-name{flex:2;}
+.fixed-item input.fi-amt{flex:1;text-align:right;font-family:'Gmarket Sans',sans-serif;}
+.fixed-total{font-size:11px;color:var(--text3);text-align:right;margin-bottom:6px;}
+.fixed-total span{color:var(--accent3);font-family:'Gmarket Sans',sans-serif;font-weight:700;}
+.btn-add-fixed{background:none;border:1px dashed var(--border);border-radius:7px;padding:5px 10px;color:var(--text3);font-size:11px;cursor:pointer;transition:var(--tr);width:100%;margin-bottom:8px;}
+.btn-add-fixed:hover{border-color:var(--accent);color:var(--accent);}
+/* 메모 */
+.budget-memo{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:12px;line-height:1.6;resize:none;outline:none;transition:var(--tr);min-height:60px;}
+.budget-memo:focus{border-color:var(--accent);}
+.budget-memo::placeholder{color:var(--text3);}
+.memo-label{font-size:10px;color:var(--text3);margin-bottom:4px;letter-spacing:.3px;}
 
 /* 달력 */
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
@@ -478,7 +500,7 @@ const DEF_CATS=[
 const EMOJIS=['🍱','🍔','🍕','🍜','🍣','☕','🧋','🎂','🚇','🚗','🚕','✈️','🛍️','👗','👟','💄','💊','🏥','🎬','🎮','🎵','📚','🏠','🧹','⚡','💡','🐶','🌸','💰','📦','🎁','🏋️','⚽','🏊','💻','📱','🔧','🌙','☀️'];
 const COLORS=['#ff6b6b','#ff8c42','#ffb347','#ffd166','#c8f04a','#34d399','#6bb5ff','#a78bfa','#f472b6','#fb7185','#94a3b8','#4ade80','#22d3ee','#f59e0b','#ef4444','#8b5cf6'];
 
-let curMonth,filterCat='all',expenses=[],budgets={},recurring=[];
+let curMonth,filterCat='all',expenses=[],budgets={},recurring=[],budgetMeta={};
 let CATS=[...DEF_CATS];
 let donutChart=null,barChart=null,compareChart=null;
 let unsubExp=null,unsubBudget=null,unsubCats=null,unsubRec=null;
@@ -586,6 +608,11 @@ function initApp(){
   unsubCats=onSnapshot(doc(db,up('settings'),'categories'),snap=>{
     CATS=snap.exists()&&snap.data().list?.length?snap.data().list:[...DEF_CATS];
     rebuildCatSelects();renderCatManage();renderAll();
+  });
+  // budgetMeta 구독 (고정항목 + 메모)
+  onSnapshot(doc(db,up('settings'),'budgetMeta'),snap=>{
+    budgetMeta=snap.exists()&&snap.data().data?snap.data().data:{};
+    renderBudget();
   });
   unsubRec=onSnapshot(collection(db,up('recurring')),snap=>{
     recurring=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -764,21 +791,99 @@ function renderBudget(){
     const spent=expenses.filter(e=>e.cat===cat.id).reduce((s,e)=>s+e.amount,0);
     const pct=b>0?Math.min(Math.round(spent/b*100),100):0;
     const bc=pct>=100?'#ff6b6b':pct>=80?'#ffb347':cat.color;
+    const meta=budgetMeta[cat.id]||{fixedItems:[],memo:''};
+    const fixedTotal=(meta.fixedItems||[]).reduce((s,fi)=>s+(Number(fi.amt)||0),0);
+
     const div=document.createElement('div');div.className='budget-item';
+
+    // 고정 항목 행들 HTML
+    const fiRows=(meta.fixedItems||[]).map((fi,i)=>`
+      <div class="fixed-item">
+        <input class="fi-name" type="text" placeholder="항목명 (예: 넷플릭스)" value="${fi.name||''}"
+          oninput="updateFixedItem('${cat.id}',${i},'name',this.value)">
+        <input class="fi-amt" type="number" placeholder="0" value="${fi.amt||''}"
+          oninput="updateFixedItem('${cat.id}',${i},'amt',this.value)">
+        <span style="font-size:11px;color:var(--text3)">원</span>
+        <button class="act-btn del" onclick="removeFixedItem('${cat.id}',${i})">✕</button>
+      </div>`).join('');
+
     div.innerHTML=`
-      <div class="cat-dot" style="background:${cat.color}22;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">${cat.emoji}</div>
-      <div class="budget-info" style="flex:1">
-        <div class="budget-name">${cat.name}${pct>=80&&b>0?`<span style="font-size:9px;background:${bc}22;color:${bc};padding:1px 5px;border-radius:99px">${pct}%</span>`:''}</div>
-        <div class="budget-spent">${fmt(spent)} 지출</div>
-        ${b>0?`<div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;background:${bc}"></div></div>`:''}
+      <div class="budget-item-row">
+        <div class="cat-dot" style="background:${cat.color}22;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">${cat.emoji}</div>
+        <div class="budget-info" style="flex:1">
+          <div class="budget-name">${cat.name}${pct>=80&&b>0?`<span style="font-size:9px;background:${bc}22;color:${bc};padding:1px 5px;border-radius:99px">${pct}%</span>`:''}</div>
+          <div class="budget-spent">${fmt(spent)} 지출${fixedTotal>0?` · 고정 ${fmt(fixedTotal)}`:''}${meta.memo?` · 📝`:''}</div>
+          ${b>0?`<div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;background:${bc}"></div></div>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:5px">
+          <input class="budget-input" type="number" value="${b||''}" placeholder="0"
+            onchange="setBudget('${cat.id}',this.value)" oninput="setBudget('${cat.id}',this.value)">
+          <span style="font-size:12px;color:var(--text3)">원</span>
+        </div>
+        <button class="budget-expand-btn" onclick="toggleBudgetDetail('${cat.id}',this)" title="상세 펼치기">▾</button>
       </div>
-      <div style="display:flex;align-items:center;gap:5px">
-        <input class="budget-input" type="number" value="${b||''}" placeholder="0"
-          onchange="setBudget('${cat.id}',this.value)" oninput="setBudget('${cat.id}',this.value)">
-        <span style="font-size:12px;color:var(--text3)">원</span>
+      <div class="budget-detail" id="bd-${cat.id}">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:6px;letter-spacing:.3px">📌 고정 항목</div>
+        <div class="fixed-items" id="fi-${cat.id}">${fiRows}</div>
+        ${fixedTotal>0?`<div class="fixed-total">고정 합계: <span>${fmt(fixedTotal)}</span></div>`:''}
+        <button class="btn-add-fixed" onclick="addFixedItem('${cat.id}')">+ 고정 항목 추가</button>
+        <div class="memo-label">📝 메모</div>
+        <textarea class="budget-memo" placeholder="예산 배정 이유, 참고 지수 등 자유롭게 메모하세요"
+          oninput="updateMemo('${cat.id}',this.value)">${meta.memo||''}</textarea>
       </div>`;
     le.appendChild(div);
   });
+}
+
+window.toggleBudgetDetail=function(catId,btn){
+  const detail=document.getElementById('bd-'+catId);
+  const isOpen=detail.classList.toggle('open');
+  btn.textContent=isOpen?'▴':'▾';
+};
+
+window.addFixedItem=function(catId){
+  if(!budgetMeta[catId])budgetMeta[catId]={fixedItems:[],memo:''};
+  budgetMeta[catId].fixedItems.push({name:'',amt:''});
+  renderBudget();
+  // 방금 추가된 항목의 detail 열기
+  const detail=document.getElementById('bd-'+catId);
+  detail.classList.add('open');
+  const btn=detail.previousElementSibling.querySelector('.budget-expand-btn');
+  if(btn)btn.textContent='▴';
+  scheduleBudgetMetaSave();
+};
+
+window.removeFixedItem=function(catId,i){
+  if(!budgetMeta[catId])return;
+  budgetMeta[catId].fixedItems.splice(i,1);
+  renderBudget();
+  const detail=document.getElementById('bd-'+catId);
+  detail.classList.add('open');
+  scheduleBudgetMetaSave();
+};
+
+window.updateFixedItem=function(catId,i,field,val){
+  if(!budgetMeta[catId])budgetMeta[catId]={fixedItems:[],memo:''};
+  budgetMeta[catId].fixedItems[i][field]=val;
+  scheduleBudgetMetaSave();
+};
+
+window.updateMemo=function(catId,val){
+  if(!budgetMeta[catId])budgetMeta[catId]={fixedItems:[],memo:''};
+  budgetMeta[catId].memo=val;
+  scheduleBudgetMetaSave();
+};
+
+let budgetMetaTimer=null;
+function scheduleBudgetMetaSave(){
+  clearTimeout(budgetMetaTimer);
+  budgetMetaTimer=setTimeout(async()=>{
+    setSyncStatus('syncing');
+    try{
+      await setDoc(doc(db,up('settings'),'budgetMeta'),{data:budgetMeta});
+      setSyncStatus('online');
+    }catch(e){setSyncStatus('offline');}
+  },800);
 }
 
 function renderRecurring(){
