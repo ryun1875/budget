@@ -674,6 +674,24 @@ window.toggleInstallment=function(){
 document.getElementById('inp-amount').addEventListener('input',()=>{if(instOn)updateInstPreview();});
 
 // ── 렌더 ──────────────────────────────────────────────────
+function updateSummary(){
+  const tB=Object.values(budgets).reduce((s,v)=>s+(Number(v)||0),0);
+  const tS=expenses.reduce((s,e)=>s+e.amount,0);
+  const rem=tB-tS;
+  const pct=tB>0?Math.min(Math.round(tS/tB*100),100):0;
+  document.getElementById('total-budget').textContent=fmt(tB);
+  document.getElementById('total-spent').textContent=fmt(tS);
+  document.getElementById('total-remain').textContent=fmt(Math.abs(rem));
+  document.getElementById('remain-card').classList.toggle('s-danger',rem<0);
+  const gf=document.getElementById('gauge-fill');
+  gf.style.width=pct+'%';
+  gf.className='gauge-fill'+(pct>=100?' danger':pct>=80?' warn':'');
+  const pe=document.getElementById('usage-pct');
+  pe.textContent=pct+'%';
+  pe.style.color=pct>=100?'var(--accent2)':pct>=80?'#ffb347':'var(--accent)';
+  document.getElementById('alert-banner').classList.toggle('show',pct>=80);
+}
+
 function renderAll(){
   const[y,m]=curMonth.split('-').map(Number);
   document.getElementById('month-label').textContent=`${y}년 ${m}월`;
@@ -800,9 +818,9 @@ function renderBudget(){
     const fiRows=(meta.fixedItems||[]).map((fi,i)=>`
       <div class="fixed-item">
         <input class="fi-name" type="text" placeholder="항목명 (예: 넷플릭스)" value="${fi.name||''}"
-          oninput="updateFixedItem('${cat.id}',${i},'name',this.value)">
+          onblur="updateFixedItem('${cat.id}',${i},'name',this.value)">
         <input class="fi-amt" type="number" placeholder="0" value="${fi.amt||''}"
-          oninput="updateFixedItem('${cat.id}',${i},'amt',this.value)">
+          onblur="updateFixedItem('${cat.id}',${i},'amt',this.value)">
         <span style="font-size:11px;color:var(--text3)">원</span>
         <button class="act-btn del" onclick="removeFixedItem('${cat.id}',${i})">✕</button>
       </div>`).join('');
@@ -817,7 +835,7 @@ function renderBudget(){
         </div>
         <div style="display:flex;align-items:center;gap:5px">
           <input class="budget-input" type="number" value="${b||''}" placeholder="0"
-            onchange="setBudget('${cat.id}',this.value)" oninput="setBudget('${cat.id}',this.value)">
+            onblur="setBudget('${cat.id}',this.value)">
           <span style="font-size:12px;color:var(--text3)">원</span>
         </div>
         <button class="budget-expand-btn" onclick="toggleBudgetDetail('${cat.id}',this)" title="상세 펼치기">▾</button>
@@ -829,7 +847,7 @@ function renderBudget(){
         <button class="btn-add-fixed" onclick="addFixedItem('${cat.id}')">+ 고정 항목 추가</button>
         <div class="memo-label">📝 메모</div>
         <textarea class="budget-memo" placeholder="예산 배정 이유, 참고 지수 등 자유롭게 메모하세요"
-          oninput="updateMemo('${cat.id}',this.value)">${meta.memo||''}</textarea>
+          onblur="updateMemo('${cat.id}',this.value)">${meta.memo||''}</textarea>
       </div>`;
     le.appendChild(div);
   });
@@ -1124,7 +1142,9 @@ window.deleteGroup=async function(gid){
 };
 
 window.setBudget=function(catId,val){
-  budgets[catId]=parseInt(val)||0;renderAll();
+  budgets[catId]=parseInt(val)||0;
+  // 게이지/요약만 업데이트 (renderBudget 전체 재렌더 안 함)
+  updateSummary();
   clearTimeout(budgetTimer);
   budgetTimer=setTimeout(async()=>{
     setSyncStatus('syncing');
