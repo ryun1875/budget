@@ -407,10 +407,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </div>
   </div>
 
-  <div class="summary-grid">
-    <div class="summary-card s-spent"><div class="lbl">이번 달 지출</div><div class="val" id="total-spent">0원</div></div>
-    <div class="summary-card" id="over-card"><div class="lbl">초과 카테고리</div><div class="val" id="over-count" style="color:var(--accent2)">0개</div></div>
-    <div class="summary-card"><div class="lbl">남은 일수</div><div class="val" id="remain-days-top" style="color:var(--accent3)">—</div></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 16px;margin-bottom:8px">
+    <span style="font-size:12px;color:var(--text2)">이번 달 지출</span>
+    <span style="font-family:'Gmarket Sans',sans-serif;font-weight:700;font-size:18px;color:var(--accent2)" id="total-spent">0원</span>
   </div>
   <div class="alert-banner" id="alert-banner">⚠️ 예산의 80%를 초과했어요! 소비를 줄여보세요.</div>
 
@@ -522,6 +521,13 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
   <!-- 분석 -->
   <div class="panel" id="panel-chart">
+    <!-- 지출 필터 -->
+    <div style="display:flex;gap:4px;margin-bottom:14px" id="chart-filter-tabs">
+      <button class="range-tab active" onclick="setChartFilter('all',this)">전체</button>
+      <button class="range-tab" onclick="setChartFilter('life',this)">생활지출만</button>
+      <button class="range-tab" onclick="setChartFilter('loan',this)">대출상환만</button>
+      <button class="range-tab" onclick="setChartFilter('invest',this)">투자만</button>
+    </div>
     <div class="stat-grid">
       <div class="stat-item"><div class="s-lbl">가장 많이 쓴 카테고리</div><div class="s-val" id="top-cat">—</div></div>
       <div class="stat-item"><div class="s-lbl">하루 평균 지출</div><div class="s-val" id="avg-daily">—</div></div>
@@ -615,7 +621,7 @@ const DEF_CATS=[
 const EMOJIS=['🍱','🍔','🍕','🍜','🍣','☕','🧋','🎂','🚇','🚗','🚕','✈️','🛍️','👗','👟','💄','💊','🏥','🎬','🎮','🎵','📚','🏠','🧹','⚡','💡','🐶','🌸','💰','📦','🎁','🏋️','⚽','🏊','💻','📱','🔧','🌙','☀️'];
 const COLORS=['#ff6b6b','#ff8c42','#ffb347','#ffd166','#c8f04a','#34d399','#6bb5ff','#a78bfa','#f472b6','#fb7185','#94a3b8','#4ade80','#22d3ee','#f59e0b','#ef4444','#8b5cf6'];
 
-let curMonth,filterCat='all',expenses=[],budgets={},recurring=[],budgetMeta={},payMethods=[],investments=[],loans=[],loanPayments=[];
+let curMonth,filterCat='all',chartFilter='all',expenses=[],budgets={},recurring=[],budgetMeta={},payMethods=[],investments=[],loans=[],loanPayments=[];
 let CATS=[...DEF_CATS];
 let donutChart=null,barChart=null,compareChart=null,budgetCompareChart=null,trendChart=null,payTrendChart=null,assetChart=null,loanChart=null;
 let trendCatId=null, trendPayId=null;
@@ -843,25 +849,6 @@ document.getElementById('inp-amount').addEventListener('input',()=>{if(instOn)up
 function updateSummary(){
   const tS=expenses.reduce((s,e)=>s+e.amount,0);
   document.getElementById('total-spent').textContent=fmt(tS);
-
-  // 초과 카테고리 수
-  const overCount=CATS.filter(c=>{
-    const b=Number(budgets[c.id])||0;
-    if(!b)return false;
-    return expenses.filter(e=>e.cat===c.id).reduce((s,e)=>s+e.amount,0)>b;
-  }).length;
-  const overEl=document.getElementById('over-count');
-  overEl.textContent=overCount+'개';
-  overEl.style.color=overCount>0?'var(--accent2)':'var(--accent)';
-
-  // 남은 일수
-  const[y,m]=curMonth.split('-').map(Number);
-  const dim=new Date(y,m,0).getDate();
-  const today=new Date();
-  const isThis=today.getFullYear()===y&&today.getMonth()+1===m;
-  document.getElementById('remain-days-top').textContent=isThis?(dim-today.getDate())+'일':'—';
-
-  // 전체 예산 초과 배너 (예산 합계 기준)
   const tB=Object.values(budgets).reduce((s,v)=>s+(Number(v)||0),0);
   const pct=tB>0?Math.min(Math.round(tS/tB*100),100):0;
   document.getElementById('alert-banner').classList.toggle('show',pct>=80&&tB>0);
@@ -1444,20 +1431,23 @@ function renderRecurring(){
 
 // ── 차트 ──────────────────────────────────────────────────
 async function renderChart(){
-  const topId=(()=>{const m={};expenses.forEach(e=>m[e.cat]=(m[e.cat]||0)+e.amount);return Object.entries(m).sort((a,b)=>b[1]-a[1])[0]?.[0];})();
+  const fe=filteredExpenses();
+  const filterLabel={all:'전체',life:'생활지출',loan:'대출상환',invest:'투자'}[chartFilter];
+
+  const topId=(()=>{const m={};fe.forEach(e=>m[e.cat]=(m[e.cat]||0)+e.amount);return Object.entries(m).sort((a,b)=>b[1]-a[1])[0]?.[0];})();
   const topCat=CATS.find(c=>c.id===topId);
   document.getElementById('top-cat').textContent=topCat?`${topCat.emoji} ${topCat.name}`:'—';
   const[y,m]=curMonth.split('-').map(Number);
   const dim=new Date(y,m,0).getDate(),today=new Date();
   const isThis=today.getFullYear()===y&&today.getMonth()+1===m;
   const dp=isThis?today.getDate():dim;
-  const total=expenses.reduce((s,e)=>s+e.amount,0);
+  const total=fe.reduce((s,e)=>s+e.amount,0);
   document.getElementById('avg-daily').textContent=dp>0?fmt(Math.round(total/dp)):'—';
-  document.getElementById('total-count').textContent=expenses.length+'건';
+  document.getElementById('total-count').textContent=fe.length+'건 ('+filterLabel+')';
   document.getElementById('remain-days').textContent=isThis?(dim-today.getDate())+'일':'—';
 
   // 도넛
-  const ct=CATS.map(c=>({name:`${c.emoji} ${c.name}`,val:expenses.filter(e=>e.cat===c.id).reduce((s,e)=>s+e.amount,0),color:c.color})).filter(c=>c.val>0);
+  const ct=CATS.map(c=>({name:`${c.emoji} ${c.name}`,val:fe.filter(e=>e.cat===c.id).reduce((s,e)=>s+e.amount,0),color:c.color})).filter(c=>c.val>0);
   if(donutChart){donutChart.destroy();donutChart=null;}
   if(ct.length){
     donutChart=new Chart(document.getElementById('donut-chart'),{type:'doughnut',
@@ -1469,7 +1459,7 @@ async function renderChart(){
 
   // 일별 막대
   const dm={};for(let i=1;i<=dim;i++)dm[i]=0;
-  expenses.forEach(e=>{const d=parseInt(e.date.split('-')[2]);dm[d]=(dm[d]||0)+e.amount;});
+  fe.forEach(e=>{const d=parseInt(e.date.split('-')[2]);dm[d]=(dm[d]||0)+e.amount;});
   const days=Object.keys(dm).map(Number),amounts=days.map(d=>dm[d]);
   if(barChart){barChart.destroy();barChart=null;}
   barChart=new Chart(document.getElementById('bar-chart'),{type:'bar',
@@ -1497,9 +1487,11 @@ async function renderCompareChart(){
     months.push(`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}`);
   }
   const monthTotals=await Promise.all(months.map(async mo=>{
-    if(mo===curMonth)return expenses.reduce((s,e)=>s+e.amount,0);
+    if(mo===curMonth)return filteredExpenses().reduce((s,e)=>s+e.amount,0);
     const snap=await getDocs(query(collection(db,up('expenses')),where('month','==',mo)));
-    return snap.docs.reduce((s,d)=>s+d.data().amount,0);
+    const allExp=snap.docs.map(d=>d.data());
+    const filtered=chartFilter==='all'?allExp:chartFilter==='loan'?allExp.filter(e=>e.loanId):chartFilter==='invest'?allExp.filter(e=>e.isInvestment):allExp.filter(e=>!e.loanId&&!e.isInvestment);
+    return filtered.reduce((s,e)=>s+e.amount,0);
   }));
 
   if(compareChart){compareChart.destroy();compareChart=null;}
@@ -1529,8 +1521,25 @@ window.setRange=function(n,btn){
   renderCompareChart();
 };
 
+window.setChartFilter=function(filter,btn){
+  chartFilter=filter;
+  document.querySelectorAll('#chart-filter-tabs .range-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderChart();
+};
+
+// 필터 적용된 지출 반환
+function filteredExpenses(){
+  if(chartFilter==='all') return expenses;
+  if(chartFilter==='loan') return expenses.filter(e=>e.loanId);
+  if(chartFilter==='invest') return expenses.filter(e=>e.isInvestment);
+  // 생활지출: 대출/투자 제외
+  return expenses.filter(e=>!e.loanId&&!e.isInvestment);
+}
+
 // ── 예산 대비 실제 지출 ───────────────────────────────────
 function renderBudgetCompareChart(){
+  const fe=filteredExpenses();
   const catsWithBudget=CATS.filter(c=>Number(budgets[c.id])>0);
   if(budgetCompareChart){budgetCompareChart.destroy();budgetCompareChart=null;}
   if(!catsWithBudget.length){
@@ -1540,7 +1549,7 @@ function renderBudgetCompareChart(){
   }
   const labels=catsWithBudget.map(c=>`${c.emoji} ${c.name}`);
   const budgetVals=catsWithBudget.map(c=>Number(budgets[c.id])||0);
-  const spentVals=catsWithBudget.map(c=>expenses.filter(e=>e.cat===c.id).reduce((s,e)=>s+e.amount,0));
+  const spentVals=catsWithBudget.map(c=>fe.filter(e=>e.cat===c.id).reduce((s,e)=>s+e.amount,0));
   const spentColors=catsWithBudget.map((c,i)=>spentVals[i]>budgetVals[i]?'rgba(255,107,107,0.8)':'rgba(200,240,74,0.75)');
 
   budgetCompareChart=new Chart(document.getElementById('budget-compare-chart'),{type:'bar',
@@ -1954,8 +1963,49 @@ async function renderAsset(){
   if(!wrap)return;
   wrap.innerHTML='';
 
-  // ── 투자 섹션 ─────────────────────────────────────────
-  const invCard=document.createElement('div');
+  // ── 절약금 현황 ────────────────────────────────────────
+  const[y,m]=curMonth.split('-').map(Number);
+  const now=new Date();
+  const tS=expenses.reduce((s,e)=>s+e.amount,0);
+  const tB=Object.values(budgets).reduce((s,v)=>s+(Number(v)||0),0);
+  const saved=tB>tS&&tB>0?tB-tS:0;
+
+  // 이번 달 투자/대출 상환 지출
+  const thisMonthInv=investments.filter(inv=>(inv.date||'').startsWith(curMonth)).reduce((s,i)=>s+(Number(i.amount)||0),0);
+  const thisMonthLoan=expenses.filter(e=>e.loanId&&e.month===curMonth).reduce((s,e)=>s+e.amount,0)+loanPayments.filter(p=>(p.date||'').startsWith(curMonth)).reduce((s,p)=>s+(Number(p.amount)||0),0);
+  const totalUsed=thisMonthInv+thisMonthLoan;
+  const unused=Math.max(0,saved-totalUsed);
+
+  const savingCard=document.createElement('div');
+  savingCard.className='form-card';
+  savingCard.style.marginBottom='14px';
+  savingCard.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">💰 이번 달 절약금 현황</h3>
+      <span style="font-family:'Gmarket Sans',sans-serif;font-weight:700;font-size:18px;color:${saved>0?'var(--accent)':'var(--text3)'}">${fmt(saved)}</span>
+    </div>
+    ${tB===0?`<div style="font-size:12px;color:var(--text3)">예산을 설정하면 절약금이 계산돼요</div>`:`
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:7px"><span>📈</span><span style="font-size:13px;color:var(--text2)">투자로 활용</span></div>
+        <span style="font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;color:var(--accent)">${fmt(thisMonthInv)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:7px"><span>🏦</span><span style="font-size:13px;color:var(--text2)">대출 상환</span></div>
+        <span style="font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;color:var(--accent3)">${fmt(thisMonthLoan)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
+        <div style="display:flex;align-items:center;gap:7px"><span>${unused>0?'💤':'✅'}</span><span style="font-size:13px;color:var(--text2)">미활용</span></div>
+        <span style="font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;color:${unused>0?'#ffb347':'var(--accent)'}">${fmt(unused)}</span>
+      </div>
+      ${saved>0&&totalUsed>0?`
+      <div style="height:6px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-top:4px">
+        <div style="height:100%;width:${Math.min(100,Math.round(totalUsed/saved*100))}%;background:var(--accent);border-radius:99px;transition:width .5s ease"></div>
+      </div>
+      <div style="font-size:10px;color:var(--text3);text-align:right">절약금의 ${Math.min(100,Math.round(totalUsed/saved*100))}% 활용 중</div>`:''}
+    </div>`}
+  `;
+  wrap.appendChild(savingCard);
   invCard.className='form-card';
   invCard.style.marginBottom='14px';
 
@@ -2011,7 +2061,6 @@ async function renderAsset(){
   wrap.appendChild(invChartCard);
 
   // 월별 투자 누적 계산
-  const now=new Date();
   const invMonths=[];
   for(let i=11;i>=0;i--){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
