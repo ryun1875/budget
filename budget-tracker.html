@@ -458,6 +458,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <div class="form-group" style="flex:2"><label>내용</label><input type="text" id="rec-desc" placeholder="예: 월세, 넷플릭스"></div>
         <div class="form-group"><label>금액 (원)</label><input type="number" id="rec-amount" placeholder="0"></div>
       </div>
+      <div class="form-row">
+        <div class="form-group"><label>결제수단</label><select id="rec-pay"></select></div>
+      </div>
       <button class="btn-primary" onclick="addRecurring()">+ 고정 지출 등록</button>
     </div>
     <div id="recurring-list"></div>
@@ -1004,10 +1007,12 @@ function renderRecurring(){
   if(!recurring.length){le.innerHTML=`<div class="empty-state"><div class="ic">📌</div>등록된 고정 지출이 없어요</div>`;return;}
   recurring.forEach(r=>{
     const cat=CATS.find(c=>c.id===r.cat)||CATS[CATS.length-1];
+    const pay=payMethods.find(p=>p.id===r.payId);
+    const pb=pay?`<span style="font-size:9px;background:${pay.color||'#6bb5ff'}22;color:${pay.color||'#6bb5ff'};padding:2px 5px;border-radius:99px;border:1px solid ${pay.color||'#6bb5ff'}44">${pay.emoji||'💳'} ${pay.name}</span>`:'';
     const div=document.createElement('div');div.className='recurring-item';
     div.innerHTML=`
       <div class="cat-dot" style="background:${cat.color}22">${cat.emoji}</div>
-      <div class="rec-info"><div class="rec-name">${r.desc||cat.name}</div><div class="rec-meta">매월 ${r.day}일 · ${cat.name}</div></div>
+      <div class="rec-info"><div class="rec-name">${r.desc||cat.name} ${pb}</div><div class="rec-meta">매월 ${r.day}일 · ${cat.name}</div></div>
       <div class="rec-amt">-${fmt(r.amount)}</div>
       <button class="act-btn del" onclick="deleteRecurring('${r.id}')">✕</button>`;
     le.appendChild(div);
@@ -1139,10 +1144,11 @@ window.addRecurring=async function(){
   const day=parseInt(document.getElementById('rec-day').value)||0;
   const desc=document.getElementById('rec-desc').value.trim();
   const amount=parseInt(document.getElementById('rec-amount').value)||0;
+  const payId=document.getElementById('rec-pay').value||'';
   if(!day||day<1||day>31){showToast('날짜를 확인해주세요','warning');return;}
   if(!amount){showToast('금액을 입력해주세요','warning');return;}
   try{
-    await setDoc(doc(db,up('recurring'),uid()),{cat,day,desc,amount});
+    await setDoc(doc(db,up('recurring'),uid()),{cat,day,desc,amount,payId});
     document.getElementById('rec-day').value='';document.getElementById('rec-desc').value='';document.getElementById('rec-amount').value='';
     showToast('고정 지출이 추가됐어요 ✓','success');
   }catch(e){showToast('저장 실패','error');}
@@ -1159,7 +1165,7 @@ window.applyRecurring=async function(){
     const day=Math.min(r.day,maxDay);
     const ds=`${curMonth}-${String(day).padStart(2,'0')}`;
     const exists=expenses.some(e=>e.recurringId===r.id&&e.month===curMonth);
-    if(!exists){batch.set(doc(db,up('expenses'),uid()),{date:ds,cat:r.cat,desc:r.desc,amount:r.amount,month:curMonth,isRecurring:true,recurringId:r.id});count++;}
+    if(!exists){batch.set(doc(db,up('expenses'),uid()),{date:ds,cat:r.cat,desc:r.desc,amount:r.amount,month:curMonth,isRecurring:true,recurringId:r.id,payId:r.payId||''});count++;}
   });
   if(!count){showToast('이미 이번 달 고정 지출이 적용됐어요','warning');return;}
   try{await batch.commit();showToast(`${count}개 고정 지출이 추가됐어요 ✓`,'success');}catch(e){showToast('적용 실패','error');}
@@ -1256,7 +1262,7 @@ const PAY_EMOJIS=['💳','🏦','💵','📱','🪙','💴','🏧','💰'];
 const PAY_TYPES=['신용카드','체크카드','계좌이체','현금','간편결제','기타'];
 
 function rebuildPaySelects(){
-  ['inp-pay','edit-pay'].forEach(id=>{
+  ['inp-pay','edit-pay','rec-pay'].forEach(id=>{
     const sel=document.getElementById(id);if(!sel)return;
     const prev=sel.value;sel.innerHTML='<option value="">결제수단 선택 안 함</option>';
     payMethods.forEach(p=>{
