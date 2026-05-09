@@ -61,7 +61,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .modal-bg.open{opacity:1;pointer-events:all;}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:380px;transform:translateY(20px);transition:transform .25s;max-height:90vh;overflow-y:auto;}
 .modal-bg.open .modal{transform:translateY(0);}
-.modal-title{font-size:16px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px;color:var(--text);}
 .modal-close{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;line-height:1;}
 
 /* 헤더 */
@@ -88,7 +88,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .summary-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;}
 .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
 .summary-card .lbl{font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;}
-.summary-card .val{font-family:'Gmarket Sans',sans-serif;font-size:16px;font-weight:700;}
+.summary-card .val{font-family:'Gmarket Sans',sans-serif;font-size:16px;font-weight:700;color:var(--text);}
 .s-budget .val{color:var(--accent3);}.s-spent .val{color:var(--accent2);}.s-remain .val{color:var(--accent);}
 .s-danger .val{color:var(--accent2)!important;}
 
@@ -150,7 +150,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 @keyframes slideIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 .cat-dot{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
 .exp-info{flex:1;min-width:0;}
-.exp-desc{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.exp-desc{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
 .exp-meta{font-size:10px;color:var(--text3);margin-top:2px;}
 .exp-amt{font-family:'Gmarket Sans',sans-serif;font-size:14px;font-weight:700;color:var(--accent2);flex-shrink:0;}
 .inst-badge{font-size:9px;background:rgba(107,181,255,.15);color:var(--accent3);padding:2px 5px;border-radius:99px;border:1px solid rgba(107,181,255,.3);}
@@ -166,7 +166,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .budget-item{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin-bottom:7px;}
 .budget-item-row{display:flex;align-items:center;gap:10px;}
 .budget-info{flex:1;}
-.budget-name{font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;}
+.budget-name{font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;color:var(--text);}
 .budget-spent{font-size:10px;color:var(--text3);margin-top:2px;}
 .mini-bar{height:3px;background:var(--surface2);border-radius:99px;margin-top:5px;overflow:hidden;}
 .mini-bar-fill{height:100%;border-radius:99px;}
@@ -198,7 +198,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .pay-item{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:7px;}
 .pay-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
 .pay-info{flex:1;}
-.pay-name{font-size:13px;font-weight:500;}
+.pay-name{font-size:13px;font-weight:500;color:var(--text);}
 .pay-meta{font-size:10px;color:var(--text3);margin-top:2px;}
 .pay-spent{font-family:'Gmarket Sans',sans-serif;font-size:14px;font-weight:700;color:var(--accent2);flex-shrink:0;}
 .pay-manage-item{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:11px 13px;display:flex;align-items:center;gap:8px;margin-bottom:7px;}
@@ -246,7 +246,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 /* 고정지출 */
 .recurring-item{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:7px;}
 .rec-info{flex:1;}
-.rec-name{font-size:13px;font-weight:500;}
+.rec-name{font-size:13px;font-weight:500;color:var(--text);}
 .rec-meta{font-size:10px;color:var(--text3);margin-top:2px;}
 .rec-amt{font-family:'Gmarket Sans',sans-serif;font-size:14px;font-weight:700;color:var(--accent2);flex-shrink:0;}
 
@@ -259,7 +259,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
 .stat-item{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px;}
 .stat-item .s-lbl{font-size:10px;color:var(--text3);margin-bottom:5px;}
-.stat-item .s-val{font-family:'Gmarket Sans',sans-serif;font-size:16px;font-weight:700;}
+.stat-item .s-val{font-family:'Gmarket Sans',sans-serif;font-size:16px;font-weight:700;color:var(--text);}
 
 /* 월별 비교 범위 선택 */
 .range-tabs{display:flex;gap:4px;margin-bottom:12px;}
@@ -1040,7 +1040,7 @@ async function renderChart(){
     donutChart=new Chart(document.getElementById('donut-chart'),{type:'doughnut',
       data:{labels:ct.map(c=>c.name),datasets:[{data:ct.map(c=>c.val),backgroundColor:ct.map(c=>c.color),borderWidth:0,hoverOffset:6}]},
       options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
-        plugins:{legend:{position:'bottom',labels:{color:'var(--text2)',font:{size:10},padding:10,boxWidth:9}},
+        plugins:{legend:{position:'bottom',labels:{color:isDark?'#9090aa':'#555566',font:{size:10},padding:10,boxWidth:9}},
           tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${fmt(ctx.raw)}`}}}}});
   }
 
@@ -1053,8 +1053,8 @@ async function renderChart(){
     data:{labels:days.map(d=>d+'일'),datasets:[{data:amounts,backgroundColor:amounts.map(v=>v>0?'rgba(200,240,74,0.7)':'rgba(200,240,74,0.1)'),borderRadius:4,borderSkipped:false}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.raw)}`}}},
-      scales:{x:{ticks:{color:'var(--text3)',maxRotation:0,font:{size:9},maxTicksLimit:15},grid:{display:false}},
-        y:{ticks:{color:'var(--text3)',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:'var(--border)'}}}}});
+      scales:{x:{ticks:{color:isDark?'#5a5a70':'#aaaabc',maxRotation:0,font:{size:9},maxTicksLimit:15},grid:{display:false}},
+        y:{ticks:{color:isDark?'#5a5a70':'#aaaabc',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:isDark?'#2e2e3e':'#e0e0e8'}}}}});
 
   // 월별 비교
   await renderCompareChart();
@@ -1088,8 +1088,8 @@ async function renderCompareChart(){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.raw)}`}}},
       scales:{
-        x:{ticks:{color:'var(--text3)',maxRotation:compareRange>12?45:0,font:{size:compareRange>12?8:9},maxTicksLimit:compareRange},grid:{display:false}},
-        y:{ticks:{color:'var(--text3)',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:'var(--border)'}}
+        x:{ticks:{color:isDark?'#5a5a70':'#aaaabc',maxRotation:compareRange>12?45:0,font:{size:compareRange>12?8:9},maxTicksLimit:compareRange},grid:{display:false}},
+        y:{ticks:{color:isDark?'#5a5a70':'#aaaabc',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:isDark?'#2e2e3e':'#e0e0e8'}}
       }}});
 }
 
@@ -1291,13 +1291,13 @@ function renderPayment(){
         div.innerHTML=`
           <div class="pay-icon" style="background:${color}22">${p.emoji||'💳'}</div>
           <div class="pay-info" style="flex:1">
-            <div class="pay-name">${p.name} <span style="font-size:10px;color:var(--text3)">${p.type||''}</span></div>
+            <div class="pay-name">${p.name}</div>
             <div class="pay-meta">${goal>0?`실적 목표: ${fmt(goal)}`:''}</div>
             ${goal>0?`<div class="pay-gauge-bg"><div class="pay-gauge-fill" style="width:${pct}%;background:${barColor}"></div></div>`:''}
           </div>
           <div>
             <div class="pay-spent">-${fmt(spent)}</div>
-            ${goal>0?`<div style="font-size:10px;color:${pct>=100?'var(--accent)':'var(--text3)'};text-align:right;margin-top:2px">${pct>=100?'✅ 달성':'목표까지 '+fmt(goal-spent)}</div>`:''}
+            ${goal>0?`<div style="font-size:10px;color:${pct>=100?'var(--accent)':isDark?'#5a5a70':'#aaaabc'};text-align:right;margin-top:2px">${pct>=100?'✅ 달성':'목표까지 '+fmt(goal-spent)}</div>`:''}
           </div>`;
         statsEl.appendChild(div);
       });
@@ -1327,9 +1327,6 @@ function renderPayment(){
         <div class="pay-emoji-box" style="background:${p.color||'#6bb5ff'}22" onclick="openPayEmojiPicker('${p.id}')">${p.emoji||'💳'}</div>
         <input class="pay-name-inp" type="text" value="${p.name||''}" placeholder="카드/계좌 이름"
           onblur="updatePayMethod('${p.id}','name',this.value)">
-        <select class="pay-type-sel" onchange="updatePayMethod('${p.id}','type',this.value)">
-          ${PAY_TYPES.map(t=>`<option value="${t}"${p.type===t?' selected':''}>${t}</option>`).join('')}
-        </select>
         <input class="pay-goal-inp" type="number" value="${p.goal||''}" placeholder="실적목표"
           onblur="updatePayMethod('${p.id}','goal',this.value)" title="월 실적 목표금액">
         <span style="font-size:10px;color:var(--text3)">원</span>
