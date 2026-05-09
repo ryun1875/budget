@@ -1053,8 +1053,8 @@ async function renderChart(){
     data:{labels:days.map(d=>d+'일'),datasets:[{data:amounts,backgroundColor:amounts.map(v=>v>0?'rgba(200,240,74,0.7)':'rgba(200,240,74,0.1)'),borderRadius:4,borderSkipped:false}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.raw)}`}}},
-      scales:{x:{ticks:{color:isDark?'#5a5a70':'#aaaabc',maxRotation:0,font:{size:9},maxTicksLimit:15},grid:{display:false}},
-        y:{ticks:{color:isDark?'#5a5a70':'#aaaabc',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:isDark?'#2e2e3e':'#e0e0e8'}}}}});
+      scales:{x:{ticks:{color:isDark?'#7a7a90':'#888899',maxRotation:0,font:{size:9},maxTicksLimit:15},grid:{display:false}},
+        y:{ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:isDark?'#3a3a4e':'#d0d0dc'}}}}});
 
   // 월별 비교
   await renderCompareChart();
@@ -1088,8 +1088,8 @@ async function renderCompareChart(){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.raw)}`}}},
       scales:{
-        x:{ticks:{color:isDark?'#5a5a70':'#aaaabc',maxRotation:compareRange>12?45:0,font:{size:compareRange>12?8:9},maxTicksLimit:compareRange},grid:{display:false}},
-        y:{ticks:{color:isDark?'#5a5a70':'#aaaabc',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:isDark?'#2e2e3e':'#e0e0e8'}}
+        x:{ticks:{color:isDark?'#7a7a90':'#888899',maxRotation:compareRange>12?45:0,font:{size:compareRange>12?8:9},maxTicksLimit:compareRange},grid:{display:false}},
+        y:{ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:isDark?'#3a3a4e':'#d0d0dc'}}
       }}});
 }
 
@@ -1297,7 +1297,7 @@ function renderPayment(){
           </div>
           <div>
             <div class="pay-spent">-${fmt(spent)}</div>
-            ${goal>0?`<div style="font-size:10px;color:${pct>=100?'var(--accent)':isDark?'#5a5a70':'#aaaabc'};text-align:right;margin-top:2px">${pct>=100?'✅ 달성':'목표까지 '+fmt(goal-spent)}</div>`:''}
+            ${goal>0?`<div style="font-size:10px;color:${pct>=100?'var(--accent)':isDark?'#7a7a90':'#888899'};text-align:right;margin-top:2px">${pct>=100?'✅ 달성':'목표까지 '+fmt(goal-spent)}</div>`:''}
           </div>`;
         statsEl.appendChild(div);
       });
