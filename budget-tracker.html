@@ -385,13 +385,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 
   <div class="summary-grid">
-    <div class="summary-card s-budget"><div class="lbl">총 예산</div><div class="val" id="total-budget">0원</div></div>
-    <div class="summary-card s-spent"><div class="lbl">지출</div><div class="val" id="total-spent">0원</div></div>
-    <div class="summary-card s-remain" id="remain-card"><div class="lbl">남은 예산</div><div class="val" id="total-remain">0원</div></div>
-  </div>
-  <div class="gauge-wrap">
-    <div class="gauge-hd"><span>예산 사용률</span><span id="usage-pct" style="font-family:'Gmarket Sans',sans-serif;font-weight:700">0%</span></div>
-    <div class="gauge-bg"><div class="gauge-fill" id="gauge-fill" style="width:0%"></div></div>
+    <div class="summary-card s-spent"><div class="lbl">이번 달 지출</div><div class="val" id="total-spent">0원</div></div>
+    <div class="summary-card" id="over-card"><div class="lbl">초과 카테고리</div><div class="val" id="over-count" style="color:var(--accent2)">0개</div></div>
+    <div class="summary-card"><div class="lbl">남은 일수</div><div class="val" id="remain-days-top" style="color:var(--accent3)">—</div></div>
   </div>
   <div class="alert-banner" id="alert-banner">⚠️ 예산의 80%를 초과했어요! 소비를 줄여보세요.</div>
 
@@ -409,7 +405,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 
   <!-- 입력 -->
-  <div class="panel active" id="panel-input">
+  <div class="panel" id="panel-input">
     <div class="form-card">
       <h3>지출 추가</h3>
       <div class="form-row">
@@ -704,6 +700,11 @@ function initApp(){
   document.getElementById('today-date').textContent=
     now.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
   document.getElementById('inp-date').value=now.toISOString().split('T')[0];
+  // 홈을 기본 탭으로 설정
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-home').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-home').classList.add('active');
 
   // 달력 요일 헤더
   const cl=document.getElementById('cal-labels');cl.innerHTML='';
@@ -787,21 +788,30 @@ document.getElementById('inp-amount').addEventListener('input',()=>{if(instOn)up
 
 // ── 렌더 ──────────────────────────────────────────────────
 function updateSummary(){
-  const tB=Object.values(budgets).reduce((s,v)=>s+(Number(v)||0),0);
   const tS=expenses.reduce((s,e)=>s+e.amount,0);
-  const rem=tB-tS;
-  const pct=tB>0?Math.min(Math.round(tS/tB*100),100):0;
-  document.getElementById('total-budget').textContent=fmt(tB);
   document.getElementById('total-spent').textContent=fmt(tS);
-  document.getElementById('total-remain').textContent=fmt(Math.abs(rem));
-  document.getElementById('remain-card').classList.toggle('s-danger',rem<0);
-  const gf=document.getElementById('gauge-fill');
-  gf.style.width=pct+'%';
-  gf.className='gauge-fill'+(pct>=100?' danger':pct>=80?' warn':'');
-  const pe=document.getElementById('usage-pct');
-  pe.textContent=pct+'%';
-  pe.style.color=pct>=100?'var(--accent2)':pct>=80?'#ffb347':'var(--accent)';
-  document.getElementById('alert-banner').classList.toggle('show',pct>=80);
+
+  // 초과 카테고리 수
+  const overCount=CATS.filter(c=>{
+    const b=Number(budgets[c.id])||0;
+    if(!b)return false;
+    return expenses.filter(e=>e.cat===c.id).reduce((s,e)=>s+e.amount,0)>b;
+  }).length;
+  const overEl=document.getElementById('over-count');
+  overEl.textContent=overCount+'개';
+  overEl.style.color=overCount>0?'var(--accent2)':'var(--accent)';
+
+  // 남은 일수
+  const[y,m]=curMonth.split('-').map(Number);
+  const dim=new Date(y,m,0).getDate();
+  const today=new Date();
+  const isThis=today.getFullYear()===y&&today.getMonth()+1===m;
+  document.getElementById('remain-days-top').textContent=isThis?(dim-today.getDate())+'일':'—';
+
+  // 전체 예산 초과 배너 (예산 합계 기준)
+  const tB=Object.values(budgets).reduce((s,v)=>s+(Number(v)||0),0);
+  const pct=tB>0?Math.min(Math.round(tS/tB*100),100):0;
+  document.getElementById('alert-banner').classList.toggle('show',pct>=80&&tB>0);
 }
 
 // 입력 중인지 확인하는 헬퍼 — input/textarea/select에 포커스 중이면 true
@@ -812,53 +822,100 @@ function isEditing(){
 }
 
 function renderHome(){
+  if(isEditing())return;
   const wrap=document.getElementById('home-summary-wrap');
   if(!wrap)return;
   const[y,m]=curMonth.split('-').map(Number);
-  const tB=Object.values(budgets).reduce((s,v)=>s+(Number(v)||0),0);
-  const tS=expenses.reduce((s,e)=>s+e.amount,0);
   const today=new Date();
   const dim=new Date(y,m,0).getDate();
   const isThis=today.getFullYear()===y&&today.getMonth()+1===m;
   const dp=isThis?today.getDate():dim;
+  const tS=expenses.reduce((s,e)=>s+e.amount,0);
   const remainDays=isThis?dim-today.getDate():0;
-  const dailyBudget=remainDays>0?Math.round((tB-tS)/remainDays):0;
 
-  wrap.innerHTML=`
-    <div class="form-card" style="margin-bottom:14px">
-      <h3 style="margin-bottom:14px;font-size:15px;color:var(--text)">이번 달 요약</h3>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:13px;color:var(--text2)">총 지출</span>
-          <span style="font-family:'Gmarket Sans',sans-serif;font-weight:700;color:var(--accent2);font-size:18px">${fmt(tS)}</span>
+  // 카테고리별 집계
+  const catData=CATS.map(c=>{
+    const b=Number(budgets[c.id])||0;
+    const spent=expenses.filter(e=>e.cat===c.id).reduce((s,e)=>s+e.amount,0);
+    const pct=b>0?Math.min(Math.round(spent/b*100),100):0;
+    return{...c,b,spent,pct};
+  }).filter(c=>c.spent>0||c.b>0).sort((a,b)=>{
+    // 초과 → 80%이상 → 나머지 순
+    if(a.pct>=100&&b.pct<100)return -1;
+    if(b.pct>=100&&a.pct<100)return 1;
+    return b.spent-a.spent;
+  });
+
+  // 하루 사용 가능 금액 (예산 있는 경우)
+  const tB=Object.values(budgets).reduce((s,v)=>s+(Number(v)||0),0);
+  const dailyLeft=remainDays>0&&tB>tS?Math.round((tB-tS)/remainDays):0;
+
+  wrap.innerHTML='';
+
+  // 빠른 통계 행
+  const statsDiv=document.createElement('div');
+  statsDiv.style.cssText='display:flex;gap:10px;margin-bottom:14px';
+  [
+    {lbl:'하루 평균',val:dp>0?fmt(Math.round(tS/dp)):'—',color:'var(--text)'},
+    ...(dailyLeft>0?[{lbl:'오늘 사용 가능',val:fmt(dailyLeft),color:'var(--accent3)'}]:[]),
+  ].forEach(s=>{
+    const d=document.createElement('div');
+    d.style.cssText=`flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px`;
+    d.innerHTML=`<div style="font-size:10px;color:var(--text3);margin-bottom:5px">${s.lbl}</div><div style="font-family:'Gmarket Sans',sans-serif;font-weight:700;font-size:16px;color:${s.color}">${s.val}</div>`;
+    statsDiv.appendChild(d);
+  });
+  wrap.appendChild(statsDiv);
+
+  // 카테고리별 게이지
+  const catCard=document.createElement('div');
+  catCard.className='form-card';
+  catCard.style.marginBottom='14px';
+
+  if(!catData.length){
+    catCard.innerHTML=`<div class="empty-state"><div class="ic">📊</div>아직 지출이 없어요</div>`;
+  } else {
+    catData.forEach(c=>{
+      const barColor=c.pct>=100?'var(--accent2)':c.pct>=80?'#ffb347':c.color;
+      const statusText=c.b>0?(c.pct>=100?`<span style="color:var(--accent2);font-size:10px;font-weight:700">초과 +${fmt(c.spent-c.b)}</span>`:`<span style="font-size:10px;color:var(--text3)">${fmt(c.b-c.spent)} 남음</span>`):'';
+      const row=document.createElement('div');
+      row.style.cssText='margin-bottom:12px';
+      row.innerHTML=`
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font-size:16px">${c.emoji}</span>
+            <span style="font-size:13px;font-weight:500;color:var(--text)">${c.name}</span>
+            ${statusText}
+          </div>
+          <div style="text-align:right">
+            <span style="font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;color:${c.pct>=100?'var(--accent2)':'var(--text)'}">${fmt(c.spent)}</span>
+            ${c.b>0?`<span style="font-size:10px;color:var(--text3)"> / ${fmt(c.b)}</span>`:''}
+          </div>
         </div>
-        ${tB>0?`<div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:13px;color:var(--text2)">남은 예산</span>
-          <span style="font-family:'Gmarket Sans',sans-serif;font-weight:700;color:${tB-tS<0?'var(--accent2)':'var(--accent)'};font-size:18px">${fmt(Math.abs(tB-tS))}</span>
-        </div>`:''}
-        ${remainDays>0&&dailyBudget>0?`<div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:13px;color:var(--text2)">하루 사용 가능</span>
-          <span style="font-family:'Gmarket Sans',sans-serif;font-weight:700;color:var(--accent3);font-size:15px">${fmt(dailyBudget)}</span>
-        </div>`:''}
-        ${dp>0?`<div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:13px;color:var(--text2)">하루 평균 지출</span>
-          <span style="font-family:'Gmarket Sans',sans-serif;font-weight:700;color:var(--text);font-size:15px">${fmt(Math.round(tS/dp))}</span>
-        </div>`:''}
-      </div>
-    </div>
-    <div class="form-card" style="padding:14px">
-      <div class="cal-grid" id="home-cal-labels"></div>
-      <div style="height:8px"></div>
-      <div class="cal-grid" id="home-cal-grid"></div>
-    </div>`;
+        ${c.b>0?`
+        <div style="height:6px;background:var(--surface2);border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:${c.pct}%;background:${barColor};border-radius:99px;transition:width .5s ease"></div>
+        </div>`:`<div style="height:6px;background:var(--surface2);border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:100%;background:${c.color}33;border-radius:99px"></div>
+        </div>`}`;
+      catCard.appendChild(row);
+    });
+  }
+  wrap.appendChild(catCard);
 
-  // 달력 요일 헤더
+  // 달력
+  const calCard=document.createElement('div');
+  calCard.className='form-card';
+  calCard.style.padding='14px';
+  calCard.innerHTML=`<div class="cal-grid" id="home-cal-labels"></div><div style="height:8px"></div><div class="cal-grid" id="home-cal-grid"></div>`;
+  wrap.appendChild(calCard);
+
+  // 달력 요일
   const cl=document.getElementById('home-cal-labels');
   ['일','월','화','수','목','금','토'].forEach(d=>{
     const div=document.createElement('div');div.className='cal-day-label';div.textContent=d;cl.appendChild(div);
   });
 
-  // 달력 그리드 (renderCalendar 재활용)
+  // 달력 그리드
   const firstDay=new Date(y,m-1,1).getDay();
   const grid=document.getElementById('home-cal-grid');
   const dayMap={};
@@ -888,21 +945,7 @@ function renderAll(){
   if(isEditing())return;
   const[y,m]=curMonth.split('-').map(Number);
   document.getElementById('month-label').textContent=`${y}년 ${m}월`;
-  const tB=Object.values(budgets).reduce((s,v)=>s+(Number(v)||0),0);
-  const tS=expenses.reduce((s,e)=>s+e.amount,0);
-  const rem=tB-tS;
-  const pct=tB>0?Math.min(Math.round(tS/tB*100),100):0;
-  document.getElementById('total-budget').textContent=fmt(tB);
-  document.getElementById('total-spent').textContent=fmt(tS);
-  document.getElementById('total-remain').textContent=fmt(Math.abs(rem));
-  document.getElementById('remain-card').classList.toggle('s-danger',rem<0);
-  const gf=document.getElementById('gauge-fill');
-  gf.style.width=pct+'%';
-  gf.className='gauge-fill'+(pct>=100?' danger':pct>=80?' warn':'');
-  const pe=document.getElementById('usage-pct');
-  pe.textContent=pct+'%';
-  pe.style.color=pct>=100?'var(--accent2)':pct>=80?'#ffb347':'var(--accent)';
-  document.getElementById('alert-banner').classList.toggle('show',pct>=80);
+  updateSummary();
   renderList();renderBudget();renderCalendar();
   if(document.getElementById('panel-chart').classList.contains('active'))renderChart();
   if(document.getElementById('panel-payment').classList.contains('active'))renderPayment();
