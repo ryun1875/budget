@@ -194,7 +194,24 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .budget-memo::placeholder{color:var(--text3);}
 .memo-label{font-size:10px;color:var(--text3);margin-bottom:4px;letter-spacing:.3px;}
 
-/* 달력 */
+/* 결제수단 */
+.pay-item{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+.pay-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.pay-info{flex:1;}
+.pay-name{font-size:13px;font-weight:500;}
+.pay-meta{font-size:10px;color:var(--text3);margin-top:2px;}
+.pay-spent{font-family:'Gmarket Sans',sans-serif;font-size:14px;font-weight:700;color:var(--accent2);flex-shrink:0;}
+.pay-manage-item{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:11px 13px;display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.pay-emoji-box{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;flex-shrink:0;transition:var(--tr);}
+.pay-emoji-box:hover{transform:scale(1.1);}
+.pay-name-inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;outline:none;transition:var(--tr);}
+.pay-name-inp:focus{border-color:var(--accent);}
+.pay-type-sel{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:12px;outline:none;width:80px;flex-shrink:0;}
+.pay-goal-inp{width:90px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);font-family:'Gmarket Sans',sans-serif;font-size:12px;text-align:right;outline:none;}
+.pay-goal-inp:focus{border-color:var(--accent);}
+/* 실적 게이지 */
+.pay-gauge-bg{height:4px;background:var(--surface2);border-radius:99px;margin-top:5px;overflow:hidden;}
+.pay-gauge-fill{height:100%;border-radius:99px;transition:width .5s ease;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
 .cal-day-label{text-align:center;font-size:10px;color:var(--text3);padding:4px 0;font-weight:600;}
 .cal-day-label:first-child{color:#ff6b6b;}
@@ -323,6 +340,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="form-group" style="flex:2"><label>내용</label><input type="text" id="edit-desc"></div>
       <div class="form-group"><label>금액</label><input type="number" id="edit-amount"></div>
     </div>
+    <div class="form-row">
+      <div class="form-group"><label>결제수단</label><select id="edit-pay"></select></div>
+    </div>
     <button class="btn-primary" onclick="saveEdit()">수정 완료</button>
   </div>
 </div>
@@ -374,6 +394,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <button class="tab-btn" onclick="switchTab('calendar',this)">📅 달력</button>
     <button class="tab-btn" onclick="switchTab('budget',this)">🎯 예산</button>
     <button class="tab-btn" onclick="switchTab('recurring',this)">📌 고정</button>
+    <button class="tab-btn" onclick="switchTab('payment',this)">💳 결제</button>
     <button class="tab-btn" onclick="switchTab('cats',this)">🏷️ 카테고리</button>
     <button class="tab-btn" onclick="switchTab('chart',this)">📊 분석</button>
   </div>
@@ -389,6 +410,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="form-row">
         <div class="form-group" style="flex:2"><label>내용</label><input type="text" id="inp-desc" placeholder="예: 점심 식사"></div>
         <div class="form-group"><label>금액 (원)</label><input type="number" id="inp-amount" placeholder="0" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>결제수단</label><select id="inp-pay"></select></div>
       </div>
       <div class="toggle-row" id="inst-toggle" onclick="toggleInstallment()">
         <div class="sw"></div><span id="inst-label">할부 결제</span>
@@ -438,6 +462,21 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </div>
     <div id="recurring-list"></div>
     <button class="btn-secondary" style="border-style:solid;border-color:var(--accent);color:var(--accent)" onclick="applyRecurring()">📌 이번 달 고정 지출 일괄 적용</button>
+  </div>
+
+  <!-- 결제수단 -->
+  <div class="panel" id="panel-payment">
+    <!-- 이번 달 실적 -->
+    <div class="form-card">
+      <h3>이번 달 결제수단별 실적</h3>
+      <div id="payment-stats"></div>
+    </div>
+    <!-- 결제수단 관리 -->
+    <div class="form-card">
+      <h3>결제수단 관리</h3>
+      <div id="payment-manage-list"></div>
+      <button class="btn-secondary" onclick="addPayMethod()">+ 결제수단 추가</button>
+    </div>
   </div>
 
   <!-- 카테고리 -->
@@ -500,7 +539,7 @@ const DEF_CATS=[
 const EMOJIS=['🍱','🍔','🍕','🍜','🍣','☕','🧋','🎂','🚇','🚗','🚕','✈️','🛍️','👗','👟','💄','💊','🏥','🎬','🎮','🎵','📚','🏠','🧹','⚡','💡','🐶','🌸','💰','📦','🎁','🏋️','⚽','🏊','💻','📱','🔧','🌙','☀️'];
 const COLORS=['#ff6b6b','#ff8c42','#ffb347','#ffd166','#c8f04a','#34d399','#6bb5ff','#a78bfa','#f472b6','#fb7185','#94a3b8','#4ade80','#22d3ee','#f59e0b','#ef4444','#8b5cf6'];
 
-let curMonth,filterCat='all',expenses=[],budgets={},recurring=[],budgetMeta={};
+let curMonth,filterCat='all',expenses=[],budgets={},recurring=[],budgetMeta={},payMethods=[];
 let CATS=[...DEF_CATS];
 let donutChart=null,barChart=null,compareChart=null;
 let unsubExp=null,unsubBudget=null,unsubCats=null,unsubRec=null;
@@ -618,6 +657,12 @@ function initApp(){
     recurring=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderRecurring();
   });
+  // 결제수단 구독
+  onSnapshot(collection(db,up('payMethods')),snap=>{
+    payMethods=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.order-b.order||0);
+    rebuildPaySelects();
+    renderPayment();
+  });
   subscribeMonth();
 }
 
@@ -720,6 +765,7 @@ function renderAll(){
   document.getElementById('alert-banner').classList.toggle('show',pct>=80);
   renderList();renderBudget();renderCalendar();
   if(document.getElementById('panel-chart').classList.contains('active'))renderChart();
+  if(document.getElementById('panel-payment').classList.contains('active'))renderPayment();
 }
 
 function renderList(){
@@ -746,10 +792,12 @@ function renderList(){
     const div=document.createElement('div');div.className='expense-item';
     const ib=e.installmentTotal?`<span class="inst-badge">할부 ${e.installmentCurrent}/${e.installmentTotal}</span>`:'';
     const rb=e.isRecurring?`<span class="rec-badge">고정</span>`:'';
+    const pay=payMethods.find(p=>p.id===e.payId);
+    const pb=pay?`<span style="font-size:9px;background:${pay.color||'#6bb5ff'}22;color:${pay.color||'#6bb5ff'};padding:2px 5px;border-radius:99px;border:1px solid ${pay.color||'#6bb5ff'}44">${pay.emoji||'💳'} ${pay.name}</span>`:'';
     div.innerHTML=`
       <div class="cat-dot" style="background:${cat.color}22">${cat.emoji}</div>
       <div class="exp-info">
-        <div class="exp-desc">${e.desc||cat.name} ${ib}${rb}</div>
+        <div class="exp-desc">${e.desc||cat.name} ${ib}${rb}${pb}</div>
         <div class="exp-meta">${e.date} · ${cat.name}</div>
       </div>
       <div class="exp-amt">-${fmt(e.amount)}</div>
@@ -1124,8 +1172,9 @@ window.openEdit=function(id){
   document.getElementById('edit-date').value=e.date;
   document.getElementById('edit-desc').value=e.desc||'';
   document.getElementById('edit-amount').value=e.amount;
-  rebuildCatSelects();
+  rebuildCatSelects();rebuildPaySelects();
   document.getElementById('edit-cat').value=e.cat;
+  document.getElementById('edit-pay').value=e.payId||'';
   document.getElementById('edit-modal').classList.add('open');
 };
 window.saveEdit=async function(){
@@ -1134,9 +1183,10 @@ window.saveEdit=async function(){
   const cat=document.getElementById('edit-cat').value;
   const desc=document.getElementById('edit-desc').value.trim();
   const amount=parseInt(document.getElementById('edit-amount').value)||0;
+  const payId=document.getElementById('edit-pay').value||'';
   if(!amount){showToast('금액을 입력해주세요','warning');return;}
   try{
-    await updateDoc(doc(db,up('expenses'),editId),{date,cat,desc,amount,month:date.slice(0,7)});
+    await updateDoc(doc(db,up('expenses'),editId),{date,cat,desc,amount,month:date.slice(0,7),payId});
     closeModal('edit-modal');editId=null;showToast('수정됐어요 ✓','success');
   }catch(e){showToast('수정 실패','error');}
 };
@@ -1147,6 +1197,7 @@ window.addExpense=async function(){
   const cat=document.getElementById('inp-cat').value;
   const desc=document.getElementById('inp-desc').value.trim();
   const total=parseInt(document.getElementById('inp-amount').value)||0;
+  const payId=document.getElementById('inp-pay').value||'';
   if(!date){showToast('날짜를 선택해주세요','warning');return;}
   if(!total){showToast('금액을 입력해주세요','warning');return;}
   const btn=document.getElementById('btn-add');
@@ -1161,12 +1212,12 @@ window.addExpense=async function(){
         const mo=`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}`;
         const md=new Date(nd.getFullYear(),nd.getMonth()+1,0).getDate();
         const dd=Math.min(parseInt(date.split('-')[2]),md);
-        batch.set(doc(db,up('expenses'),uid()),{date:`${mo}-${String(dd).padStart(2,'0')}`,cat,desc:desc||(CATS.find(c=>c.id===cat)?.name||''),amount:ma,month:mo,installmentTotal:instMonths,installmentCurrent:i+1,installmentGroupId:gid});
+        batch.set(doc(db,up('expenses'),uid()),{date:`${mo}-${String(dd).padStart(2,'0')}`,cat,desc:desc||(CATS.find(c=>c.id===cat)?.name||''),amount:ma,month:mo,payId,installmentTotal:instMonths,installmentCurrent:i+1,installmentGroupId:gid});
       }
       await batch.commit();showToast(`${instMonths}개월 할부로 추가됐어요 ✓`,'success');
       instOn=false;window.toggleInstallment();
     } else {
-      await setDoc(doc(db,up('expenses'),uid()),{date,cat,desc,amount:total,month:curMonth});
+      await setDoc(doc(db,up('expenses'),uid()),{date,cat,desc,amount:total,month:curMonth,payId});
       const b=Number(budgets[cat])||0;
       if(b>0){
         const spent=expenses.filter(e=>e.cat===cat).reduce((s,e)=>s+e.amount,0)+total;
@@ -1200,6 +1251,129 @@ window.setBudget=function(catId,val){
   },800);
 };
 
+// ── 결제수단 ──────────────────────────────────────────────
+const PAY_EMOJIS=['💳','🏦','💵','📱','🪙','💴','🏧','💰'];
+const PAY_TYPES=['신용카드','체크카드','계좌이체','현금','간편결제','기타'];
+
+function rebuildPaySelects(){
+  ['inp-pay','edit-pay'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const prev=sel.value;sel.innerHTML='<option value="">결제수단 선택 안 함</option>';
+    payMethods.forEach(p=>{
+      const o=document.createElement('option');o.value=p.id;o.textContent=`${p.emoji||'💳'} ${p.name}`;sel.appendChild(o);
+    });
+    if(payMethods.find(p=>p.id===prev))sel.value=prev;
+  });
+}
+
+function renderPayment(){
+  if(isEditing())return;
+  // 실적 섹션
+  const statsEl=document.getElementById('payment-stats');
+  if(statsEl){
+    if(!payMethods.length){
+      statsEl.innerHTML=`<div class="empty-state"><div class="ic">💳</div>아래에서 결제수단을 추가해보세요</div>`;
+    } else {
+      statsEl.innerHTML='';
+      payMethods.forEach(p=>{
+        const spent=expenses.filter(e=>e.payId===p.id).reduce((s,e)=>s+e.amount,0);
+        const goal=Number(p.goal)||0;
+        const pct=goal>0?Math.min(Math.round(spent/goal*100),100):0;
+        const color=p.color||'#6bb5ff';
+        const barColor=pct>=100?'var(--accent)':color;
+        const div=document.createElement('div');div.className='pay-item';
+        div.innerHTML=`
+          <div class="pay-icon" style="background:${color}22">${p.emoji||'💳'}</div>
+          <div class="pay-info" style="flex:1">
+            <div class="pay-name">${p.name} <span style="font-size:10px;color:var(--text3)">${p.type||''}</span></div>
+            <div class="pay-meta">${goal>0?`실적 목표: ${fmt(goal)}`:''}</div>
+            ${goal>0?`<div class="pay-gauge-bg"><div class="pay-gauge-fill" style="width:${pct}%;background:${barColor}"></div></div>`:''}
+          </div>
+          <div>
+            <div class="pay-spent">-${fmt(spent)}</div>
+            ${goal>0?`<div style="font-size:10px;color:${pct>=100?'var(--accent)':'var(--text3)'};text-align:right;margin-top:2px">${pct>=100?'✅ 달성':'목표까지 '+fmt(goal-spent)}</div>`:''}
+          </div>`;
+        statsEl.appendChild(div);
+      });
+      // 결제수단 미지정 지출
+      const unassigned=expenses.filter(e=>!e.payId).reduce((s,e)=>s+e.amount,0);
+      if(unassigned>0){
+        const div=document.createElement('div');div.className='pay-item';
+        div.innerHTML=`
+          <div class="pay-icon" style="background:var(--surface2)">❓</div>
+          <div class="pay-info" style="flex:1"><div class="pay-name" style="color:var(--text2)">미지정</div></div>
+          <div class="pay-spent" style="color:var(--text2)">-${fmt(unassigned)}</div>`;
+        statsEl.appendChild(div);
+      }
+    }
+  }
+
+  // 관리 섹션
+  const manageEl=document.getElementById('payment-manage-list');
+  if(manageEl){
+    manageEl.innerHTML='';
+    if(!payMethods.length){
+      manageEl.innerHTML=`<div style="font-size:12px;color:var(--text3);margin-bottom:12px">신한카드, 우리카드, 카카오페이 등 자유롭게 추가하세요</div>`;
+    }
+    payMethods.forEach(p=>{
+      const div=document.createElement('div');div.className='pay-manage-item';
+      div.innerHTML=`
+        <div class="pay-emoji-box" style="background:${p.color||'#6bb5ff'}22" onclick="openPayEmojiPicker('${p.id}')">${p.emoji||'💳'}</div>
+        <input class="pay-name-inp" type="text" value="${p.name||''}" placeholder="카드/계좌 이름"
+          onblur="updatePayMethod('${p.id}','name',this.value)">
+        <select class="pay-type-sel" onchange="updatePayMethod('${p.id}','type',this.value)">
+          ${PAY_TYPES.map(t=>`<option value="${t}"${p.type===t?' selected':''}>${t}</option>`).join('')}
+        </select>
+        <input class="pay-goal-inp" type="number" value="${p.goal||''}" placeholder="실적목표"
+          onblur="updatePayMethod('${p.id}','goal',this.value)" title="월 실적 목표금액">
+        <span style="font-size:10px;color:var(--text3)">원</span>
+        <div class="color-dot-btn" style="background:${p.color||'#6bb5ff'}" onclick="openPayColorPicker('${p.id}')"></div>
+        <button class="act-btn del" onclick="deletePayMethod('${p.id}')">✕</button>`;
+      manageEl.appendChild(div);
+    });
+  }
+}
+
+window.addPayMethod=async function(){
+  const colors=['#6bb5ff','#ff6b6b','#c8f04a','#a78bfa','#ffb347','#34d399','#f472b6','#fb7185'];
+  const color=colors[payMethods.length%colors.length];
+  try{
+    await setDoc(doc(db,up('payMethods'),uid()),{name:'새 결제수단',emoji:'💳',type:'신용카드',goal:0,color,order:payMethods.length});
+    showToast('결제수단이 추가됐어요 ✓','success');
+  }catch(e){showToast('저장 실패','error');}
+};
+
+window.deletePayMethod=async function(id){
+  try{await deleteDoc(doc(db,up('payMethods'),id));showToast('삭제됐어요','');}
+  catch(e){showToast('삭제 실패','error');}
+};
+
+window.updatePayMethod=async function(id,field,val){
+  try{
+    await updateDoc(doc(db,up('payMethods'),id),{[field]:field==='goal'?(parseInt(val)||0):val});
+  }catch(e){showToast('저장 실패','error');}
+};
+
+// 결제수단 이모지/색상 피커
+window.openPayEmojiPicker=function(id){
+  const p=document.getElementById('emoji-picker');p.innerHTML='';
+  PAY_EMOJIS.concat(['💳','🏦','💵','📱','🪙','💴','🏧','💰','🎴','🔖','⭐','🌟']).forEach(e=>{
+    const s=document.createElement('span');s.className='emoji-opt';s.textContent=e;
+    s.onclick=()=>{updatePayMethod(id,'emoji',e);closeModal('emoji-modal');};
+    p.appendChild(s);
+  });
+  document.getElementById('emoji-modal').classList.add('open');
+};
+window.openPayColorPicker=function(id){
+  const p=document.getElementById('color-picker');p.innerHTML='';
+  COLORS.forEach(c=>{
+    const d=document.createElement('div');d.className='color-opt';d.style.background=c;
+    d.onclick=()=>{updatePayMethod(id,'color',c);closeModal('color-modal');};
+    p.appendChild(d);
+  });
+  document.getElementById('color-modal').classList.add('open');
+};
+
 window.switchTab=function(name,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -1208,14 +1382,16 @@ window.switchTab=function(name,btn){
   if(name==='chart')renderChart();
   if(name==='cats')renderCatManage();
   if(name==='recurring')renderRecurring();
+  if(name==='payment')renderPayment();
 };
 
 window.exportCSV=function(){
   if(!expenses.length){showToast('내보낼 데이터가 없어요','warning');return;}
-  const rows=[['날짜','카테고리','내용','금액','할부','고정']];
+  const rows=[['날짜','카테고리','내용','금액','결제수단','할부','고정']];
   expenses.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
     const cat=CATS.find(c=>c.id===e.cat);
-    rows.push([e.date,cat?.name||e.cat,e.desc||'',e.amount,e.installmentTotal?`${e.installmentCurrent}/${e.installmentTotal}`:'',e.isRecurring?'O':'']);
+    const pay=payMethods.find(p=>p.id===e.payId);
+    rows.push([e.date,cat?.name||e.cat,e.desc||'',e.amount,pay?.name||'',e.installmentTotal?`${e.installmentCurrent}/${e.installmentTotal}`:'',e.isRecurring?'O':'']);
   });
   const csv='\uFEFF'+rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
   const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'})),download:`가계부_${curMonth}.csv`});
