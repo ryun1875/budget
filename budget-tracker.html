@@ -1067,7 +1067,38 @@ function renderHome(){
 
   wrap.innerHTML='';
 
-  // 빠른 통계 행
+  // ── 투자 계산기 ──────────────────────────────────────────
+  const calcCard=document.createElement('div');
+  calcCard.className='calc-card';
+  let cs=JSON.parse(localStorage.getItem('calc_settings')||'{}');
+  if(!cs.mode)cs.mode='deposit';
+  if(!cs.src)cs.src='auto';
+  if(!cs.period)cs.period=12;
+  const savedAmt=tB>tS?tB-tS:0;
+  const autoAmt=savedAmt>0?savedAmt:0;
+  calcCard.innerHTML=`
+    <h3>💡 절약금 운용 시뮬레이터</h3>
+    <div class="calc-sub">절약하거나 초과한 금액을 어디에 넣으면 좋을지 계산해봐요</div>
+    <div class="calc-tabs" id="calc-tabs">
+      <button class="calc-tab${cs.mode==='deposit'?' active':''}" style="${cs.mode==='deposit'?'background:var(--accent3)':''}" onclick="setCalcMode('deposit')">🏦 예금</button>
+      <button class="calc-tab${cs.mode==='savings'?' active':''}" style="${cs.mode==='savings'?'background:var(--accent3)':''}" onclick="setCalcMode('savings')">💰 적금</button>
+      <button class="calc-tab${cs.mode==='stock'?' active':''}" style="${cs.mode==='stock'?'background:var(--accent)':''}" onclick="setCalcMode('stock')">📈 주식/ETF</button>
+      <button class="calc-tab${cs.mode==='loan'?' active':''}" style="${cs.mode==='loan'?'background:var(--accent2)':''}" onclick="setCalcMode('loan')">🏠 대출상환</button>
+    </div>
+    <div class="calc-src-toggle">
+      <button class="calc-src-btn${cs.src==='auto'?' active':''}" onclick="setCalcSrc('auto')">자동 (절약금 ${fmt(autoAmt)})</button>
+      <button class="calc-src-btn${cs.src==='manual'?' active':''}" onclick="setCalcSrc('manual')">직접 입력</button>
+    </div>
+    <div id="calc-manual-row" style="display:${cs.src==='manual'?'flex':'none'}" class="calc-row">
+      <span class="calc-label">금액</span>
+      <input class="calc-inp" type="number" id="calc-amount" value="${cs.manualAmt||''}" placeholder="0" onblur="saveCalcSettings()">
+      <span class="calc-unit">원</span>
+    </div>
+    <div id="calc-fields"></div>
+    <div id="calc-result"></div>
+  `;
+  wrap.appendChild(calcCard);
+  renderCalcFields();
   const statsDiv=document.createElement('div');
   statsDiv.style.cssText='display:flex;gap:10px;margin-bottom:14px';
   [
