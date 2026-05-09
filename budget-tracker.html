@@ -603,7 +603,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, writeBatch, getDocs }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const FB={apiKey:"AIzaSyDVllZksxB55CbI4W1AiKVhSDXpuzJy8f0",authDomain:"my-budget-942d1.firebaseapp.com",projectId:"my-budget-942d1",storageBucket:"my-budget-942d1.firebasestorage.app",messagingSenderId:"1050275673720",appId:"1:1050275673720:web:d7b393d26974d84fdf9f8d"};
@@ -694,8 +694,20 @@ window.toggleTheme=function(){
 
 // ── 인증 ──────────────────────────────────────────────────
 document.getElementById('btn-login').onclick=async()=>{
-  try{await signInWithPopup(auth,gp);}catch(e){showToast('로그인 실패','error');}
+  try{
+    await signInWithPopup(auth,gp);
+  }catch(e){
+    // 팝업 차단된 경우 리디렉션으로 대체
+    if(e.code==='auth/popup-blocked'||e.code==='auth/cancelled-popup-request'){
+      await signInWithRedirect(auth,gp);
+    } else {
+      showToast('로그인 실패: '+e.message,'error');
+    }
+  }
 };
+
+// 리디렉션 후 돌아왔을 때 결과 처리
+getRedirectResult(auth).catch(()=>{});
 window.logout=async function(){
   [unsubExp,unsubBudget,unsubCats,unsubRec].forEach(u=>u&&u());
   await signOut(auth);
