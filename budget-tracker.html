@@ -512,6 +512,23 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       </div>
       <div class="chart-container tall"><canvas id="compare-chart"></canvas></div>
     </div>
+    <div class="chart-card">
+      <h3>카테고리별 예산 대비 실제 지출</h3>
+      <p class="chart-sub">예산이 설정된 카테고리만 표시돼요</p>
+      <div class="chart-container"><canvas id="budget-compare-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>카테고리별 12개월 추이</h3>
+      <p class="chart-sub">카테고리 선택</p>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px" id="trend-cat-filter"></div>
+      <div class="chart-container tall"><canvas id="trend-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>결제수단별 12개월 추이</h3>
+      <p class="chart-sub">결제수단 선택</p>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px" id="trend-pay-filter"></div>
+      <div class="chart-container tall"><canvas id="pay-trend-chart"></canvas></div>
+    </div>
     <button class="export-btn" onclick="exportCSV()">📥 이번 달 지출 CSV 내보내기</button>
   </div>
 </div>
@@ -544,7 +561,8 @@ const COLORS=['#ff6b6b','#ff8c42','#ffb347','#ffd166','#c8f04a','#34d399','#6bb5
 
 let curMonth,filterCat='all',expenses=[],budgets={},recurring=[],budgetMeta={},payMethods=[];
 let CATS=[...DEF_CATS];
-let donutChart=null,barChart=null,compareChart=null;
+let donutChart=null,barChart=null,compareChart=null,budgetCompareChart=null,trendChart=null,payTrendChart=null;
+let trendCatId=null, trendPayId=null;
 let unsubExp=null,unsubBudget=null,unsubCats=null,unsubRec=null;
 let budgetTimer=null,catTimer=null;
 let instOn=false,instMonths=2;
@@ -1058,6 +1076,12 @@ async function renderChart(){
 
   // 월별 비교
   await renderCompareChart();
+  // 예산 대비 실제 지출
+  renderBudgetCompareChart();
+  // 카테고리별 12개월 추이
+  await renderTrendChart();
+  // 결제수단별 12개월 추이
+  await renderPayTrendChart();
 }
 
 async function renderCompareChart(){
@@ -1099,6 +1123,145 @@ window.setRange=function(n,btn){
   btn.classList.add('active');
   renderCompareChart();
 };
+
+// ── 예산 대비 실제 지출 ───────────────────────────────────
+function renderBudgetCompareChart(){
+  const catsWithBudget=CATS.filter(c=>Number(budgets[c.id])>0);
+  if(budgetCompareChart){budgetCompareChart.destroy();budgetCompareChart=null;}
+  if(!catsWithBudget.length){
+    const canvas=document.getElementById('budget-compare-chart');
+    const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+    return;
+  }
+  const labels=catsWithBudget.map(c=>`${c.emoji} ${c.name}`);
+  const budgetVals=catsWithBudget.map(c=>Number(budgets[c.id])||0);
+  const spentVals=catsWithBudget.map(c=>expenses.filter(e=>e.cat===c.id).reduce((s,e)=>s+e.amount,0));
+  const spentColors=catsWithBudget.map((c,i)=>spentVals[i]>budgetVals[i]?'rgba(255,107,107,0.8)':'rgba(200,240,74,0.75)');
+
+  budgetCompareChart=new Chart(document.getElementById('budget-compare-chart'),{type:'bar',
+    data:{labels,datasets:[
+      {label:'예산',data:budgetVals,backgroundColor:'rgba(107,181,255,0.25)',borderColor:'rgba(107,181,255,0.6)',borderWidth:1,borderRadius:4,borderSkipped:false},
+      {label:'지출',data:spentVals,backgroundColor:spentColors,borderRadius:4,borderSkipped:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{color:isDark?'#9090aa':'#555566',font:{size:10},boxWidth:10,padding:10}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},
+      scales:{
+        x:{ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9},maxRotation:20},grid:{display:false}},
+        y:{ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:isDark?'#3a3a4e':'#d0d0dc'}}
+      }}});
+}
+
+// ── 카테고리별 12개월 추이 ────────────────────────────────
+async function renderTrendChart(){
+  // 카테고리 필터 칩 빌드
+  const filterEl=document.getElementById('trend-cat-filter');
+  if(!trendCatId&&CATS.length)trendCatId=CATS[0].id;
+  filterEl.innerHTML='';
+  CATS.forEach(c=>{
+    const chip=document.createElement('div');
+    chip.className='cat-chip'+(trendCatId===c.id?' active':'');
+    chip.style.cssText='padding:4px 10px;border-radius:99px;font-size:11px;cursor:pointer;border:1px solid '+(trendCatId===c.id?c.color:'var(--border)')+';color:'+(trendCatId===c.id?c.color:'var(--text2)')+';background:'+(trendCatId===c.id?c.color+'22':'var(--surface)');
+    chip.textContent=`${c.emoji} ${c.name}`;
+    chip.onclick=async()=>{trendCatId=c.id;await renderTrendChart();};
+    filterEl.appendChild(chip);
+  });
+
+  const[y,m]=curMonth.split('-').map(Number);
+  const months=[];
+  for(let i=11;i>=0;i--){
+    const nd=new Date(y,m-1-i,1);
+    months.push(`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}`);
+  }
+  const cat=CATS.find(c=>c.id===trendCatId);
+  const vals=await Promise.all(months.map(async mo=>{
+    if(mo===curMonth)return expenses.filter(e=>e.cat===trendCatId).reduce((s,e)=>s+e.amount,0);
+    const snap=await getDocs(query(collection(db,up('expenses')),where('month','==',mo),where('cat','==',trendCatId)));
+    return snap.docs.reduce((s,d)=>s+d.data().amount,0);
+  }));
+  const labels=months.map(mo=>{const[,mm]=mo.split('-');return parseInt(mm)+'월';});
+
+  if(trendChart){trendChart.destroy();trendChart=null;}
+  trendChart=new Chart(document.getElementById('trend-chart'),{type:'line',
+    data:{labels,datasets:[{
+      label:cat?`${cat.emoji} ${cat.name}`:'',
+      data:vals,
+      borderColor:cat?.color||'#c8f04a',
+      backgroundColor:(cat?.color||'#c8f04a')+'33',
+      borderWidth:2,pointRadius:4,pointHoverRadius:6,
+      fill:true,tension:0.3
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.raw)}`}}},
+      scales:{
+        x:{ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9}},grid:{display:false}},
+        y:{ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:isDark?'#3a3a4e':'#d0d0dc'}}
+      }}});
+}
+
+// ── 결제수단별 12개월 추이 ────────────────────────────────
+async function renderPayTrendChart(){
+  const filterEl=document.getElementById('trend-pay-filter');
+  if(!payMethods.length){
+    filterEl.innerHTML=`<div style="font-size:12px;color:var(--text3)">결제수단을 먼저 추가해주세요</div>`;
+    if(payTrendChart){payTrendChart.destroy();payTrendChart=null;}
+    return;
+  }
+  if(!trendPayId||!payMethods.find(p=>p.id===trendPayId))trendPayId=payMethods[0].id;
+
+  filterEl.innerHTML='';
+  payMethods.forEach(p=>{
+    const chip=document.createElement('div');
+    const color=p.color||'#6bb5ff';
+    chip.style.cssText='padding:4px 10px;border-radius:99px;font-size:11px;cursor:pointer;border:1px solid '+(trendPayId===p.id?color:'var(--border)')+';color:'+(trendPayId===p.id?color:'var(--text2)')+';background:'+(trendPayId===p.id?color+'22':'var(--surface)');
+    chip.textContent=`${p.emoji||'💳'} ${p.name}`;
+    chip.onclick=async()=>{trendPayId=p.id;await renderPayTrendChart();};
+    filterEl.appendChild(chip);
+  });
+
+  const[y,m]=curMonth.split('-').map(Number);
+  const months=[];
+  for(let i=11;i>=0;i--){
+    const nd=new Date(y,m-1-i,1);
+    months.push(`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}`);
+  }
+  const pay=payMethods.find(p=>p.id===trendPayId);
+  const vals=await Promise.all(months.map(async mo=>{
+    if(mo===curMonth)return expenses.filter(e=>e.payId===trendPayId).reduce((s,e)=>s+e.amount,0);
+    const snap=await getDocs(query(collection(db,up('expenses')),where('month','==',mo),where('payId','==',trendPayId)));
+    return snap.docs.reduce((s,d)=>s+d.data().amount,0);
+  }));
+
+  // 전월 대비 증감 계산
+  const lastMonthIdx=months.findIndex(mo=>mo===curMonth)-1;
+  const prevVal=lastMonthIdx>=0?vals[lastMonthIdx]:0;
+  const curVal=vals[vals.length-1];
+  const diff=curVal-prevVal;
+  const diffText=prevVal>0?(diff>=0?`▲ ${fmt(diff)}`:`▼ ${fmt(Math.abs(diff))}`):'';
+  const diffColor=diff>0?'var(--accent2)':diff<0?'var(--accent)':'var(--text3)';
+  document.querySelector('#panel-chart .chart-card:last-of-type .chart-sub').innerHTML=
+    `결제수단 선택 ${diffText?`<span style="color:${diffColor};font-size:11px;margin-left:6px">전월 대비 ${diffText}</span>`:''}`;
+
+  const labels=months.map(mo=>{const[,mm]=mo.split('-');return parseInt(mm)+'월';});
+  const color=pay?.color||'#6bb5ff';
+
+  if(payTrendChart){payTrendChart.destroy();payTrendChart=null;}
+  payTrendChart=new Chart(document.getElementById('pay-trend-chart'),{type:'line',
+    data:{labels,datasets:[{
+      label:pay?`${pay.emoji||'💳'} ${pay.name}`:'',
+      data:vals,
+      borderColor:color,
+      backgroundColor:color+'33',
+      borderWidth:2,pointRadius:4,pointHoverRadius:6,
+      fill:true,tension:0.3
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.raw)}`}}},
+      scales:{
+        x:{ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9}},grid:{display:false}},
+        y:{ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:isDark?'#3a3a4e':'#d0d0dc'}}
+      }}});
+}
 
 // ── 카테고리 관리 ─────────────────────────────────────────
 function renderCatManage(){
