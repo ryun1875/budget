@@ -371,6 +371,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </div>
     <div class="form-row">
       <div class="form-group"><label>결제수단</label><select id="edit-pay"></select></div>
+      <div class="form-group"><label>대출상환</label><select id="edit-loan"><option value="">해당없음</option></select></div>
     </div>
     <button class="btn-primary" onclick="saveEdit()">수정 완료</button>
   </div>
@@ -440,6 +441,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       </div>
       <div class="form-row">
         <div class="form-group"><label>결제수단</label><select id="inp-pay"></select></div>
+        <div class="form-group"><label>대출상환</label><select id="inp-loan"><option value="">해당없음</option></select></div>
       </div>
       <div class="toggle-row" id="inst-toggle" onclick="toggleInstallment()">
         <div class="sw"></div><span id="inst-label">할부 결제</span>
@@ -558,38 +560,28 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </div>
     <button class="export-btn" onclick="exportCSV()">📥 이번 달 지출 CSV 내보내기</button>
   </div>
-  <!-- 하단 네비게이션 -->
-  <nav class="bottom-nav">
-    <button class="nav-btn" id="nav-home" onclick="switchNav('home',this)">
-      <span class="nav-icon">🏠</span><span class="nav-label">홈</span>
-    </button>
-    <button class="nav-btn active" id="nav-input" onclick="switchNav('input',this)">
-      <span class="nav-icon">✏️</span><span class="nav-label">입력</span>
-    </button>
-    <button class="nav-btn" id="nav-list" onclick="switchNav('list',this)">
-      <span class="nav-icon">📋</span><span class="nav-label">목록</span>
-    </button>
-    <button class="nav-btn" id="nav-chart" onclick="switchNav('chart',this)">
-      <span class="nav-icon">📊</span><span class="nav-label">분석</span>
-    </button>
-    <button class="nav-btn" id="nav-settings" onclick="switchNav('settings',this)">
-      <span class="nav-icon">⚙️</span><span class="nav-label">설정</span>
-    </button>
-  </nav>
+
+  <!-- 자산 패널 -->
+  <div class="panel" id="panel-asset">
+    <div id="asset-wrap"></div>
+  </div>
 
 </div>
 
 <div class="toast" id="toast"></div>
 
 <nav class="bottom-nav">
-  <button class="nav-btn" id="nav-home" onclick="switchNav('home',this)">
+  <button class="nav-btn active" id="nav-home" onclick="switchNav('home',this)">
     <span class="nav-icon">🏠</span><span class="nav-label">홈</span>
   </button>
-  <button class="nav-btn active" id="nav-input" onclick="switchNav('input',this)">
+  <button class="nav-btn" id="nav-input" onclick="switchNav('input',this)">
     <span class="nav-icon">✏️</span><span class="nav-label">입력</span>
   </button>
   <button class="nav-btn" id="nav-list" onclick="switchNav('list',this)">
     <span class="nav-icon">📋</span><span class="nav-label">목록</span>
+  </button>
+  <button class="nav-btn" id="nav-asset" onclick="switchNav('asset',this)">
+    <span class="nav-icon">💎</span><span class="nav-label">자산</span>
   </button>
   <button class="nav-btn" id="nav-chart" onclick="switchNav('chart',this)">
     <span class="nav-icon">📊</span><span class="nav-label">분석</span>
@@ -623,9 +615,9 @@ const DEF_CATS=[
 const EMOJIS=['🍱','🍔','🍕','🍜','🍣','☕','🧋','🎂','🚇','🚗','🚕','✈️','🛍️','👗','👟','💄','💊','🏥','🎬','🎮','🎵','📚','🏠','🧹','⚡','💡','🐶','🌸','💰','📦','🎁','🏋️','⚽','🏊','💻','📱','🔧','🌙','☀️'];
 const COLORS=['#ff6b6b','#ff8c42','#ffb347','#ffd166','#c8f04a','#34d399','#6bb5ff','#a78bfa','#f472b6','#fb7185','#94a3b8','#4ade80','#22d3ee','#f59e0b','#ef4444','#8b5cf6'];
 
-let curMonth,filterCat='all',expenses=[],budgets={},recurring=[],budgetMeta={},payMethods=[];
+let curMonth,filterCat='all',expenses=[],budgets={},recurring=[],budgetMeta={},payMethods=[],investments=[],loans=[],loanPayments=[];
 let CATS=[...DEF_CATS];
-let donutChart=null,barChart=null,compareChart=null,budgetCompareChart=null,trendChart=null,payTrendChart=null;
+let donutChart=null,barChart=null,compareChart=null,budgetCompareChart=null,trendChart=null,payTrendChart=null,assetChart=null,loanChart=null;
 let trendCatId=null, trendPayId=null;
 let unsubExp=null,unsubBudget=null,unsubCats=null,unsubRec=null;
 let budgetTimer=null,catTimer=null;
@@ -765,6 +757,22 @@ function initApp(){
     rebuildPaySelects();
     renderPayment();
   });
+  // 투자 구독
+  onSnapshot(collection(db,up('investments')),snap=>{
+    investments=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.createdAt-b.createdAt||0);
+    if(document.getElementById('panel-asset').classList.contains('active'))renderAsset();
+  });
+  // 대출 구독
+  onSnapshot(collection(db,up('loans')),snap=>{
+    loans=snap.docs.map(d=>({id:d.id,...d.data()}));
+    rebuildLoanSelects();
+    if(document.getElementById('panel-asset').classList.contains('active'))renderAsset();
+  });
+  // 대출 납입 구독
+  onSnapshot(collection(db,up('loanPayments')),snap=>{
+    loanPayments=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('panel-asset').classList.contains('active'))renderAsset();
+  });
   subscribeMonth();
 }
 
@@ -798,8 +806,19 @@ function rebuildCatSelects(){
 }
 
 // ── 할부 ──────────────────────────────────────────────────
+function rebuildLoanSelects(){
+  ['inp-loan','edit-loan'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const prev=sel.value;
+    sel.innerHTML='<option value="">해당없음</option>';
+    loans.forEach(l=>{
+      const o=document.createElement('option');o.value=l.id;o.textContent=l.name;sel.appendChild(o);
+    });
+    if(loans.find(l=>l.id===prev))sel.value=prev;
+  });
+}
+
 function buildMonths(){
-  const g=document.getElementById('months-grid');g.innerHTML='';
   [2,3,4,5,6,9,10,12,18,24,36].forEach(n=>{
     const c=document.createElement('div');c.className='mo-chip'+(n===instMonths?' active':'');
     c.textContent=n+'개월';
@@ -1067,38 +1086,13 @@ function renderHome(){
 
   wrap.innerHTML='';
 
-  // ── 투자 계산기 ──────────────────────────────────────────
-  const calcCard=document.createElement('div');
-  calcCard.className='calc-card';
-  let cs=JSON.parse(localStorage.getItem('calc_settings')||'{}');
-  if(!cs.mode)cs.mode='deposit';
-  if(!cs.src)cs.src='auto';
-  if(!cs.period)cs.period=12;
-  const savedAmt=tB>tS?tB-tS:0;
-  const autoAmt=savedAmt>0?savedAmt:0;
-  calcCard.innerHTML=`
-    <h3>💡 절약금 운용 시뮬레이터</h3>
-    <div class="calc-sub">절약하거나 초과한 금액을 어디에 넣으면 좋을지 계산해봐요</div>
-    <div class="calc-tabs" id="calc-tabs">
-      <button class="calc-tab${cs.mode==='deposit'?' active':''}" style="${cs.mode==='deposit'?'background:var(--accent3)':''}" onclick="setCalcMode('deposit')">🏦 예금</button>
-      <button class="calc-tab${cs.mode==='savings'?' active':''}" style="${cs.mode==='savings'?'background:var(--accent3)':''}" onclick="setCalcMode('savings')">💰 적금</button>
-      <button class="calc-tab${cs.mode==='stock'?' active':''}" style="${cs.mode==='stock'?'background:var(--accent)':''}" onclick="setCalcMode('stock')">📈 주식/ETF</button>
-      <button class="calc-tab${cs.mode==='loan'?' active':''}" style="${cs.mode==='loan'?'background:var(--accent2)':''}" onclick="setCalcMode('loan')">🏠 대출상환</button>
-    </div>
-    <div class="calc-src-toggle">
-      <button class="calc-src-btn${cs.src==='auto'?' active':''}" onclick="setCalcSrc('auto')">자동 (절약금 ${fmt(autoAmt)})</button>
-      <button class="calc-src-btn${cs.src==='manual'?' active':''}" onclick="setCalcSrc('manual')">직접 입력</button>
-    </div>
-    <div id="calc-manual-row" style="display:${cs.src==='manual'?'flex':'none'}" class="calc-row">
-      <span class="calc-label">금액</span>
-      <input class="calc-inp" type="number" id="calc-amount" value="${cs.manualAmt||''}" placeholder="0" onblur="saveCalcSettings()">
-      <span class="calc-unit">원</span>
-    </div>
-    <div id="calc-fields"></div>
-    <div id="calc-result"></div>
-  `;
-  wrap.appendChild(calcCard);
-  renderCalcFields();
+  // 절약금 힌트
+  const hint=document.createElement('div');
+  hint.id='saving-hint';
+  hint.style.cssText='background:rgba(200,240,74,.08);border:1px solid rgba(200,240,74,.25);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:14px;display:none';
+  wrap.appendChild(hint);
+  updateHomeSavingHint();
+
   const statsDiv=document.createElement('div');
   statsDiv.style.cssText='display:flex;gap:10px;margin-bottom:14px';
   [
@@ -1224,10 +1218,12 @@ function renderList(){
     const rb=e.isRecurring?`<span class="rec-badge">고정</span>`:'';
     const pay=payMethods.find(p=>p.id===e.payId);
     const pb=pay?`<span style="font-size:9px;background:${pay.color||'#6bb5ff'}22;color:${pay.color||'#6bb5ff'};padding:2px 5px;border-radius:99px;border:1px solid ${pay.color||'#6bb5ff'}44">${pay.emoji||'💳'} ${pay.name}</span>`:'';
+    const loan=loans.find(l=>l.id===e.loanId);
+    const lb=loan?`<span style="font-size:9px;background:rgba(255,107,107,.15);color:#ff6b6b;padding:2px 5px;border-radius:99px;border:1px solid rgba(255,107,107,.3)">🏦 ${loan.name}</span>`:'';
     div.innerHTML=`
       <div class="cat-dot" style="background:${cat.color}22">${cat.emoji}</div>
       <div class="exp-info">
-        <div class="exp-desc">${e.desc||cat.name} ${ib}${rb}${pb}</div>
+        <div class="exp-desc">${e.desc||cat.name} ${ib}${rb}${pb}${lb}</div>
         <div class="exp-meta">${e.date} · ${cat.name}</div>
       </div>
       <div class="exp-amt">-${fmt(e.amount)}</div>
@@ -1750,9 +1746,10 @@ window.openEdit=function(id){
   document.getElementById('edit-date').value=e.date;
   document.getElementById('edit-desc').value=e.desc||'';
   document.getElementById('edit-amount').value=e.amount;
-  rebuildCatSelects();rebuildPaySelects();
+  rebuildCatSelects();rebuildPaySelects();rebuildLoanSelects();
   document.getElementById('edit-cat').value=e.cat;
   document.getElementById('edit-pay').value=e.payId||'';
+  document.getElementById('edit-loan').value=e.loanId||'';
   document.getElementById('edit-modal').classList.add('open');
 };
 window.saveEdit=async function(){
@@ -1762,9 +1759,10 @@ window.saveEdit=async function(){
   const desc=document.getElementById('edit-desc').value.trim();
   const amount=parseInt(document.getElementById('edit-amount').value)||0;
   const payId=document.getElementById('edit-pay').value||'';
+  const loanId=document.getElementById('edit-loan').value||'';
   if(!amount){showToast('금액을 입력해주세요','warning');return;}
   try{
-    await updateDoc(doc(db,up('expenses'),editId),{date,cat,desc,amount,month:date.slice(0,7),payId});
+    await updateDoc(doc(db,up('expenses'),editId),{date,cat,desc,amount,month:date.slice(0,7),payId,loanId});
     closeModal('edit-modal');editId=null;showToast('수정됐어요 ✓','success');
   }catch(e){showToast('수정 실패','error');}
 };
@@ -1776,6 +1774,7 @@ window.addExpense=async function(){
   const desc=document.getElementById('inp-desc').value.trim();
   const total=parseInt(document.getElementById('inp-amount').value)||0;
   const payId=document.getElementById('inp-pay').value||'';
+  const loanId=document.getElementById('inp-loan').value||'';
   if(!date){showToast('날짜를 선택해주세요','warning');return;}
   if(!total){showToast('금액을 입력해주세요','warning');return;}
   const btn=document.getElementById('btn-add');
@@ -1790,12 +1789,12 @@ window.addExpense=async function(){
         const mo=`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}`;
         const md=new Date(nd.getFullYear(),nd.getMonth()+1,0).getDate();
         const dd=Math.min(parseInt(date.split('-')[2]),md);
-        batch.set(doc(db,up('expenses'),uid()),{date:`${mo}-${String(dd).padStart(2,'0')}`,cat,desc:desc||(CATS.find(c=>c.id===cat)?.name||''),amount:ma,month:mo,payId,installmentTotal:instMonths,installmentCurrent:i+1,installmentGroupId:gid});
+        batch.set(doc(db,up('expenses'),uid()),{date:`${mo}-${String(dd).padStart(2,'0')}`,cat,desc:desc||(CATS.find(c=>c.id===cat)?.name||''),amount:ma,month:mo,payId,loanId,installmentTotal:instMonths,installmentCurrent:i+1,installmentGroupId:gid});
       }
       await batch.commit();showToast(`${instMonths}개월 할부로 추가됐어요 ✓`,'success');
       instOn=false;window.toggleInstallment();
     } else {
-      await setDoc(doc(db,up('expenses'),uid()),{date,cat,desc,amount:total,month:curMonth,payId});
+      await setDoc(doc(db,up('expenses'),uid()),{date,cat,desc,amount:total,month:curMonth,payId,loanId});
       const b=Number(budgets[cat])||0;
       if(b>0){
         const spent=expenses.filter(e=>e.cat===cat).reduce((s,e)=>s+e.amount,0)+total;
@@ -1949,6 +1948,264 @@ window.openPayColorPicker=function(id){
   document.getElementById('color-modal').classList.add('open');
 };
 
+// ── 자산 탭 ───────────────────────────────────────────────
+async function renderAsset(){
+  const wrap=document.getElementById('asset-wrap');
+  if(!wrap)return;
+  wrap.innerHTML='';
+
+  // ── 투자 섹션 ─────────────────────────────────────────
+  const invCard=document.createElement('div');
+  invCard.className='form-card';
+  invCard.style.marginBottom='14px';
+
+  const totalInv=investments.reduce((s,i)=>s+(Number(i.amount)||0),0);
+  invCard.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">📈 투자 현황</h3>
+      <span style="font-family:'Gmarket Sans',sans-serif;font-weight:700;font-size:16px;color:var(--accent)">총 ${fmt(totalInv)}</span>
+    </div>
+    <div id="inv-list"></div>
+    <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:12px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">투자 추가</div>
+      <div class="form-row" style="margin-bottom:6px">
+        <div class="form-group" style="flex:2"><input class="form-group input" type="text" id="inv-name" placeholder="이름 (예: 삼성전자, KB적금)" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+        <div class="form-group"><select id="inv-type" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%">
+          <option>주식</option><option>ETF</option><option>적금</option><option>예금</option><option>펀드</option><option>코인</option><option>기타</option>
+        </select></div>
+      </div>
+      <div class="form-row" style="margin-bottom:8px">
+        <div class="form-group"><input class="form-group input" type="number" id="inv-amount" placeholder="투자금액 (원)" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+        <div class="form-group"><input type="date" id="inv-date" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+      </div>
+      <button class="btn-primary" style="margin-top:0" onclick="addInvestment()">+ 투자 추가</button>
+    </div>`;
+  wrap.appendChild(invCard);
+
+  // 투자 목록 렌더
+  const invList=document.getElementById('inv-list');
+  if(!investments.length){
+    invList.innerHTML=`<div style="text-align:center;color:var(--text3);font-size:12px;padding:12px">아직 투자 내역이 없어요</div>`;
+  } else {
+    const typeColors={주식:'#c8f04a',ETF:'#6bb5ff',적금:'#34d399',예금:'#34d399',펀드:'#a78bfa',코인:'#ffb347',기타:'#94a3b8'};
+    investments.slice().reverse().forEach(inv=>{
+      const color=typeColors[inv.type]||'#94a3b8';
+      const div=document.createElement('div');
+      div.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)';
+      div.innerHTML=`
+        <div style="width:36px;height:36px;border-radius:9px;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${color};flex-shrink:0">${inv.type}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">${inv.name}</div>
+          <div style="font-size:10px;color:var(--text3)">${inv.date||''}</div>
+        </div>
+        <div style="font-family:'Gmarket Sans',sans-serif;font-size:14px;font-weight:700;color:${color}">${fmt(inv.amount)}</div>
+        <button class="act-btn del" onclick="deleteInvestment('${inv.id}')">✕</button>`;
+      invList.appendChild(div);
+    });
+  }
+
+  // 투자 12개월 그래프
+  const invChartCard=document.createElement('div');
+  invChartCard.className='chart-card';
+  invChartCard.innerHTML=`<h3>투자 누적 추이 (12개월)</h3><div class="chart-container"><canvas id="asset-chart"></canvas></div>`;
+  wrap.appendChild(invChartCard);
+
+  // 월별 투자 누적 계산
+  const now=new Date();
+  const invMonths=[];
+  for(let i=11;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    invMonths.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  const invCumulative=invMonths.map(mo=>{
+    return investments.filter(inv=>(inv.date||'').slice(0,7)<=mo).reduce((s,inv)=>s+(Number(inv.amount)||0),0);
+  });
+  if(assetChart){assetChart.destroy();assetChart=null;}
+  assetChart=new Chart(document.getElementById('asset-chart'),{type:'line',
+    data:{labels:invMonths.map(mo=>parseInt(mo.split('-')[1])+'월'),
+      datasets:[{data:invCumulative,borderColor:'#c8f04a',backgroundColor:'rgba(200,240,74,0.1)',borderWidth:2,pointRadius:4,fill:true,tension:0.3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.raw)}`}}},
+      scales:{x:{ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9}},grid:{display:false}},
+        y:{ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:isDark?'#3a3a4e':'#d0d0dc'}}}}});
+
+  // ── 대출 섹션 ─────────────────────────────────────────
+  const loanCard=document.createElement('div');
+  loanCard.className='form-card';
+  loanCard.style.marginBottom='14px';
+  loanCard.innerHTML=`
+    <h3 style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px">🏦 대출 현황</h3>
+    <div id="loan-list"></div>
+    <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:12px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">대출 등록</div>
+      <div class="form-row" style="margin-bottom:6px">
+        <div class="form-group" style="flex:2"><input type="text" id="loan-name" placeholder="대출명 (예: 주택담보대출)" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+        <div class="form-group"><input type="number" id="loan-rate" placeholder="금리 %" step="0.1" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+      </div>
+      <div class="form-row" style="margin-bottom:8px">
+        <div class="form-group"><input type="number" id="loan-principal" placeholder="원금 (원)" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+        <div class="form-group"><input type="date" id="loan-start" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+      </div>
+      <button class="btn-primary" style="margin-top:0" onclick="addLoan()">+ 대출 등록</button>
+    </div>`;
+  wrap.appendChild(loanCard);
+
+  // 대출 목록
+  const loanList=document.getElementById('loan-list');
+  if(!loans.length){
+    loanList.innerHTML=`<div style="text-align:center;color:var(--text3);font-size:12px;padding:12px">등록된 대출이 없어요</div>`;
+  } else {
+    loans.forEach(loan=>{
+      // 지출에서 loanId로 연결된 것 + 직접 납입 기록 합산
+      const paidFromExpenses=expenses.filter(e=>e.loanId===loan.id).reduce((s,e)=>s+(Number(e.amount)||0),0);
+      const paidFromRecords=loanPayments.filter(p=>p.loanId===loan.id).reduce((s,p)=>s+(Number(p.amount)||0),0);
+      const paid=paidFromExpenses+paidFromRecords;
+      const remaining=Math.max(0,(Number(loan.principal)||0)-paid);
+      const pct=loan.principal>0?Math.min(Math.round(paid/loan.principal*100),100):0;
+      const div=document.createElement('div');
+      div.style.cssText='margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)';
+      div.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div>
+            <span style="font-size:13px;font-weight:500;color:var(--text)">${loan.name}</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:6px">금리 ${loan.rate||0}%</span>
+          </div>
+          <button class="act-btn del" onclick="deleteLoan('${loan.id}')">✕</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:6px">
+          <span>원금 ${fmt(loan.principal||0)}</span>
+          <span>상환 ${fmt(paid)} (${pct}%)</span>
+          <span style="color:var(--accent2)">잔액 ${fmt(remaining)}</span>
+        </div>
+        <div style="height:6px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-bottom:8px">
+          <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:99px;transition:width .5s ease"></div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <input type="number" id="lp-amount-${loan.id}" placeholder="납입금액 (원)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);font-size:12px;outline:none">
+          <input type="date" id="lp-date-${loan.id}" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);font-size:12px;outline:none">
+          <button style="background:var(--accent3);border:none;border-radius:7px;padding:6px 10px;color:#0f0f13;font-size:11px;font-weight:700;cursor:pointer" onclick="addLoanPayment('${loan.id}')">납입</button>
+        </div>
+        <div style="margin-top:6px" id="lp-list-${loan.id}">
+          ${loanPayments.filter(p=>p.loanId===loan.id).slice(-3).reverse().map(p=>`
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);padding:3px 0">
+              <span>${p.date||''}</span>
+              <span style="color:var(--accent);font-family:'Gmarket Sans',sans-serif">-${fmt(p.amount)}</span>
+              <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px" onclick="deleteLoanPayment('${p.id}')">✕</button>
+            </div>`).join('')}
+        </div>`;
+      loanList.appendChild(div);
+    });
+  }
+
+  // 대출 상환 12개월 그래프
+  if(loans.length){
+    const loanChartCard=document.createElement('div');
+    loanChartCard.className='chart-card';
+    loanChartCard.innerHTML=`<h3>대출 잔액 추이 (12개월)</h3><div class="chart-container"><canvas id="loan-chart"></canvas></div>`;
+    wrap.appendChild(loanChartCard);
+
+    const lMonths=[];
+    for(let i=11;i>=0;i--){
+      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+      lMonths.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+    }
+    // 각 달 말 기준 잔액 계산
+    const loanDatasets=loans.map(loan=>{
+      const color='#ff6b6b';
+      const data=lMonths.map(mo=>{
+        const paidExp=expenses.filter(e=>e.loanId===loan.id&&(e.date||'').slice(0,7)<=mo).reduce((s,e)=>s+(Number(e.amount)||0),0);
+        const paidRec=loanPayments.filter(p=>p.loanId===loan.id&&(p.date||'').slice(0,7)<=mo).reduce((s,p)=>s+(Number(p.amount)||0),0);
+        return Math.max(0,(Number(loan.principal)||0)-paidExp-paidRec);
+      });
+      return{label:loan.name,data,borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:3,fill:true,tension:0.3};
+    });
+    if(loanChart){loanChart.destroy();loanChart=null;}
+    loanChart=new Chart(document.getElementById('loan-chart'),{type:'line',
+      data:{labels:lMonths.map(mo=>parseInt(mo.split('-')[1])+'월'),datasets:loanDatasets},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{color:isDark?'#9090aa':'#555566',font:{size:10},boxWidth:10}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},
+        scales:{x:{ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9}},grid:{display:false}},
+          y:{ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:isDark?'#3a3a4e':'#d0d0dc'}}}}});
+  }
+
+  // 홈 절약금 표시 업데이트
+  updateHomeSavingHint();
+}
+
+function updateHomeSavingHint(){
+  const el=document.getElementById('saving-hint');
+  if(!el)return;
+  const tS=expenses.reduce((s,e)=>s+e.amount,0);
+  const tB=Object.values(budgets).reduce((s,v)=>s+(Number(v)||0),0);
+  const saved=tB>tS?tB-tS:0;
+  if(saved>0&&tB>0){
+    el.style.display='block';
+    el.innerHTML=`💰 이번 달 <strong style="color:var(--accent)">${fmt(saved)}</strong> 절약했어요! <span style="color:var(--text3);font-size:11px">→ 자산 탭에서 기록해보세요</span>`;
+  } else {
+    el.style.display='none';
+  }
+}
+
+// 투자 CRUD
+window.addInvestment=async function(){
+  const name=document.getElementById('inv-name').value.trim();
+  const type=document.getElementById('inv-type').value;
+  const amount=parseInt(document.getElementById('inv-amount').value)||0;
+  const date=document.getElementById('inv-date').value;
+  if(!name){showToast('이름을 입력해주세요','warning');return;}
+  if(!amount){showToast('금액을 입력해주세요','warning');return;}
+  try{
+    await setDoc(doc(db,up('investments'),uid()),{name,type,amount,date,createdAt:Date.now()});
+    document.getElementById('inv-name').value='';
+    document.getElementById('inv-amount').value='';
+    showToast('투자 내역이 추가됐어요 ✓','success');
+  }catch(e){showToast('저장 실패','error');}
+};
+window.deleteInvestment=async function(id){
+  try{await deleteDoc(doc(db,up('investments'),id));showToast('삭제됐어요','');}
+  catch(e){showToast('삭제 실패','error');}
+};
+
+// 대출 CRUD
+window.addLoan=async function(){
+  const name=document.getElementById('loan-name').value.trim();
+  const rate=parseFloat(document.getElementById('loan-rate').value)||0;
+  const principal=parseInt(document.getElementById('loan-principal').value)||0;
+  const start=document.getElementById('loan-start').value;
+  if(!name){showToast('대출명을 입력해주세요','warning');return;}
+  if(!principal){showToast('원금을 입력해주세요','warning');return;}
+  try{
+    await setDoc(doc(db,up('loans'),uid()),{name,rate,principal,start,createdAt:Date.now()});
+    document.getElementById('loan-name').value='';
+    document.getElementById('loan-principal').value='';
+    showToast('대출이 등록됐어요 ✓','success');
+  }catch(e){showToast('저장 실패','error');}
+};
+window.deleteLoan=async function(id){
+  try{
+    await deleteDoc(doc(db,up('loans'),id));
+    // 해당 대출 납입 기록도 삭제
+    const snap=await getDocs(query(collection(db,up('loanPayments')),where('loanId','==',id)));
+    const batch=writeBatch(db);snap.docs.forEach(d=>batch.delete(d.ref));
+    await batch.commit();
+    showToast('삭제됐어요','');
+  }catch(e){showToast('삭제 실패','error');}
+};
+window.addLoanPayment=async function(loanId){
+  const amount=parseInt(document.getElementById(`lp-amount-${loanId}`).value)||0;
+  const date=document.getElementById(`lp-date-${loanId}`).value;
+  if(!amount){showToast('납입금액을 입력해주세요','warning');return;}
+  try{
+    await setDoc(doc(db,up('loanPayments'),uid()),{loanId,amount,date,createdAt:Date.now()});
+    document.getElementById(`lp-amount-${loanId}`).value='';
+    showToast('납입 기록이 추가됐어요 ✓','success');
+  }catch(e){showToast('저장 실패','error');}
+};
+window.deleteLoanPayment=async function(id){
+  try{await deleteDoc(doc(db,up('loanPayments'),id));showToast('삭제됐어요','');}
+  catch(e){showToast('삭제 실패','error');}
+};
+
 window.switchNav=function(name,btn){
   // 모든 패널 숨기기
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -1973,6 +2230,7 @@ window.switchNav=function(name,btn){
     if(name==='home')renderHome();
     if(name==='list')renderList();
     if(name==='calendar')renderCalendar();
+    if(name==='asset')renderAsset();
   }
 };
 
