@@ -428,29 +428,61 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
   <!-- 입력 -->
   <div class="panel" id="panel-input">
-    <div class="form-card">
-      <h3>지출 추가</h3>
-      <div class="form-row">
-        <div class="form-group"><label>날짜</label><input type="date" id="inp-date"></div>
-        <div class="form-group"><label>카테고리</label><select id="inp-cat"></select></div>
+    <!-- 입력 타입 선택 -->
+    <div style="display:flex;gap:4px;margin-bottom:12px">
+      <button class="range-tab active" id="inp-tab-expense" onclick="switchInputTab('expense',this)">💸 지출</button>
+      <button class="range-tab" id="inp-tab-invest" onclick="switchInputTab('invest',this)">📈 투자</button>
+    </div>
+
+    <!-- 지출 입력 -->
+    <div id="inp-panel-expense">
+      <div class="form-card">
+        <h3>지출 추가</h3>
+        <div class="form-row">
+          <div class="form-group"><label>날짜</label><input type="date" id="inp-date"></div>
+          <div class="form-group"><label>카테고리</label><select id="inp-cat"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:2"><label>내용</label><input type="text" id="inp-desc" placeholder="예: 점심 식사"></div>
+          <div class="form-group"><label>금액 (원)</label><input type="number" id="inp-amount" placeholder="0" min="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>결제수단</label><select id="inp-pay"></select></div>
+          <div class="form-group"><label>대출상환</label><select id="inp-loan"><option value="">해당없음</option></select></div>
+        </div>
+        <div class="toggle-row" id="inst-toggle" onclick="toggleInstallment()">
+          <div class="sw"></div><span id="inst-label">할부 결제</span>
+        </div>
+        <div class="install-opts" id="inst-opts">
+          <label>할부 개월 수</label>
+          <div class="months-grid" id="months-grid"></div>
+          <div style="margin-top:8px;font-size:11px;color:var(--text3)" id="inst-preview"></div>
+        </div>
+        <button class="btn-primary" id="btn-add" onclick="addExpense()">+ 지출 추가</button>
       </div>
-      <div class="form-row">
-        <div class="form-group" style="flex:2"><label>내용</label><input type="text" id="inp-desc" placeholder="예: 점심 식사"></div>
-        <div class="form-group"><label>금액 (원)</label><input type="number" id="inp-amount" placeholder="0" min="0"></div>
+    </div>
+
+    <!-- 투자 입력 -->
+    <div id="inp-panel-invest" style="display:none">
+      <div class="form-card">
+        <h3>투자 추가</h3>
+        <div class="form-row">
+          <div class="form-group"><label>날짜</label><input type="date" id="inv-date-inp"></div>
+          <div class="form-group"><label>종류</label>
+            <select id="inv-type-inp" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;outline:none;width:100%">
+              <option>주식</option><option>ETF</option><option>적금</option><option>예금</option><option>펀드</option><option>코인</option><option>기타</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:2"><label>이름</label><input type="text" id="inv-name-inp" placeholder="예: 삼성전자, KB적금"></div>
+          <div class="form-group"><label>금액 (원)</label><input type="number" id="inv-amount-inp" placeholder="0" min="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>결제수단</label><select id="inv-pay-inp"></select></div>
+        </div>
+        <button class="btn-primary" id="btn-add-inv" onclick="addInvestmentFromInput()">+ 투자 추가</button>
       </div>
-      <div class="form-row">
-        <div class="form-group"><label>결제수단</label><select id="inp-pay"></select></div>
-        <div class="form-group"><label>대출상환</label><select id="inp-loan"><option value="">해당없음</option></select></div>
-      </div>
-      <div class="toggle-row" id="inst-toggle" onclick="toggleInstallment()">
-        <div class="sw"></div><span id="inst-label">할부 결제</span>
-      </div>
-      <div class="install-opts" id="inst-opts">
-        <label>할부 개월 수</label>
-        <div class="months-grid" id="months-grid"></div>
-        <div style="margin-top:8px;font-size:11px;color:var(--text3)" id="inst-preview"></div>
-      </div>
-      <button class="btn-primary" id="btn-add" onclick="addExpense()">+ 지출 추가</button>
     </div>
   </div>
 
@@ -732,6 +764,7 @@ function initApp(){
   document.getElementById('today-date').textContent=
     now.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
   document.getElementById('inp-date').value=now.toISOString().split('T')[0];
+  document.getElementById('inv-date-inp').value=now.toISOString().split('T')[0];
   // 홈을 기본 탭으로 설정
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-home').classList.add('active');
@@ -812,9 +845,48 @@ function rebuildCatSelects(){
 }
 
 // ── 할부 ──────────────────────────────────────────────────
+window.switchInputTab=function(type,btn){
+  document.querySelectorAll('#panel-input .range-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('inp-panel-expense').style.display=type==='expense'?'block':'none';
+  document.getElementById('inp-panel-invest').style.display=type==='invest'?'block':'none';
+  // 투자 탭 결제수단 드롭다운 빌드
+  if(type==='invest') rebuildInvPaySelect();
+};
+
+function rebuildInvPaySelect(){
+  const sel=document.getElementById('inv-pay-inp');if(!sel)return;
+  const prev=sel.value;
+  sel.innerHTML='<option value="">결제수단 선택 안 함</option>';
+  payMethods.forEach(p=>{
+    const o=document.createElement('option');o.value=p.id;o.textContent=`${p.emoji||'💳'} ${p.name}`;sel.appendChild(o);
+  });
+  if(payMethods.find(p=>p.id===prev))sel.value=prev;
+}
+
+window.addInvestmentFromInput=async function(){
+  const date=document.getElementById('inv-date-inp').value;
+  const type=document.getElementById('inv-type-inp').value;
+  const name=document.getElementById('inv-name-inp').value.trim();
+  const amount=parseInt(document.getElementById('inv-amount-inp').value)||0;
+  const payId=document.getElementById('inv-pay-inp').value||'';
+  if(!name){showToast('이름을 입력해주세요','warning');return;}
+  if(!amount){showToast('금액을 입력해주세요','warning');return;}
+  const btn=document.getElementById('btn-add-inv');
+  btn.disabled=true;btn.textContent='저장 중...';
+  try{
+    await setDoc(doc(db,up('investments'),uid()),{name,type,amount,date,payId,createdAt:Date.now()});
+    document.getElementById('inv-name-inp').value='';
+    document.getElementById('inv-amount-inp').value='';
+    showToast(`📈 ${name} 투자가 추가됐어요 ✓`,'success');
+    // 홈 업데이트
+    if(document.getElementById('panel-home').classList.contains('active'))renderHome();
+  }catch(e){showToast('저장 실패','error');}
+  finally{btn.disabled=false;btn.textContent='+ 투자 추가';}
+};
+
 function rebuildLoanSelects(){
   ['inp-loan','edit-loan'].forEach(id=>{
-    const sel=document.getElementById(id);if(!sel)return;
     const prev=sel.value;
     sel.innerHTML='<option value="">해당없음</option>';
     loans.forEach(l=>{
@@ -1067,31 +1139,82 @@ function renderHome(){
     return b.spent-a.spent;
   });
 
-  // 하루 사용 가능 금액 (예산 있는 경우)
-  const tB=Object.values(budgets).reduce((s,v)=>s+(Number(v)||0),0);
-  const dailyLeft=remainDays>0&&tB>tS?Math.round((tB-tS)/remainDays):0;
-
   wrap.innerHTML='';
 
-  // 절약금 힌트
-  const hint=document.createElement('div');
-  hint.id='saving-hint';
-  hint.style.cssText='background:rgba(200,240,74,.08);border:1px solid rgba(200,240,74,.25);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:14px;display:none';
-  wrap.appendChild(hint);
-  updateHomeSavingHint();
+  // ── 예산/지출 현황 ─────────────────────────────────────
+  const tB=Object.values(budgets).reduce((s,v)=>s+(Number(v)||0),0);
+  const saved=tB>tS&&tB>0?tB-tS:0;
+  const dailyLeft=remainDays>0&&tB>tS?Math.round((tB-tS)/remainDays):0;
+  const overCount=CATS.filter(c=>{const b=Number(budgets[c.id])||0;return b>0&&expenses.filter(e=>e.cat===c.id).reduce((s,e)=>s+e.amount,0)>b;}).length;
 
-  const statsDiv=document.createElement('div');
-  statsDiv.style.cssText='display:flex;gap:10px;margin-bottom:14px';
-  [
-    {lbl:'하루 평균',val:dp>0?fmt(Math.round(tS/dp)):'—',color:'var(--text)'},
-    ...(dailyLeft>0?[{lbl:'오늘 사용 가능',val:fmt(dailyLeft),color:'var(--accent3)'}]:[]),
-  ].forEach(s=>{
-    const d=document.createElement('div');
-    d.style.cssText=`flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px`;
-    d.innerHTML=`<div style="font-size:10px;color:var(--text3);margin-bottom:5px">${s.lbl}</div><div style="font-family:'Gmarket Sans',sans-serif;font-weight:700;font-size:16px;color:${s.color}">${s.val}</div>`;
-    statsDiv.appendChild(d);
-  });
-  wrap.appendChild(statsDiv);
+  const statusCard=document.createElement('div');
+  statusCard.className='form-card';
+  statusCard.style.marginBottom='14px';
+  statusCard.innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--text2)">이번 달 지출</span>
+        <span style="font-family:'Gmarket Sans',sans-serif;font-weight:700;font-size:18px;color:var(--accent2)">${fmt(tS)}</span>
+      </div>
+      ${tB>0?`
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--text2)">예산 대비 남은 금액</span>
+        <span style="font-family:'Gmarket Sans',sans-serif;font-weight:700;font-size:15px;color:${saved>0?'var(--accent)':'var(--accent2)'}">${saved>0?'+'+fmt(saved):'-'+fmt(tS-tB)}</span>
+      </div>
+      ${overCount>0?`<div style="font-size:11px;color:var(--accent2)">⚠️ 초과 카테고리 ${overCount}개</div>`:''}
+      ${dailyLeft>0?`
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--text2)">오늘 사용 가능</span>
+        <span style="font-family:'Gmarket Sans',sans-serif;font-weight:700;font-size:14px;color:var(--accent3)">${fmt(dailyLeft)}</span>
+      </div>`:''}
+      <div style="height:5px;background:var(--surface2);border-radius:99px;overflow:hidden">
+        <div style="height:100%;width:${tB>0?Math.min(100,Math.round(tS/tB*100)):0}%;background:${tS>tB?'var(--accent2)':tS/tB>0.8?'#ffb347':'var(--accent)'};border-radius:99px;transition:width .5s ease"></div>
+      </div>`:'<div style="font-size:11px;color:var(--text3)">⚙️ 설정에서 예산을 설정하면 더 많은 정보를 볼 수 있어요</div>'}
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3)">
+        <span>하루 평균 ${dp>0?fmt(Math.round(tS/dp)):'—'}</span>
+        <span>남은 일수 ${isThis?remainDays+'일':'—'}</span>
+      </div>
+    </div>`;
+  wrap.appendChild(statusCard);
+
+  // ── 절약금 현황 ────────────────────────────────────────
+  const thisMonthInv=investments.filter(inv=>(inv.date||'').startsWith(curMonth)).reduce((s,i)=>s+(Number(i.amount)||0),0);
+  const thisMonthLoan=expenses.filter(e=>e.loanId&&e.month===curMonth).reduce((s,e)=>s+e.amount,0)+loanPayments.filter(p=>(p.date||'').startsWith(curMonth)).reduce((s,p)=>s+(Number(p.amount)||0),0);
+  const totalUsed=thisMonthInv+thisMonthLoan;
+  const unused=Math.max(0,saved-totalUsed);
+
+  if(tB>0){
+    const savingCard=document.createElement('div');
+    savingCard.className='form-card';
+    savingCard.style.marginBottom='14px';
+    savingCard.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="font-size:13px;font-weight:700;color:var(--text)">💰 절약금 활용 현황</h3>
+        <span style="font-family:'Gmarket Sans',sans-serif;font-weight:700;font-size:16px;color:${saved>0?'var(--accent)':'var(--text3)'}">${fmt(saved)}</span>
+      </div>
+      ${saved===0?`<div style="font-size:12px;color:var(--text3)">이번 달은 절약금이 없어요</div>`:`
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:7px"><span>📈</span><span style="font-size:12px;color:var(--text2)">투자로 활용</span></div>
+          <span style="font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;color:var(--accent)">${fmt(thisMonthInv)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:7px"><span>🏦</span><span style="font-size:12px;color:var(--text2)">대출 상환</span></div>
+          <span style="font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;color:var(--accent3)">${fmt(thisMonthLoan)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
+          <div style="display:flex;align-items:center;gap:7px"><span>${unused>0?'💤':'✅'}</span><span style="font-size:12px;color:var(--text2)">미활용</span></div>
+          <span style="font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;color:${unused>0?'#ffb347':'var(--accent)'}">${fmt(unused)}</span>
+        </div>
+        ${totalUsed>0?`
+        <div style="height:5px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-top:2px">
+          <div style="height:100%;width:${Math.min(100,Math.round(totalUsed/saved*100))}%;background:var(--accent);border-radius:99px"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);text-align:right">절약금의 ${Math.min(100,Math.round(totalUsed/saved*100))}% 활용 중 · <span style="color:var(--accent3);cursor:pointer" onclick="switchNav('asset',document.getElementById('nav-asset'))">자산 탭에서 기록 →</span></div>`:'<div style="font-size:10px;color:var(--text3)">💡 <span style="color:var(--accent3);cursor:pointer" onclick="switchNav(\'asset\',document.getElementById(\'nav-asset\'))">자산 탭</span>에서 투자/대출 상환을 기록해보세요</div>'}
+      </div>`}
+    `;
+    wrap.appendChild(savingCard);
+  }
 
   // 카테고리별 게이지
   const catCard=document.createElement('div');
@@ -1963,50 +2086,11 @@ async function renderAsset(){
   if(!wrap)return;
   wrap.innerHTML='';
 
-  // ── 절약금 현황 ────────────────────────────────────────
   const[y,m]=curMonth.split('-').map(Number);
   const now=new Date();
-  const tS=expenses.reduce((s,e)=>s+e.amount,0);
-  const tB=Object.values(budgets).reduce((s,v)=>s+(Number(v)||0),0);
-  const saved=tB>tS&&tB>0?tB-tS:0;
 
-  // 이번 달 투자/대출 상환 지출
-  const thisMonthInv=investments.filter(inv=>(inv.date||'').startsWith(curMonth)).reduce((s,i)=>s+(Number(i.amount)||0),0);
-  const thisMonthLoan=expenses.filter(e=>e.loanId&&e.month===curMonth).reduce((s,e)=>s+e.amount,0)+loanPayments.filter(p=>(p.date||'').startsWith(curMonth)).reduce((s,p)=>s+(Number(p.amount)||0),0);
-  const totalUsed=thisMonthInv+thisMonthLoan;
-  const unused=Math.max(0,saved-totalUsed);
-
-  const savingCard=document.createElement('div');
-  savingCard.className='form-card';
-  savingCard.style.marginBottom='14px';
-  savingCard.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h3 style="font-size:14px;font-weight:700;color:var(--text)">💰 이번 달 절약금 현황</h3>
-      <span style="font-family:'Gmarket Sans',sans-serif;font-weight:700;font-size:18px;color:${saved>0?'var(--accent)':'var(--text3)'}">${fmt(saved)}</span>
-    </div>
-    ${tB===0?`<div style="font-size:12px;color:var(--text3)">예산을 설정하면 절약금이 계산돼요</div>`:`
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:7px"><span>📈</span><span style="font-size:13px;color:var(--text2)">투자로 활용</span></div>
-        <span style="font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;color:var(--accent)">${fmt(thisMonthInv)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:7px"><span>🏦</span><span style="font-size:13px;color:var(--text2)">대출 상환</span></div>
-        <span style="font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;color:var(--accent3)">${fmt(thisMonthLoan)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
-        <div style="display:flex;align-items:center;gap:7px"><span>${unused>0?'💤':'✅'}</span><span style="font-size:13px;color:var(--text2)">미활용</span></div>
-        <span style="font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;color:${unused>0?'#ffb347':'var(--accent)'}">${fmt(unused)}</span>
-      </div>
-      ${saved>0&&totalUsed>0?`
-      <div style="height:6px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-top:4px">
-        <div style="height:100%;width:${Math.min(100,Math.round(totalUsed/saved*100))}%;background:var(--accent);border-radius:99px;transition:width .5s ease"></div>
-      </div>
-      <div style="font-size:10px;color:var(--text3);text-align:right">절약금의 ${Math.min(100,Math.round(totalUsed/saved*100))}% 활용 중</div>`:''}
-    </div>`}
-  `;
-  wrap.appendChild(savingCard);
-  invCard.className='form-card';
+  // ── 투자 섹션 ─────────────────────────────────────────
+  const invCard=document.createElement('div');
   invCard.style.marginBottom='14px';
 
   const totalInv=investments.reduce((s,i)=>s+(Number(i.amount)||0),0);
