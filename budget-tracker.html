@@ -434,6 +434,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <button class="settings-tab-btn" onclick="switchSettings('payment',this)">💳 결제수단</button>
     <button class="settings-tab-btn" onclick="switchSettings('cats',this)">🏷️ 카테고리</button>
     <button class="settings-tab-btn" onclick="switchSettings('list',this)">📋 목록</button>
+    <button class="settings-tab-btn" onclick="switchSettings('backup',this)">🔒 백업</button>
   </div>
 
   <!-- 홈 -->
@@ -626,6 +627,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="chart-container tall"><canvas id="pay-trend-chart"></canvas></div>
     </div>
     <button class="export-btn" onclick="exportCSV()">📥 이번 달 지출 CSV 내보내기</button>
+  </div>
+
+  <!-- 백업 -->
+  <div class="panel" id="panel-backup">
+    <div id="backup-wrap"></div>
   </div>
 
   <!-- 자산 패널 -->
@@ -856,7 +862,7 @@ function subscribeMonth(){
   unsubExp=onSnapshot(query(collection(db,up('expenses')),where('month','==',curMonth)),snap=>{
     expenses=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderAll();setSyncStatus('online');
-    if(first){hideLoading();first=false;setTimeout(checkBudgetAlert,800);}
+    if(first){hideLoading();first=false;setTimeout(checkBudgetAlert,800);setTimeout(checkAutoBackup,2000);}
   },()=>{setSyncStatus('offline');hideLoading();});
   unsubBudget=onSnapshot(doc(db,up('budgets'),curMonth),snap=>{
     budgets=snap.exists()?snap.data():{};renderAll();
@@ -2555,6 +2561,176 @@ window.deleteLoanPayment=async function(id){
   });
 };
 
+// ── 백업/복구 ──────────────────────────────────────────────
+async function renderBackup(){
+  const wrap=document.getElementById('backup-wrap');
+  if(!wrap)return;
+  wrap.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">백업 목록 불러오는 중...</div>';
+
+  // 백업 목록 로드
+  const snap=await getDocs(collection(db,up('backups')));
+  const backups=snap.docs.map(d=>({id:d.id,...d.data()}))
+    .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+
+  wrap.innerHTML='';
+
+  // 수동 백업 카드
+  const manualCard=document.createElement('div');
+  manualCard.className='form-card';
+  manualCard.style.marginBottom='14px';
+  manualCard.innerHTML=`
+    <div style="margin-bottom:14px">
+      <h3 style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">🔒 데이터 백업</h3>
+      <div style="font-size:11px;color:var(--text3)">지출, 예산, 카테고리, 투자, 대출 데이터를 백업해요</div>
+    </div>
+    <button class="btn-primary" onclick="createBackup(false)" style="margin-bottom:8px">💾 지금 백업하기</button>
+    <div style="font-size:11px;color:var(--text3);text-align:center">매월 1일 자동으로 백업돼요</div>`;
+  wrap.appendChild(manualCard);
+
+  // 백업 목록
+  const listCard=document.createElement('div');
+  listCard.className='form-card';
+  listCard.innerHTML=`<h3 style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px">📋 백업 목록 (${backups.length}개)</h3>`;
+
+  if(!backups.length){
+    listCard.innerHTML+=`<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">아직 백업이 없어요<br>위 버튼으로 첫 백업을 만들어보세요</div>`;
+  } else {
+    backups.forEach(b=>{
+      const date=b.createdAt?new Date(b.createdAt).toLocaleString('ko-KR',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}):'날짜 없음';
+      const isAuto=b.type==='auto';
+      const div=document.createElement('div');
+      div.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)';
+      div.innerHTML=`
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">${isAuto?'🔄 자동 백업':'💾 수동 백업'}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">${date}</div>
+          <div style="font-size:10px;color:var(--text3)">지출 ${b.expenseCount||0}건 · 투자 ${b.investCount||0}건 · 대출 ${b.loanCount||0}건</div>
+        </div>
+        <button onclick="restoreBackup('${b.id}')" style="background:var(--accent3);border:none;border-radius:8px;padding:7px 12px;color:#0f0f13;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">복구</button>
+        <button onclick="deleteBackup('${b.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:4px">✕</button>`;
+      listCard.appendChild(div);
+    });
+  }
+  wrap.appendChild(listCard);
+}
+
+window.createBackup=async function(isAuto=false){
+  setSyncStatus('syncing');
+  try{
+    // 모든 데이터 수집
+    const [expSnap,invSnap,loanSnap,lpSnap,budgetSnap,catSnap,recSnap,paySnap]=await Promise.all([
+      getDocs(collection(db,up('expenses'))),
+      getDocs(collection(db,up('investments'))),
+      getDocs(collection(db,up('loans'))),
+      getDocs(collection(db,up('loanPayments'))),
+      getDocs(collection(db,up('budgets'))),
+      getDocs(collection(db,up('settings'))),
+      getDocs(collection(db,up('recurring'))),
+      getDocs(collection(db,up('payMethods'))),
+    ]);
+    const backupData={
+      createdAt:Date.now(),
+      type:isAuto?'auto':'manual',
+      expenseCount:expSnap.size,
+      investCount:invSnap.size,
+      loanCount:loanSnap.size,
+      expenses:expSnap.docs.map(d=>({id:d.id,...d.data()})),
+      investments:invSnap.docs.map(d=>({id:d.id,...d.data()})),
+      loans:loanSnap.docs.map(d=>({id:d.id,...d.data()})),
+      loanPayments:lpSnap.docs.map(d=>({id:d.id,...d.data()})),
+      budgets:budgetSnap.docs.map(d=>({id:d.id,...d.data()})),
+      settings:catSnap.docs.map(d=>({id:d.id,...d.data()})),
+      recurring:recSnap.docs.map(d=>({id:d.id,...d.data()})),
+      payMethods:paySnap.docs.map(d=>({id:d.id,...d.data()})),
+    };
+    const backupId=`${isAuto?'auto':'manual'}_${Date.now()}`;
+    await setDoc(doc(db,up('backups'),backupId),backupData);
+    setSyncStatus('online');
+    showToast(isAuto?'자동 백업 완료 ✓':'백업이 완료됐어요 ✓','success');
+    if(document.getElementById('panel-backup').classList.contains('active'))renderBackup();
+  }catch(e){
+    setSyncStatus('offline');
+    showToast('백업 실패: '+e.message,'error');
+  }
+};
+
+window.restoreBackup=async function(backupId){
+  showConfirm('백업 데이터로 복구하면 현재 데이터가 모두 덮어써져요. 정말 복구할까요?',async()=>{
+    setSyncStatus('syncing');
+    try{
+      const snap=await getDocs(collection(db,up('backups')));
+      const backup=snap.docs.find(d=>d.id===backupId)?.data();
+      if(!backup){showToast('백업 데이터를 찾을 수 없어요','error');return;}
+
+      // 현재 데이터 삭제 후 복구
+      const collections=['expenses','investments','loans','loanPayments','recurring','payMethods'];
+      for(const col of collections){
+        const s=await getDocs(collection(db,up(col)));
+        if(s.size){
+          const batch=writeBatch(db);
+          s.docs.forEach(d=>batch.delete(d.ref));
+          await batch.commit();
+        }
+      }
+      // 백업 데이터 복원
+      const dataMap={
+        expenses:backup.expenses||[],
+        investments:backup.investments||[],
+        loans:backup.loans||[],
+        loanPayments:backup.loanPayments||[],
+        recurring:backup.recurring||[],
+        payMethods:backup.payMethods||[],
+      };
+      for(const [col,items] of Object.entries(dataMap)){
+        if(!items.length)continue;
+        const batch=writeBatch(db);
+        items.forEach(item=>{
+          const {id,...data}=item;
+          batch.set(doc(db,up(col),id),data);
+        });
+        await batch.commit();
+      }
+      // 예산 복원
+      if(backup.budgets?.length){
+        const batch=writeBatch(db);
+        backup.budgets.forEach(b=>{const{id,...data}=b;batch.set(doc(db,up('budgets'),id),data);});
+        await batch.commit();
+      }
+      // 카테고리 설정 복원
+      if(backup.settings?.length){
+        const batch=writeBatch(db);
+        backup.settings.forEach(s=>{const{id,...data}=s;batch.set(doc(db,up('settings'),id),data);});
+        await batch.commit();
+      }
+      setSyncStatus('online');
+      showToast('복구가 완료됐어요 ✓','success');
+    }catch(e){
+      setSyncStatus('offline');
+      showToast('복구 실패: '+e.message,'error');
+    }
+  });
+};
+
+window.deleteBackup=async function(id){
+  showConfirm('이 백업을 삭제할까요?',async()=>{
+    try{
+      await deleteDoc(doc(db,up('backups'),id));
+      showToast('백업이 삭제됐어요','');
+      renderBackup();
+    }catch(e){showToast('삭제 실패','error');}
+  });
+};
+
+// 자동 백업 체크 (매월 1일)
+function checkAutoBackup(){
+  const today=new Date();
+  if(today.getDate()!==1)return;
+  const key=`autoBackup_${curUser?.uid}_${today.getFullYear()}_${today.getMonth()}`;
+  if(localStorage.getItem(key))return;
+  localStorage.setItem(key,'1');
+  createBackup(true);
+}
+
 window.switchNav=function(name,btn){
   // 모든 패널 숨기기
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -2590,6 +2766,7 @@ window.switchSettings=function(name,btn){
   if(name==='recurring')renderRecurring();
   if(name==='payment')renderPayment();
   if(name==='list')renderList();
+  if(name==='backup')renderBackup();
 };
 
 window.exportCSV=function(){
