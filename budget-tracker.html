@@ -385,6 +385,20 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 </div>
 
+<!-- 삭제 확인 모달 -->
+<div class="modal-bg" id="confirm-modal">
+  <div class="modal" style="max-width:320px;text-align:center">
+    <div style="font-size:36px;margin-bottom:12px">🗑️</div>
+    <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">삭제 확인</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:6px" id="confirm-msg">삭제할까요?</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:20px">이 작업은 되돌릴 수 없어요</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeModal('confirm-modal')" style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;color:var(--text2);font-family:'Noto Sans KR',sans-serif;font-size:14px;cursor:pointer">취소</button>
+      <button id="confirm-ok-btn" style="flex:1;padding:12px;background:var(--accent2);border:none;border-radius:11px;color:#fff;font-family:'Gmarket Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer">삭제하기</button>
+    </div>
+  </div>
+</div>
+
 <!-- 메인 앱 -->
 <div id="app" style="display:none">
   <div class="header">
@@ -416,7 +430,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <!-- 설정 패널 서브탭 -->
   <div class="settings-tabs" id="settings-tabs" style="display:none">
     <button class="settings-tab-btn active" onclick="switchSettings('budget',this)">🎯 예산</button>
-    <button class="settings-tab-btn" onclick="switchSettings('recurring',this)">📌 고정</button>
+    <button class="settings-tab-btn" onclick="switchSettings('recurring',this)">📌 정기 지출</button>
     <button class="settings-tab-btn" onclick="switchSettings('payment',this)">💳 결제수단</button>
     <button class="settings-tab-btn" onclick="switchSettings('cats',this)">🏷️ 카테고리</button>
     <button class="settings-tab-btn" onclick="switchSettings('list',this)">📋 목록</button>
@@ -530,7 +544,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <!-- 고정 지출 -->
   <div class="panel" id="panel-recurring">
     <div class="form-card">
-      <h3>고정 지출 추가</h3>
+      <h3>정기 지출 추가</h3>
       <div class="form-row">
         <div class="form-group"><label>카테고리</label><select id="rec-cat"></select></div>
         <div class="form-group"><label>매월 몇 일</label><input type="number" id="rec-day" placeholder="1~31" min="1" max="31"></div>
@@ -542,10 +556,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="form-row">
         <div class="form-group"><label>결제수단</label><select id="rec-pay"></select></div>
       </div>
-      <button class="btn-primary" onclick="addRecurring()">+ 고정 지출 등록</button>
+      <button class="btn-primary" onclick="addRecurring()">+ 정기 지출 등록</button>
     </div>
     <div id="recurring-list"></div>
-    <button class="btn-secondary" style="border-style:solid;border-color:var(--accent);color:var(--accent)" onclick="applyRecurring()">📌 이번 달 고정 지출 일괄 적용</button>
+    <button class="btn-secondary" style="border-style:solid;border-color:var(--accent);color:var(--accent)" onclick="applyRecurring()">📌 이번 달 정기 지출 일괄 적용</button>
   </div>
 
   <!-- 결제수단 -->
@@ -694,6 +708,14 @@ function hideLoading(){
   ol.classList.add('hide');setTimeout(()=>ol.style.display='none',400);
 }
 window.closeModal=id=>document.getElementById(id).classList.remove('open');
+
+// 삭제 확인 모달
+function showConfirm(msg,onConfirm){
+  document.getElementById('confirm-msg').textContent=msg;
+  const btn=document.getElementById('confirm-ok-btn');
+  btn.onclick=()=>{closeModal('confirm-modal');onConfirm();};
+  document.getElementById('confirm-modal').classList.add('open');
+}
 
 // ── 예산 초과 팝업 ────────────────────────────────────────
 function checkBudgetAlert(){
@@ -1541,10 +1563,10 @@ function renderBudget(){
         <button class="budget-expand-btn" onclick="toggleBudgetDetail('${cat.id}',this)" title="상세 펼치기">▾</button>
       </div>
       <div class="budget-detail" id="bd-${cat.id}">
-        <div style="font-size:10px;color:var(--text3);margin-bottom:6px;letter-spacing:.3px">📌 고정 항목</div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:6px;letter-spacing:.3px">📋 예상 지출</div>
         <div class="fixed-items" id="fi-${cat.id}">${fiRows}</div>
         ${fixedTotal>0?`<div class="fixed-total">고정 합계: <span>${fmt(fixedTotal)}</span></div>`:''}
-        <button class="btn-add-fixed" onclick="addFixedItem('${cat.id}')">+ 고정 항목 추가</button>
+        <button class="btn-add-fixed" onclick="addFixedItem('${cat.id}')">+ 예상 지출 추가</button>
         <div class="memo-label">📝 메모</div>
         <textarea class="budget-memo" placeholder="예산 배정 이유, 참고 지수 등 자유롭게 메모하세요"
           onblur="updateMemo('${cat.id}',this.value)">${meta.memo||''}</textarea>
@@ -1636,7 +1658,7 @@ function scheduleBudgetMetaSave(){
 function renderRecurring(){
   if(isEditing())return;
   const le=document.getElementById('recurring-list');le.innerHTML='';
-  if(!recurring.length){le.innerHTML=`<div class="empty-state"><div class="ic">📌</div>등록된 고정 지출이 없어요</div>`;return;}
+  if(!recurring.length){le.innerHTML=`<div class="empty-state"><div class="ic">📌</div>등록된 정기 지출이 없어요</div>`;return;}
   recurring.forEach(r=>{
     const cat=CATS.find(c=>c.id===r.cat)||CATS[CATS.length-1];
     const pay=payMethods.find(p=>p.id===r.payId);
@@ -1933,7 +1955,7 @@ window.openColorPicker=function(i){
   COLORS.forEach(c=>{const d=document.createElement('div');d.className='color-opt'+(CATS[i].color===c?' sel':'');d.style.background=c;d.onclick=()=>{CATS[i].color=c;closeModal('color-modal');renderCatManage();scheduleCatSave();};p.appendChild(d);});
   document.getElementById('color-modal').classList.add('open');
 };
-['emoji-modal','color-modal','edit-modal','cal-modal'].forEach(id=>{
+['emoji-modal','color-modal','edit-modal','cal-modal','confirm-modal'].forEach(id=>{
   document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal(id);});
 });
 
@@ -1949,14 +1971,18 @@ window.addRecurring=async function(){
   try{
     await setDoc(doc(db,up('recurring'),uid()),{cat,day,desc,amount,payId});
     document.getElementById('rec-day').value='';document.getElementById('rec-desc').value='';document.getElementById('rec-amount').value='';
-    showToast('고정 지출이 추가됐어요 ✓','success');
+    showToast('정기 지출이 추가됐어요 ✓','success');
   }catch(e){showToast('저장 실패','error');}
 };
 window.deleteRecurring=async function(id){
-  try{await deleteDoc(doc(db,up('recurring'),id));showToast('삭제됐어요','');}catch(e){showToast('삭제 실패','error');}
+  const r=recurring.find(x=>x.id===id);
+  showConfirm(`"${r?.desc||'정기 지출'}" (${fmt(r?.amount||0)})을 삭제할까요?`,async()=>{
+    try{await deleteDoc(doc(db,up('recurring'),id));showToast('삭제됐어요','');}
+    catch(e){showToast('삭제 실패','error');}
+  });
 };
 window.applyRecurring=async function(){
-  if(!recurring.length){showToast('고정 지출이 없어요','warning');return;}
+  if(!recurring.length){showToast('정기 지출이 없어요','warning');return;}
   const[y,m]=curMonth.split('-').map(Number);
   const batch=writeBatch(db);let count=0;
   recurring.forEach(r=>{
@@ -1966,8 +1992,8 @@ window.applyRecurring=async function(){
     const exists=expenses.some(e=>e.recurringId===r.id&&e.month===curMonth);
     if(!exists){batch.set(doc(db,up('expenses'),uid()),{date:ds,cat:r.cat,desc:r.desc,amount:r.amount,month:curMonth,isRecurring:true,recurringId:r.id,payId:r.payId||''});count++;}
   });
-  if(!count){showToast('이미 이번 달 고정 지출이 적용됐어요','warning');return;}
-  try{await batch.commit();showToast(`${count}개 고정 지출이 추가됐어요 ✓`,'success');}catch(e){showToast('적용 실패','error');}
+  if(!count){showToast('이미 이번 달 정기 지출이 적용됐어요','warning');return;}
+  try{await batch.commit();showToast(`${count}개 정기 지출이 추가됐어요 ✓`,'success');}catch(e){showToast('적용 실패','error');}
 };
 
 // ── 지출 수정 ─────────────────────────────────────────────
@@ -2039,13 +2065,21 @@ window.addExpense=async function(){
 };
 
 window.deleteExpense=async function(id){
-  try{await deleteDoc(doc(db,up('expenses'),id));showToast('삭제됐어요','');}catch(e){showToast('삭제 실패','error');}
+  const e=expenses.find(x=>x.id===id);
+  const label=e?`"${e.desc||'지출 항목'}" (${fmt(e.amount)})`:'이 지출';
+  showConfirm(`${label}을 삭제할까요?`,async()=>{
+    try{await deleteDoc(doc(db,up('expenses'),id));showToast('삭제됐어요','');}
+    catch(e){showToast('삭제 실패','error');}
+  });
 };
 window.deleteGroup=async function(gid){
-  const snap=await getDocs(query(collection(db,up('expenses')),where('installmentGroupId','==',gid)));
-  if(!snap.size){await deleteDoc(doc(db,up('expenses'),gid));showToast('삭제됐어요','');return;}
-  const batch=writeBatch(db);snap.docs.forEach(d=>batch.delete(d.ref));
-  await batch.commit();showToast(`할부 ${snap.size}건 전체 삭제됐어요`,'success');
+  const cnt=expenses.filter(e=>e.installmentGroupId===gid).length;
+  showConfirm(`할부 ${cnt}건 전체를 삭제할까요?`,async()=>{
+    const snap=await getDocs(query(collection(db,up('expenses')),where('installmentGroupId','==',gid)));
+    if(!snap.size){await deleteDoc(doc(db,up('expenses'),gid));showToast('삭제됐어요','');return;}
+    const batch=writeBatch(db);snap.docs.forEach(d=>batch.delete(d.ref));
+    await batch.commit();showToast(`할부 ${snap.size}건 전체 삭제됐어요`,'success');
+  });
 };
 
 window.setBudget=function(catId,val){
@@ -2149,8 +2183,11 @@ window.addPayMethod=async function(){
 };
 
 window.deletePayMethod=async function(id){
-  try{await deleteDoc(doc(db,up('payMethods'),id));showToast('삭제됐어요','');}
-  catch(e){showToast('삭제 실패','error');}
+  const p=payMethods.find(x=>x.id===id);
+  showConfirm(`"${p?.name||'결제수단'}"을 삭제할까요?`,async()=>{
+    try{await deleteDoc(doc(db,up('payMethods'),id));showToast('삭제됐어요','');}
+    catch(e){showToast('삭제 실패','error');}
+  });
 };
 
 window.updatePayMethod=async function(id,field,val){
@@ -2458,8 +2495,11 @@ window.addInvestment=async function(){
   }catch(e){showToast('저장 실패','error');}
 };
 window.deleteInvestment=async function(id){
-  try{await deleteDoc(doc(db,up('investments'),id));showToast('삭제됐어요','');}
-  catch(e){showToast('삭제 실패','error');}
+  const inv=investments.find(x=>x.id===id);
+  showConfirm(`"${inv?.name||'투자 항목'}" (${fmt(inv?.amount||0)})을 삭제할까요?`,async()=>{
+    try{await deleteDoc(doc(db,up('investments'),id));showToast('삭제됐어요','');}
+    catch(e){showToast('삭제 실패','error');}
+  });
 };
 
 // 대출 CRUD
@@ -2478,14 +2518,16 @@ window.addLoan=async function(){
   }catch(e){showToast('저장 실패','error');}
 };
 window.deleteLoan=async function(id){
-  try{
-    await deleteDoc(doc(db,up('loans'),id));
-    // 해당 대출 납입 기록도 삭제
-    const snap=await getDocs(query(collection(db,up('loanPayments')),where('loanId','==',id)));
-    const batch=writeBatch(db);snap.docs.forEach(d=>batch.delete(d.ref));
-    await batch.commit();
-    showToast('삭제됐어요','');
-  }catch(e){showToast('삭제 실패','error');}
+  const loan=loans.find(l=>l.id===id);
+  showConfirm(`"${loan?.name||'대출'}"을 삭제할까요?\n납입 기록도 모두 삭제돼요.`,async()=>{
+    try{
+      await deleteDoc(doc(db,up('loans'),id));
+      const snap=await getDocs(query(collection(db,up('loanPayments')),where('loanId','==',id)));
+      const batch=writeBatch(db);snap.docs.forEach(d=>batch.delete(d.ref));
+      await batch.commit();
+      showToast('삭제됐어요','');
+    }catch(e){showToast('삭제 실패','error');}
+  });
 };
 window.addLoanPayment=async function(loanId){
   const amount=parseInt(document.getElementById(`lp-amount-${loanId}`).value)||0;
@@ -2506,8 +2548,11 @@ window.addLoanPayment=async function(loanId){
   }catch(e){showToast('저장 실패','error');}
 };
 window.deleteLoanPayment=async function(id){
-  try{await deleteDoc(doc(db,up('loanPayments'),id));showToast('삭제됐어요','');}
-  catch(e){showToast('삭제 실패','error');}
+  const p=loanPayments.find(x=>x.id===id);
+  showConfirm(`납입 기록 (${fmt(p?.amount||0)})을 삭제할까요?`,async()=>{
+    try{await deleteDoc(doc(db,up('loanPayments'),id));showToast('삭제됐어요','');}
+    catch(e){showToast('삭제 실패','error');}
+  });
 };
 
 window.switchNav=function(name,btn){
