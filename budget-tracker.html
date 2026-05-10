@@ -419,6 +419,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <button class="settings-tab-btn" onclick="switchSettings('recurring',this)">📌 고정</button>
     <button class="settings-tab-btn" onclick="switchSettings('payment',this)">💳 결제수단</button>
     <button class="settings-tab-btn" onclick="switchSettings('cats',this)">🏷️ 카테고리</button>
+    <button class="settings-tab-btn" onclick="switchSettings('list',this)">📋 목록</button>
   </div>
 
   <!-- 홈 -->
@@ -573,13 +574,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
   <!-- 분석 -->
   <div class="panel" id="panel-chart">
-    <!-- 지출 필터 -->
-    <div style="display:flex;gap:4px;margin-bottom:14px" id="chart-filter-tabs">
-      <button class="range-tab active" onclick="setChartFilter('all',this)">전체</button>
-      <button class="range-tab" onclick="setChartFilter('life',this)">💸 지출만</button>
-      <button class="range-tab" onclick="setChartFilter('invest',this)">📈 투자만</button>
-      <button class="range-tab" onclick="setChartFilter('loan',this)">🏦 대출만</button>
-    </div>
+    <!-- 지출 필터 제거 - 지출만 표시 -->
     <div class="stat-grid">
       <div class="stat-item"><div class="s-lbl">가장 많이 쓴 카테고리</div><div class="s-val" id="top-cat">—</div></div>
       <div class="stat-item"><div class="s-lbl">하루 평균 지출</div><div class="s-val" id="avg-daily">—</div></div>
@@ -635,14 +630,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <button class="nav-btn" id="nav-input" onclick="switchNav('input',this)">
     <span class="nav-icon">✏️</span><span class="nav-label">입력</span>
   </button>
-  <button class="nav-btn" id="nav-list" onclick="switchNav('list',this)">
-    <span class="nav-icon">📋</span><span class="nav-label">목록</span>
-  </button>
-  <button class="nav-btn" id="nav-asset" onclick="switchNav('asset',this)">
-    <span class="nav-icon">💎</span><span class="nav-label">자산</span>
+  <button class="nav-btn" id="nav-calendar" onclick="switchNav('calendar',this)">
+    <span class="nav-icon">📅</span><span class="nav-label">달력</span>
   </button>
   <button class="nav-btn" id="nav-chart" onclick="switchNav('chart',this)">
-    <span class="nav-icon">📊</span><span class="nav-label">분석</span>
+    <span class="nav-icon">📊</span><span class="nav-label">지출분석</span>
+  </button>
+  <button class="nav-btn" id="nav-asset" onclick="switchNav('asset',this)">
+    <span class="nav-icon">💎</span><span class="nav-label">자산현황</span>
   </button>
   <button class="nav-btn" id="nav-settings" onclick="switchNav('settings',this)">
     <span class="nav-icon">⚙️</span><span class="nav-label">설정</span>
@@ -1375,7 +1370,8 @@ function renderHome(){
   const firstDay=new Date(y,m-1,1).getDay();
   const grid=document.getElementById('home-cal-grid');
   const dayMap={};
-  expenses.forEach(e=>{
+  // 홈 달력: 순수 지출만 (대출상환/투자 제외)
+  expenses.filter(e=>!e.isLoanPayment&&!e.loanId&&!e.isInvestment).forEach(e=>{
     const d=parseInt(e.date.split('-')[2]);
     if(!dayMap[d])dayMap[d]={total:0,cats:[]};
     dayMap[d].total+=e.amount;
@@ -1459,7 +1455,8 @@ function renderCalendar(){
   const today=new Date();
   const grid=document.getElementById('cal-grid');grid.innerHTML='';
   const dayMap={};
-  expenses.forEach(e=>{
+  // 달력: 순수 지출만 (대출상환/투자 제외)
+  expenses.filter(e=>!e.isLoanPayment&&!e.loanId&&!e.isInvestment).forEach(e=>{
     const d=parseInt(e.date.split('-')[2]);
     if(!dayMap[d])dayMap[d]={total:0,cats:[]};
     dayMap[d].total+=e.amount;
@@ -1660,8 +1657,8 @@ function renderRecurring(){
 
 // ── 차트 ──────────────────────────────────────────────────
 async function renderChart(){
-  const fe=filteredExpenses();
-  const filterLabel={all:'전체',life:'생활지출',loan:'대출상환',invest:'투자'}[chartFilter];
+  // 지출분석: 순수 지출만 (대출상환/투자 제외)
+  const fe=expenses.filter(e=>!e.isLoanPayment&&!e.loanId&&!e.isInvestment);
 
   const topId=(()=>{const m={};fe.forEach(e=>m[e.cat]=(m[e.cat]||0)+e.amount);return Object.entries(m).sort((a,b)=>b[1]-a[1])[0]?.[0];})();
   const topCat=CATS.find(c=>c.id===topId);
@@ -1672,7 +1669,7 @@ async function renderChart(){
   const dp=isThis?today.getDate():dim;
   const total=fe.reduce((s,e)=>s+e.amount,0);
   document.getElementById('avg-daily').textContent=dp>0?fmt(Math.round(total/dp)):'—';
-  document.getElementById('total-count').textContent=fe.length+'건 ('+filterLabel+')';
+  document.getElementById('total-count').textContent=fe.length+'건';
   document.getElementById('remain-days').textContent=isThis?(dim-today.getDate())+'일':'—';
 
   // 도넛
@@ -2368,6 +2365,42 @@ async function renderAsset(){
   }
 
   // 홈 절약금 표시 업데이트
+  // ── 월별 자산 운용 현황 차트 ──────────────────────────
+  const assetMonthCard=document.createElement('div');
+  assetMonthCard.className='chart-card';
+  assetMonthCard.innerHTML=`
+    <h3>월별 자산 운용 현황 (12개월)</h3>
+    <p class="chart-sub">투자 + 대출상환 합계</p>
+    <div class="chart-container"><canvas id="asset-month-chart"></canvas></div>`;
+  wrap.appendChild(assetMonthCard);
+
+  // 월별 투자 + 대출 합계
+  const aMonths=[];
+  for(let i=11;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    aMonths.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  const invByMonth=aMonths.map(mo=>investments.filter(inv=>(inv.date||'').startsWith(mo)).reduce((s,i)=>s+(Number(i.amount)||0),0));
+  const loanByMonth=aMonths.map(mo=>{
+    const fromExp=expenses.filter(e=>(e.isLoanPayment||e.loanId)&&e.month===mo).reduce((s,e)=>s+e.amount,0);
+    const fromRec=loanPayments.filter(p=>(p.date||'').startsWith(mo)).reduce((s,p)=>s+(Number(p.amount)||0),0);
+    return fromExp+fromRec;
+  });
+  const aLabels=aMonths.map(mo=>parseInt(mo.split('-')[1])+'월');
+  if(window._assetMonthChart){window._assetMonthChart.destroy();}
+  window._assetMonthChart=new Chart(document.getElementById('asset-month-chart'),{type:'bar',
+    data:{labels:aLabels,datasets:[
+      {label:'📈 투자',data:invByMonth,backgroundColor:'rgba(200,240,74,0.7)',borderRadius:4,borderSkipped:false},
+      {label:'🏦 대출상환',data:loanByMonth,backgroundColor:'rgba(107,181,255,0.7)',borderRadius:4,borderSkipped:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{color:isDark?'#9090aa':'#555566',font:{size:10},boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},
+      scales:{
+        x:{stacked:false,ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9}},grid:{display:false}},
+        y:{ticks:{color:isDark?'#7a7a90':'#888899',font:{size:9},callback:v=>v>=10000?(v/10000)+'만':v},grid:{color:isDark?'#3a3a4e':'#d0d0dc'}}
+      }}});
+
   updateHomeSavingHint();
 }
 
@@ -2467,7 +2500,6 @@ window.switchNav=function(name,btn){
     document.getElementById('panel-'+name).classList.add('active');
     if(name==='chart')renderChart();
     if(name==='home')renderHome();
-    if(name==='list')renderList();
     if(name==='calendar')renderCalendar();
     if(name==='asset')renderAsset();
   }
@@ -2481,6 +2513,7 @@ window.switchSettings=function(name,btn){
   if(name==='cats')renderCatManage();
   if(name==='recurring')renderRecurring();
   if(name==='payment')renderPayment();
+  if(name==='list')renderList();
 };
 
 window.exportCSV=function(){
