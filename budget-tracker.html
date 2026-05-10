@@ -480,8 +480,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
           <div class="form-group"><label>금액 (원)</label><input type="number" id="inv-amount-inp" placeholder="0" min="0"></div>
         </div>
         <div class="form-row">
-          <div class="form-group" style="flex:2"><label>거래처</label><input type="text" id="inv-broker-inp" placeholder="예: 키움증권, 미래에셋"></div>
-          <div class="form-group"><label>결제수단</label><select id="inv-pay-inp"></select></div>
+          <div class="form-group"><label>거래처</label><input type="text" id="inv-broker-inp" placeholder="예: 키움증권, 미래에셋"></div>
         </div>
         <button class="btn-primary" id="btn-add-inv" onclick="addInvestmentFromInput()">+ 투자 추가</button>
       </div>
@@ -500,8 +499,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
           <div class="form-group"><label>납입금액 (원)</label><input type="number" id="loan-pay-amount-inp" placeholder="0" min="0"></div>
         </div>
         <div class="form-row">
-          <div class="form-group" style="flex:2"><label>거래처</label><input type="text" id="loan-pay-broker-inp" placeholder="예: 국민은행, 카카오뱅크"></div>
-          <div class="form-group"><label>결제수단</label><select id="loan-pay-pay-inp"></select></div>
+          <div class="form-group"><label>거래처</label><input type="text" id="loan-pay-broker-inp" placeholder="예: 국민은행, 카카오뱅크"></div>
         </div>
         <div id="loan-pay-info" style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:8px;font-size:12px;color:var(--text2);display:none"></div>
         <button class="btn-primary" id="btn-add-loan-pay" onclick="addLoanPaymentFromInput()">+ 상환 입력</button>
@@ -930,7 +928,6 @@ window.addLoanPaymentFromInput=async function(){
   const desc=document.getElementById('loan-pay-desc-inp').value.trim();
   const amount=parseInt(document.getElementById('loan-pay-amount-inp').value)||0;
   const broker=document.getElementById('loan-pay-broker-inp').value.trim();
-  const payId=document.getElementById('loan-pay-pay-inp').value||'';
   if(!loanId){showToast('대출을 선택해주세요','warning');return;}
   if(!amount){showToast('납입금액을 입력해주세요','warning');return;}
   const loan=loans.find(l=>l.id===loanId);
@@ -938,11 +935,11 @@ window.addLoanPaymentFromInput=async function(){
   btn.disabled=true;btn.textContent='저장 중...';
   try{
     const pid=uid();
-    await setDoc(doc(db,up('loanPayments'),pid),{loanId,amount,date,desc,broker,payId,createdAt:Date.now()});
+    await setDoc(doc(db,up('loanPayments'),pid),{loanId,amount,date,desc,broker,createdAt:Date.now()});
     await setDoc(doc(db,up('expenses'),uid()),{
       date,cat:'etc',desc:desc||(loan?.name||'대출상환'),
       amount,month:(date||curMonth).slice(0,7),
-      payId,loanId,broker,isLoanPayment:true
+      loanId,broker,isLoanPayment:true
     });
     document.getElementById('loan-pay-desc-inp').value='';
     document.getElementById('loan-pay-amount-inp').value='';
@@ -970,13 +967,12 @@ window.addInvestmentFromInput=async function(){
   const name=document.getElementById('inv-name-inp').value.trim();
   const amount=parseInt(document.getElementById('inv-amount-inp').value)||0;
   const broker=document.getElementById('inv-broker-inp').value.trim();
-  const payId=document.getElementById('inv-pay-inp').value||'';
   if(!name){showToast('이름을 입력해주세요','warning');return;}
   if(!amount){showToast('금액을 입력해주세요','warning');return;}
   const btn=document.getElementById('btn-add-inv');
   btn.disabled=true;btn.textContent='저장 중...';
   try{
-    await setDoc(doc(db,up('investments'),uid()),{name,type,amount,date,broker,payId,createdAt:Date.now()});
+    await setDoc(doc(db,up('investments'),uid()),{name,type,amount,date,broker,createdAt:Date.now()});
     document.getElementById('inv-name-inp').value='';
     document.getElementById('inv-amount-inp').value='';
     document.getElementById('inv-broker-inp').value='';
@@ -2197,34 +2193,40 @@ async function renderAsset(){
   invCard.style.marginBottom='14px';
 
   const totalInv=investments.reduce((s,i)=>s+(Number(i.amount)||0),0);
+  const typeColors={주식:'#c8f04a',ETF:'#6bb5ff',적금:'#34d399',예금:'#34d399',펀드:'#a78bfa',코인:'#ffb347',기타:'#94a3b8'};
+
   invCard.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <h3 style="font-size:14px;font-weight:700;color:var(--text)">📈 투자 현황</h3>
-      <span style="font-family:'Gmarket Sans',sans-serif;font-weight:700;font-size:16px;color:var(--accent)">총 ${fmt(totalInv)}</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div>
+        <h3 style="font-size:14px;font-weight:700;color:var(--text)">📈 투자 현황</h3>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">총 ${fmt(totalInv)} · ${investments.length}건</div>
+      </div>
+      <button onclick="toggleAssetForm('inv-add-form',this)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--text2);font-size:12px;cursor:pointer">+ 추가</button>
     </div>
     <div id="inv-list"></div>
-    <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:12px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">투자 추가</div>
+    <div id="inv-add-form" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
       <div class="form-row" style="margin-bottom:6px">
-        <div class="form-group" style="flex:2"><input class="form-group input" type="text" id="inv-name" placeholder="이름 (예: 삼성전자, KB적금)" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+        <div class="form-group" style="flex:2"><input type="text" id="inv-name" placeholder="이름 (예: 삼성전자)" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
         <div class="form-group"><select id="inv-type" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%">
           <option>주식</option><option>ETF</option><option>적금</option><option>예금</option><option>펀드</option><option>코인</option><option>기타</option>
         </select></div>
       </div>
-      <div class="form-row" style="margin-bottom:8px">
-        <div class="form-group"><input class="form-group input" type="number" id="inv-amount" placeholder="투자금액 (원)" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+      <div class="form-row" style="margin-bottom:6px">
+        <div class="form-group"><input type="text" id="inv-broker-asset" placeholder="거래처 (예: 키움증권)" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
         <div class="form-group"><input type="date" id="inv-date" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+      </div>
+      <div class="form-row" style="margin-bottom:8px">
+        <div class="form-group"><input type="number" id="inv-amount" placeholder="투자금액 (원)" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
       </div>
       <button class="btn-primary" style="margin-top:0" onclick="addInvestment()">+ 투자 추가</button>
     </div>`;
   wrap.appendChild(invCard);
 
-  // 투자 목록 렌더
+  // 투자 목록
   const invList=document.getElementById('inv-list');
   if(!investments.length){
-    invList.innerHTML=`<div style="text-align:center;color:var(--text3);font-size:12px;padding:12px">아직 투자 내역이 없어요</div>`;
+    invList.innerHTML=`<div style="text-align:center;color:var(--text3);font-size:12px;padding:12px">아직 투자 내역이 없어요<br><span style="font-size:11px">+ 추가 버튼을 눌러보세요</span></div>`;
   } else {
-    const typeColors={주식:'#c8f04a',ETF:'#6bb5ff',적금:'#34d399',예금:'#34d399',펀드:'#a78bfa',코인:'#ffb347',기타:'#94a3b8'};
     investments.slice().reverse().forEach(inv=>{
       const color=typeColors[inv.type]||'#94a3b8';
       const div=document.createElement('div');
@@ -2270,10 +2272,14 @@ async function renderAsset(){
   loanCard.className='form-card';
   loanCard.style.marginBottom='14px';
   loanCard.innerHTML=`
-    <h3 style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px">🏦 대출 현황</h3>
-    <div id="loan-list"></div>
-    <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:12px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">대출 등록</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div>
+        <h3 style="font-size:14px;font-weight:700;color:var(--text)">🏦 대출 현황</h3>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${loans.length}건 등록</div>
+      </div>
+      <button onclick="toggleAssetForm('loan-add-form',this)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--text2);font-size:12px;cursor:pointer">+ 대출 등록</button>
+    </div>
+    <div id="loan-add-form" style="display:none;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
       <div class="form-row" style="margin-bottom:6px">
         <div class="form-group" style="flex:2"><input type="text" id="loan-name" placeholder="대출명 (예: 주택담보대출)" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
         <div class="form-group"><input type="number" id="loan-rate" placeholder="금리 %" step="0.1" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
@@ -2283,21 +2289,22 @@ async function renderAsset(){
         <div class="form-group"><input type="date" id="loan-start" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
       </div>
       <button class="btn-primary" style="margin-top:0" onclick="addLoan()">+ 대출 등록</button>
-    </div>`;
+    </div>
+    <div id="loan-list"></div>`;
   wrap.appendChild(loanCard);
 
   // 대출 목록
   const loanList=document.getElementById('loan-list');
   if(!loans.length){
-    loanList.innerHTML=`<div style="text-align:center;color:var(--text3);font-size:12px;padding:12px">등록된 대출이 없어요</div>`;
+    loanList.innerHTML=`<div style="text-align:center;color:var(--text3);font-size:12px;padding:12px">등록된 대출이 없어요<br><span style="font-size:11px">+ 대출 등록 버튼을 눌러보세요</span></div>`;
   } else {
     loans.forEach(loan=>{
-      // 지출에서 loanId로 연결된 것 + 직접 납입 기록 합산
       const paidFromExpenses=expenses.filter(e=>e.loanId===loan.id).reduce((s,e)=>s+(Number(e.amount)||0),0);
       const paidFromRecords=loanPayments.filter(p=>p.loanId===loan.id).reduce((s,p)=>s+(Number(p.amount)||0),0);
       const paid=paidFromExpenses+paidFromRecords;
       const remaining=Math.max(0,(Number(loan.principal)||0)-paid);
       const pct=loan.principal>0?Math.min(Math.round(paid/loan.principal*100),100):0;
+      const recentPays=loanPayments.filter(p=>p.loanId===loan.id).slice(-3).reverse();
       const div=document.createElement('div');
       div.style.cssText='margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)';
       div.innerHTML=`
@@ -2306,24 +2313,32 @@ async function renderAsset(){
             <span style="font-size:13px;font-weight:500;color:var(--text)">${loan.name}</span>
             <span style="font-size:10px;color:var(--text3);margin-left:6px">금리 ${loan.rate||0}%</span>
           </div>
-          <button class="act-btn del" onclick="deleteLoan('${loan.id}')">✕</button>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button onclick="toggleAssetForm('lp-form-${loan.id}',this)" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 8px;color:var(--text2);font-size:11px;cursor:pointer">납입 입력</button>
+            <button class="act-btn del" onclick="deleteLoan('${loan.id}')">✕</button>
+          </div>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:6px">
           <span>원금 ${fmt(loan.principal||0)}</span>
           <span>상환 ${fmt(paid)} (${pct}%)</span>
           <span style="color:var(--accent2)">잔액 ${fmt(remaining)}</span>
         </div>
-        <div style="height:6px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-bottom:8px">
+        <div style="height:5px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-bottom:8px">
           <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:99px;transition:width .5s ease"></div>
         </div>
-        <div style="display:flex;gap:6px">
-          <input type="number" id="lp-amount-${loan.id}" placeholder="납입금액 (원)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);font-size:12px;outline:none">
-          <input type="date" id="lp-date-${loan.id}" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);font-size:12px;outline:none">
-          <button style="background:var(--accent3);border:none;border-radius:7px;padding:6px 10px;color:#0f0f13;font-size:11px;font-weight:700;cursor:pointer" onclick="addLoanPayment('${loan.id}')">납입</button>
+        <div id="lp-form-${loan.id}" style="display:none;background:var(--surface2);border-radius:9px;padding:10px;margin-bottom:8px">
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <input type="number" id="lp-amount-${loan.id}" placeholder="납입금액 (원)" style="flex:2;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text);font-size:12px;outline:none">
+            <input type="date" id="lp-date-${loan.id}" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text);font-size:12px;outline:none">
+          </div>
+          <div style="display:flex;gap:6px">
+            <input type="text" id="lp-broker-${loan.id}" placeholder="거래처 (예: 국민은행)" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text);font-size:12px;outline:none">
+            <button style="background:var(--accent3);border:none;border-radius:7px;padding:7px 12px;color:#0f0f13;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0" onclick="addLoanPayment('${loan.id}')">납입</button>
+          </div>
         </div>
-        <div style="margin-top:6px" id="lp-list-${loan.id}">
-          ${loanPayments.filter(p=>p.loanId===loan.id).slice(-3).reverse().map(p=>`
-            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);padding:3px 0">
+        <div id="lp-list-${loan.id}">
+          ${recentPays.map(p=>`
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);padding:3px 0;border-bottom:1px solid var(--border)">
               <span>${p.date||''}${p.broker?` · ${p.broker}`:''}</span>
               <span style="color:var(--accent);font-family:'Gmarket Sans',sans-serif">-${fmt(p.amount)}</span>
               <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px" onclick="deleteLoanPayment('${p.id}')">✕</button>
@@ -2419,17 +2434,26 @@ function updateHomeSavingHint(){
 }
 
 // 투자 CRUD
+window.toggleAssetForm=function(id,btn){
+  const el=document.getElementById(id);if(!el)return;
+  const isOpen=el.style.display==='none';
+  el.style.display=isOpen?'block':'none';
+  btn.textContent=isOpen?(btn.textContent.includes('납입')?'납입 닫기':'닫기'):(btn.textContent.includes('대출')?'+ 대출 등록':'+ 추가');
+};
+
 window.addInvestment=async function(){
   const name=document.getElementById('inv-name').value.trim();
   const type=document.getElementById('inv-type').value;
   const amount=parseInt(document.getElementById('inv-amount').value)||0;
   const date=document.getElementById('inv-date').value;
+  const broker=document.getElementById('inv-broker-asset')?.value.trim()||'';
   if(!name){showToast('이름을 입력해주세요','warning');return;}
   if(!amount){showToast('금액을 입력해주세요','warning');return;}
   try{
-    await setDoc(doc(db,up('investments'),uid()),{name,type,amount,date,createdAt:Date.now()});
+    await setDoc(doc(db,up('investments'),uid()),{name,type,amount,date,broker,createdAt:Date.now()});
     document.getElementById('inv-name').value='';
     document.getElementById('inv-amount').value='';
+    if(document.getElementById('inv-broker-asset'))document.getElementById('inv-broker-asset').value='';
     showToast('투자 내역이 추가됐어요 ✓','success');
   }catch(e){showToast('저장 실패','error');}
 };
@@ -2466,10 +2490,18 @@ window.deleteLoan=async function(id){
 window.addLoanPayment=async function(loanId){
   const amount=parseInt(document.getElementById(`lp-amount-${loanId}`).value)||0;
   const date=document.getElementById(`lp-date-${loanId}`).value;
+  const broker=document.getElementById(`lp-broker-${loanId}`)?.value.trim()||'';
   if(!amount){showToast('납입금액을 입력해주세요','warning');return;}
+  const loan=loans.find(l=>l.id===loanId);
   try{
-    await setDoc(doc(db,up('loanPayments'),uid()),{loanId,amount,date,createdAt:Date.now()});
+    await setDoc(doc(db,up('loanPayments'),uid()),{loanId,amount,date,broker,createdAt:Date.now()});
+    await setDoc(doc(db,up('expenses'),uid()),{
+      date,cat:'etc',desc:loan?.name||'대출상환',
+      amount,month:(date||curMonth).slice(0,7),
+      loanId,broker,isLoanPayment:true
+    });
     document.getElementById(`lp-amount-${loanId}`).value='';
+    if(document.getElementById(`lp-broker-${loanId}`))document.getElementById(`lp-broker-${loanId}`).value='';
     showToast('납입 기록이 추가됐어요 ✓','success');
   }catch(e){showToast('저장 실패','error');}
 };
