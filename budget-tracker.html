@@ -639,6 +639,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div id="asset-wrap"></div>
   </div>
 
+  <!-- 포트폴리오 패널 -->
+  <div class="panel" id="panel-portfolio">
+    <div id="portfolio-wrap"></div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -656,8 +661,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <button class="nav-btn" id="nav-asset" onclick="switchNav('asset',this)">
     <span class="nav-icon">💎</span><span class="nav-label">자산현황</span>
   </button>
+  <button class="nav-btn" id="nav-portfolio" onclick="switchNav('portfolio',this)">
+    <span class="nav-icon">📈</span><span class="nav-label">포트폴리오</span>
+  </button>
   <button class="nav-btn" id="nav-settings" onclick="switchNav('settings',this)">
     <span class="nav-icon">⚙️</span><span class="nav-label">설정</span>
+  </button>
   </button>
 </nav>
 
@@ -685,7 +694,7 @@ const DEF_CATS=[
 const EMOJIS=['🍱','🍔','🍕','🍜','🍣','☕','🧋','🎂','🚇','🚗','🚕','✈️','🛍️','👗','👟','💄','💊','🏥','🎬','🎮','🎵','📚','🏠','🧹','⚡','💡','🐶','🌸','💰','📦','🎁','🏋️','⚽','🏊','💻','📱','🔧','🌙','☀️'];
 const COLORS=['#ff6b6b','#ff8c42','#ffb347','#ffd166','#c8f04a','#34d399','#6bb5ff','#a78bfa','#f472b6','#fb7185','#94a3b8','#4ade80','#22d3ee','#f59e0b','#ef4444','#8b5cf6'];
 
-let curMonth,filterCat='all',chartFilter='all',expenses=[],budgets={},recurring=[],budgetMeta={},payMethods=[],investments=[],loans=[],loanPayments=[];
+let curMonth,filterCat='all',chartFilter='all',expenses=[],budgets={},recurring=[],budgetMeta={},payMethods=[],investments=[],loans=[],loanPayments=[],portfolio=[],portCategories=[];
 let CATS=[...DEF_CATS];
 let donutChart=null,barChart=null,compareChart=null,budgetCompareChart=null,trendChart=null,payTrendChart=null,assetChart=null,loanChart=null;
 let trendCatId=null, trendPayId=null;
@@ -836,6 +845,16 @@ function initApp(){
     payMethods=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.order-b.order||0);
     rebuildPaySelects();
     renderPayment();
+  });
+  // 포트폴리오 종목 구독
+  onSnapshot(collection(db,up('portfolio')),snap=>{
+    portfolio=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('panel-portfolio').classList.contains('active'))renderPortfolio();
+  });
+  // 포트폴리오 카테고리 구독
+  onSnapshot(doc(db,up('portSettings'),'categories'),snap=>{
+    portCategories=snap.exists()&&snap.data().list?.length?snap.data().list:DEF_PORT_CATS;
+    if(document.getElementById('panel-portfolio').classList.contains('active'))renderPortfolio();
   });
   // 투자 구독
   onSnapshot(collection(db,up('investments')),snap=>{
@@ -2731,6 +2750,354 @@ function checkAutoBackup(){
   createBackup(true);
 }
 
+// ── 포트폴리오 ─────────────────────────────────────────────
+const FINNHUB_KEY='d80a21hr01qq9ln34dpgd80a21hr01qq9ln34dq0';
+const DEF_PORT_CATS=[
+  {id:'us_growth',name:'미국 성장주',color:'#378ADD',target:30},
+  {id:'us_dividend',name:'미국 배당주',color:'#1D9E75',target:20},
+  {id:'etf',name:'ETF',color:'#c8f04a',target:25},
+  {id:'kr_stock',name:'국내주식',color:'#D85A30',target:15},
+  {id:'safe',name:'안전자산',color:'#EF9F27',target:10},
+];
+
+let portChart=null,portFilterCat='all';
+let priceCache={};
+
+async function fetchPrice(symbol,isUS){
+  if(priceCache[symbol]&&Date.now()-priceCache[symbol].ts<300000)return priceCache[symbol].price;
+  if(!isUS)return null;
+  try{
+    const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`);
+    const d=await r.json();
+    if(d.c){priceCache[symbol]={price:d.c,ts:Date.now()};return d.c;}
+  }catch(e){}
+  return null;
+}
+
+async function fetchDividend(symbol){
+  try{
+    const now=new Date();
+    const from=`${now.getFullYear()-1}-01-01`;
+    const to=`${now.getFullYear()}-12-31`;
+    const r=await fetch(`https://finnhub.io/api/v1/stock/dividend2?symbol=${symbol}&token=${FINNHUB_KEY}`);
+    const d=await r.json();
+    return d?.data||[];
+  }catch(e){return [];}
+}
+
+async function renderPortfolio(){
+  const wrap=document.getElementById('portfolio-wrap');
+  if(!wrap)return;
+  wrap.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px">포트폴리오 불러오는 중...</div>';
+
+  // 현재가 fetch (미국 종목만)
+  const usItems=portfolio.filter(p=>p.market==='US'&&p.symbol);
+  await Promise.all(usItems.map(async p=>{
+    p._price=await fetchPrice(p.symbol,true);
+  }));
+
+  // 평가금액 계산
+  portfolio.forEach(p=>{
+    if(p.market==='US'&&p._price&&p.qty){
+      p._value=p._price*p.qty*1350; // USD→KRW 대략
+    } else {
+      p._value=p.currentPrice?p.currentPrice*p.qty:p.buyPrice*p.qty;
+    }
+    p._profit=p._value-(p.buyPrice*p.qty*(p.market==='US'?1350:1));
+    p._profitPct=p.buyPrice>0?(p._value/(p.buyPrice*p.qty*(p.market==='US'?1350:1))-1)*100:0;
+  });
+
+  const totalValue=portfolio.reduce((s,p)=>s+(p._value||0),0);
+  const totalCost=portfolio.reduce((s,p)=>s+(p.buyPrice*p.qty*(p.market==='US'?1350:1)||0),0);
+  const totalProfit=totalValue-totalCost;
+  const totalProfitPct=totalCost>0?(totalValue/totalCost-1)*100:0;
+
+  // 배당 목표
+  const divTarget=portCategories.reduce((s,c)=>s+(Number(c.divTarget)||0),0);
+
+  wrap.innerHTML='';
+
+  // 카테고리 필터
+  const filterDiv=document.createElement('div');
+  filterDiv.style.cssText='display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px';
+  const allChip=document.createElement('div');
+  allChip.className='cat-chip'+(portFilterCat==='all'?' active':'');
+  allChip.textContent='전체';
+  allChip.onclick=()=>{portFilterCat='all';renderPortfolio();};
+  filterDiv.appendChild(allChip);
+  portCategories.forEach(c=>{
+    const chip=document.createElement('div');
+    chip.className='cat-chip'+(portFilterCat===c.id?' active':'');
+    chip.style.cssText=portFilterCat===c.id?`border-color:${c.color};color:${c.color};background:${c.color}22`:'';
+    chip.textContent=c.name;
+    chip.onclick=()=>{portFilterCat=c.id;renderPortfolio();};
+    filterDiv.appendChild(chip);
+  });
+  wrap.appendChild(filterDiv);
+
+  // 핵심 지표
+  const metricDiv=document.createElement('div');
+  metricDiv.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px';
+  [
+    {lbl:'총 평가금액',val:fmt(Math.round(totalValue)),color:'var(--text)'},
+    {lbl:'총 수익률',val:(totalProfitPct>=0?'+':'')+totalProfitPct.toFixed(1)+'%',color:totalProfitPct>=0?'var(--accent)':'var(--accent2)'},
+    {lbl:'월 배당 목표',val:divTarget>0?fmt(divTarget):'미설정',color:'var(--accent3)'},
+  ].forEach(m=>{
+    const d=document.createElement('div');
+    d.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px';
+    d.innerHTML=`<div style="font-size:10px;color:var(--text3);margin-bottom:5px">${m.lbl}</div><div style="font-family:'Gmarket Sans',sans-serif;font-weight:700;font-size:15px;color:${m.color}">${m.val}</div>`;
+    metricDiv.appendChild(d);
+  });
+  wrap.appendChild(metricDiv);
+
+  // 자산 배분
+  const allocCard=document.createElement('div');
+  allocCard.className='form-card';
+  allocCard.style.marginBottom='14px';
+  const needsRebal=portCategories.some(c=>{
+    const val=portfolio.filter(p=>p.catId===c.id).reduce((s,p)=>s+(p._value||0),0);
+    const cur=totalValue>0?val/totalValue*100:0;
+    return Math.abs(cur-(c.target||0))>5;
+  });
+  allocCard.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h3 style="font-size:14px;font-weight:700;color:var(--text)">자산 배분</h3>
+    ${needsRebal?'<span style="font-size:11px;background:rgba(255,107,107,.15);color:var(--accent2);padding:3px 8px;border-radius:99px;border:1px solid rgba(255,107,107,.3)">⚠️ 리밸런싱 필요</span>':'<span style="font-size:11px;background:rgba(200,240,74,.15);color:var(--accent);padding:3px 8px;border-radius:99px;border:1px solid rgba(200,240,74,.3)">✅ 균형 유지 중</span>'}
+  </div>`;
+  portCategories.forEach(c=>{
+    const val=portfolio.filter(p=>p.catId===c.id).reduce((s,p)=>s+(p._value||0),0);
+    const cur=totalValue>0?Math.round(val/totalValue*100):0;
+    const target=c.target||0;
+    const diff=cur-target;
+    allocCard.innerHTML+=`<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span style="color:var(--text)">${c.name} <span style="font-weight:700">${cur}%</span></span>
+        <span style="color:${Math.abs(diff)>5?'var(--accent2)':'var(--text3)'}">목표 ${target}% ${diff!==0?(diff>0?'+':'')+diff+'%p':''}</span>
+      </div>
+      <div style="height:6px;background:var(--surface2);border-radius:99px;overflow:hidden">
+        <div style="height:100%;width:${Math.min(cur,100)}%;background:${c.color};border-radius:99px;transition:width .5s"></div>
+      </div>
+    </div>`;
+  });
+  // 카테고리 관리 버튼
+  allocCard.innerHTML+=`<button onclick="toggleAssetForm('port-cat-form',this)" style="width:100%;margin-top:4px;padding:8px;background:transparent;border:1px dashed var(--border);border-radius:9px;color:var(--text3);font-size:12px;cursor:pointer">⚙️ 카테고리 / 목표 비중 설정</button>
+  <div id="port-cat-form" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+    <div id="port-cat-list"></div>
+    <button onclick="addPortCat()" style="width:100%;padding:8px;background:transparent;border:1px dashed var(--border);border-radius:9px;color:var(--text3);font-size:12px;cursor:pointer;margin-top:6px">+ 카테고리 추가</button>
+    <button onclick="savePortCats()" class="btn-primary" style="margin-top:8px">저장</button>
+  </div>`;
+  wrap.appendChild(allocCard);
+
+  // 카테고리 폼 렌더
+  setTimeout(()=>{
+    const cl=document.getElementById('port-cat-list');
+    if(!cl)return;
+    renderPortCatForm(cl);
+  },0);
+
+  // 리밸런싱 가이드
+  const rebalCard=document.createElement('div');
+  rebalCard.className='form-card';
+  rebalCard.style.marginBottom='14px';
+  rebalCard.innerHTML=`<h3 style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px">리밸런싱 가이드</h3>`;
+  portCategories.forEach(c=>{
+    const val=portfolio.filter(p=>p.catId===c.id).reduce((s,p)=>s+(p._value||0),0);
+    const cur=totalValue>0?val/totalValue*100:0;
+    const target=c.target||0;
+    const diff=cur-target;
+    const amt=Math.abs(Math.round(totalValue*Math.abs(diff)/100));
+    let action,actionClass,actionText;
+    if(Math.abs(diff)<=2){action='유지';actionClass='background:var(--surface2);color:var(--text2)';actionText='';}
+    else if(diff>0){action='매도/축소';actionClass='background:rgba(255,107,107,.15);color:var(--accent2)';actionText=`약 ${fmt(amt)}`;}
+    else{action='매수/추가';actionClass='background:rgba(200,240,74,.15);color:var(--accent)';actionText=`약 ${fmt(amt)}`;}
+    rebalCard.innerHTML+=`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0"></div>
+      <div style="flex:1;font-size:12px;color:var(--text)">${c.name} ${actionText?`<span style="color:var(--text3)">— ${actionText}</span>`:''}</div>
+      <span style="font-size:11px;padding:3px 8px;border-radius:6px;${actionClass}">${action}</span>
+    </div>`;
+  });
+  wrap.appendChild(rebalCard);
+
+  // 보유 종목
+  const holdCard=document.createElement('div');
+  holdCard.className='form-card';
+  holdCard.style.marginBottom='14px';
+  const filtered=portFilterCat==='all'?portfolio:portfolio.filter(p=>p.catId===portFilterCat);
+  holdCard.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h3 style="font-size:14px;font-weight:700;color:var(--text)">보유 종목 (${filtered.length})</h3>
+    <button onclick="toggleAssetForm('port-add-form',this)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--text2);font-size:12px;cursor:pointer">+ 종목 추가</button>
+  </div>
+  <div id="port-add-form" style="display:none;background:var(--surface2);border-radius:9px;padding:12px;margin-bottom:10px">
+    <div class="form-row" style="margin-bottom:6px">
+      <div class="form-group"><label>종목명</label><input type="text" id="port-name" placeholder="예: Apple, 삼성전자" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+      <div class="form-group"><label>티커/코드</label><input type="text" id="port-symbol" placeholder="AAPL / 005930" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+    </div>
+    <div class="form-row" style="margin-bottom:6px">
+      <div class="form-group"><label>시장</label><select id="port-market" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%">
+        <option value="US">미국 (자동 시세)</option>
+        <option value="KR">국내 (수동)</option>
+        <option value="OTHER">기타</option>
+      </select></div>
+      <div class="form-group"><label>카테고리</label><select id="port-cat" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%">
+        ${portCategories.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+      </select></div>
+    </div>
+    <div class="form-row" style="margin-bottom:6px">
+      <div class="form-group"><label>수량</label><input type="number" id="port-qty" placeholder="0" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+      <div class="form-group"><label>매수가 (원/달러)</label><input type="number" id="port-buy" placeholder="0" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+    </div>
+    <div class="form-row" style="margin-bottom:8px">
+      <div class="form-group"><label>거래처</label><input type="text" id="port-broker" placeholder="예: 키움증권" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+      <div class="form-group"><label>국내 현재가 (수동)</label><input type="number" id="port-cur" placeholder="수동 입력" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+    </div>
+    <button class="btn-primary" style="margin-top:0" onclick="addPortItem()">+ 추가</button>
+  </div>`;
+
+  if(!filtered.length){
+    holdCard.innerHTML+=`<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">종목을 추가해보세요</div>`;
+  } else {
+    filtered.forEach(p=>{
+      const cat=portCategories.find(c=>c.id===p.catId);
+      const color=cat?.color||'#94a3b8';
+      const isUS=p.market==='US';
+      const priceStr=isUS&&p._price?`$${p._price.toFixed(2)}`:(p.currentPrice?fmt(p.currentPrice):'수동 입력 필요');
+      holdCard.innerHTML+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="width:40px;height:40px;border-radius:9px;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${color};flex-shrink:0;text-align:center;line-height:1.2">${p.symbol||p.name?.slice(0,4)||'?'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
+          <div style="font-size:10px;color:var(--text3)">${cat?.name||'미분류'} · ${p.qty}주 · ${priceStr}${p.broker?` · ${p.broker}`:''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-family:'Gmarket Sans',sans-serif;font-size:13px;font-weight:700;color:var(--text)">${fmt(Math.round(p._value||0))}</div>
+          <div style="font-size:11px;color:${p._profitPct>=0?'var(--accent)':'var(--accent2)'}">${p._profitPct>=0?'+':''}${p._profitPct.toFixed(1)}%</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          ${p.market!=='US'?`<button onclick="openPortEdit('${p.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px">✏️</button>`:''}
+          <button onclick="deletePortItem('${p.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px">✕</button>
+        </div>
+      </div>`;
+    });
+  }
+  wrap.appendChild(holdCard);
+
+  // 배당 현황
+  const divItems=portfolio.filter(p=>p.market==='US'&&p.symbol);
+  if(divItems.length){
+    const divCard=document.createElement('div');
+    divCard.className='form-card';
+    divCard.innerHTML=`<h3 style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">배당 현황</h3>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">미국 주식 기준 · Finnhub 데이터</div>`;
+    // 배당 목표 게이지
+    if(divTarget>0){
+      const totalDivEstimate=portfolio.reduce((s,p)=>{
+        if(!p.annualDiv||!p.qty)return s;
+        return s+p.annualDiv*p.qty*(p.market==='US'?1350:1)/12;
+      },0);
+      const divPct=Math.min(100,Math.round(totalDivEstimate/divTarget*100));
+      divCard.innerHTML+=`<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:5px">
+          <span>예상 월 배당 ${fmt(Math.round(totalDivEstimate))}</span>
+          <span>목표 ${fmt(divTarget)}</span>
+        </div>
+        <div style="height:6px;background:var(--surface2);border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:${divPct}%;background:var(--accent);border-radius:99px"></div>
+        </div>
+      </div>`;
+    }
+    divItems.forEach(p=>{
+      const annDiv=p.annualDiv||0;
+      const monthDiv=annDiv*p.qty*1350/12;
+      divCard.innerHTML+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">
+        <span style="color:var(--text2)">${p.symbol}</span>
+        <span style="color:var(--text3)">${annDiv>0?`연 $${annDiv.toFixed(2)}/주`:'배당 없음'}</span>
+        <span style="color:var(--accent);font-family:'Gmarket Sans',sans-serif">${monthDiv>0?`~${fmt(Math.round(monthDiv))}/월`:'-'}</span>
+      </div>`;
+    });
+    wrap.appendChild(divCard);
+  }
+}
+
+function renderPortCatForm(el){
+  el.innerHTML='';
+  portCategories.forEach((c,i)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:6px';
+    row.innerHTML=`
+      <input type="text" value="${c.name}" placeholder="카테고리명" onblur="portCategories[${i}].name=this.value" style="flex:2;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);font-size:12px;outline:none">
+      <input type="number" value="${c.target}" placeholder="목표%" onblur="portCategories[${i}].target=parseInt(this.value)||0" style="width:60px;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);font-size:12px;outline:none;text-align:right">
+      <span style="font-size:11px;color:var(--text3)">%</span>
+      <input type="number" value="${c.divTarget||''}" placeholder="월배당목표" onblur="portCategories[${i}].divTarget=parseInt(this.value)||0" style="width:80px;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);font-size:12px;outline:none;text-align:right">
+      <span style="font-size:11px;color:var(--text3)">원</span>
+      <input type="color" value="${c.color}" onchange="portCategories[${i}].color=this.value" style="width:28px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:0">
+      <button onclick="portCategories.splice(${i},1);renderPortCatForm(document.getElementById('port-cat-list'))" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px">✕</button>`;
+    el.appendChild(row);
+  });
+}
+
+window.addPortCat=function(){
+  portCategories.push({id:'cat_'+uid(),name:'새 카테고리',color:'#94a3b8',target:0,divTarget:0});
+  renderPortCatForm(document.getElementById('port-cat-list'));
+};
+
+window.savePortCats=async function(){
+  setSyncStatus('syncing');
+  try{
+    await setDoc(doc(db,up('portSettings'),'categories'),{list:portCategories});
+    setSyncStatus('online');
+    showToast('카테고리가 저장됐어요 ✓','success');
+    renderPortfolio();
+  }catch(e){setSyncStatus('offline');showToast('저장 실패','error');}
+};
+
+window.addPortItem=async function(){
+  const name=document.getElementById('port-name').value.trim();
+  const symbol=document.getElementById('port-symbol').value.trim().toUpperCase();
+  const market=document.getElementById('port-market').value;
+  const catId=document.getElementById('port-cat').value;
+  const qty=parseFloat(document.getElementById('port-qty').value)||0;
+  const buyPrice=parseFloat(document.getElementById('port-buy').value)||0;
+  const broker=document.getElementById('port-broker').value.trim();
+  const currentPrice=parseFloat(document.getElementById('port-cur').value)||0;
+  if(!name){showToast('종목명을 입력해주세요','warning');return;}
+  if(!qty||!buyPrice){showToast('수량과 매수가를 입력해주세요','warning');return;}
+
+  setSyncStatus('syncing');
+  try{
+    const item={name,symbol,market,catId,qty,buyPrice,broker,currentPrice,createdAt:Date.now()};
+    // 미국 종목이면 배당 정보 가져오기
+    if(market==='US'&&symbol){
+      const divData=await fetchDividend(symbol);
+      if(divData.length){
+        const annual=divData.slice(0,4).reduce((s,d)=>s+(d.amount||0),0);
+        item.annualDiv=annual;
+      }
+    }
+    await setDoc(doc(db,up('portfolio'),uid()),item);
+    ['port-name','port-symbol','port-qty','port-buy','port-broker','port-cur'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.value='';
+    });
+    showToast(`${name} 종목이 추가됐어요 ✓`,'success');
+    setSyncStatus('online');
+  }catch(e){showToast('저장 실패','error');setSyncStatus('offline');}
+};
+
+window.openPortEdit=async function(id){
+  const p=portfolio.find(x=>x.id===id);if(!p)return;
+  const price=prompt(`${p.name} 현재가 입력 (원):`,p.currentPrice||'');
+  if(price===null)return;
+  try{
+    await updateDoc(doc(db,up('portfolio'),id),{currentPrice:parseFloat(price)||0});
+    showToast('현재가가 업데이트됐어요 ✓','success');
+  }catch(e){showToast('저장 실패','error');}
+};
+
+window.deletePortItem=async function(id){
+  const p=portfolio.find(x=>x.id===id);
+  showConfirm(`"${p?.name||'종목'}"을 포트폴리오에서 삭제할까요?`,async()=>{
+    try{await deleteDoc(doc(db,up('portfolio'),id));showToast('삭제됐어요','');}
+    catch(e){showToast('삭제 실패','error');}
+  });
+};
+
 window.switchNav=function(name,btn){
   // 모든 패널 숨기기
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -2754,6 +3121,7 @@ window.switchNav=function(name,btn){
     if(name==='chart')renderChart();
     if(name==='home')renderHome();
     if(name==='asset')renderAsset();
+    if(name==='portfolio')renderPortfolio();
   }
 };
 
