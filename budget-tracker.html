@@ -480,6 +480,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
           <div class="form-group"><label>금액 (원)</label><input type="number" id="inv-amount-inp" placeholder="0" min="0"></div>
         </div>
         <div class="form-row">
+          <div class="form-group" style="flex:2"><label>거래처</label><input type="text" id="inv-broker-inp" placeholder="예: 키움증권, 미래에셋"></div>
           <div class="form-group"><label>결제수단</label><select id="inv-pay-inp"></select></div>
         </div>
         <button class="btn-primary" id="btn-add-inv" onclick="addInvestmentFromInput()">+ 투자 추가</button>
@@ -499,6 +500,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
           <div class="form-group"><label>납입금액 (원)</label><input type="number" id="loan-pay-amount-inp" placeholder="0" min="0"></div>
         </div>
         <div class="form-row">
+          <div class="form-group" style="flex:2"><label>거래처</label><input type="text" id="loan-pay-broker-inp" placeholder="예: 국민은행, 카카오뱅크"></div>
           <div class="form-group"><label>결제수단</label><select id="loan-pay-pay-inp"></select></div>
         </div>
         <div id="loan-pay-info" style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:8px;font-size:12px;color:var(--text2);display:none"></div>
@@ -629,9 +631,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </button>
   <button class="nav-btn" id="nav-input" onclick="switchNav('input',this)">
     <span class="nav-icon">✏️</span><span class="nav-label">입력</span>
-  </button>
-  <button class="nav-btn" id="nav-calendar" onclick="switchNav('calendar',this)">
-    <span class="nav-icon">📅</span><span class="nav-label">달력</span>
   </button>
   <button class="nav-btn" id="nav-chart" onclick="switchNav('chart',this)">
     <span class="nav-icon">📊</span><span class="nav-label">지출분석</span>
@@ -930,6 +929,7 @@ window.addLoanPaymentFromInput=async function(){
   const date=document.getElementById('loan-pay-date-inp').value;
   const desc=document.getElementById('loan-pay-desc-inp').value.trim();
   const amount=parseInt(document.getElementById('loan-pay-amount-inp').value)||0;
+  const broker=document.getElementById('loan-pay-broker-inp').value.trim();
   const payId=document.getElementById('loan-pay-pay-inp').value||'';
   if(!loanId){showToast('대출을 선택해주세요','warning');return;}
   if(!amount){showToast('납입금액을 입력해주세요','warning');return;}
@@ -937,17 +937,16 @@ window.addLoanPaymentFromInput=async function(){
   const btn=document.getElementById('btn-add-loan-pay');
   btn.disabled=true;btn.textContent='저장 중...';
   try{
-    // loanPayments 컬렉션에 저장 + expenses에도 저장 (지출로 잡히게)
     const pid=uid();
-    await setDoc(doc(db,up('loanPayments'),pid),{loanId,amount,date,desc,payId,createdAt:Date.now()});
-    // expenses에도 loanId 태깅해서 지출로 잡기
+    await setDoc(doc(db,up('loanPayments'),pid),{loanId,amount,date,desc,broker,payId,createdAt:Date.now()});
     await setDoc(doc(db,up('expenses'),uid()),{
       date,cat:'etc',desc:desc||(loan?.name||'대출상환'),
       amount,month:(date||curMonth).slice(0,7),
-      payId,loanId,isLoanPayment:true
+      payId,loanId,broker,isLoanPayment:true
     });
     document.getElementById('loan-pay-desc-inp').value='';
     document.getElementById('loan-pay-amount-inp').value='';
+    document.getElementById('loan-pay-broker-inp').value='';
     updateLoanPayInfo();
     showToast(`🏦 ${loan?.name||'대출'} 상환이 입력됐어요 ✓`,'success');
     if(document.getElementById('panel-home').classList.contains('active'))renderHome();
@@ -970,17 +969,18 @@ window.addInvestmentFromInput=async function(){
   const type=document.getElementById('inv-type-inp').value;
   const name=document.getElementById('inv-name-inp').value.trim();
   const amount=parseInt(document.getElementById('inv-amount-inp').value)||0;
+  const broker=document.getElementById('inv-broker-inp').value.trim();
   const payId=document.getElementById('inv-pay-inp').value||'';
   if(!name){showToast('이름을 입력해주세요','warning');return;}
   if(!amount){showToast('금액을 입력해주세요','warning');return;}
   const btn=document.getElementById('btn-add-inv');
   btn.disabled=true;btn.textContent='저장 중...';
   try{
-    await setDoc(doc(db,up('investments'),uid()),{name,type,amount,date,payId,createdAt:Date.now()});
+    await setDoc(doc(db,up('investments'),uid()),{name,type,amount,date,broker,payId,createdAt:Date.now()});
     document.getElementById('inv-name-inp').value='';
     document.getElementById('inv-amount-inp').value='';
+    document.getElementById('inv-broker-inp').value='';
     showToast(`📈 ${name} 투자가 추가됐어요 ✓`,'success');
-    // 홈 업데이트
     if(document.getElementById('panel-home').classList.contains('active'))renderHome();
   }catch(e){showToast('저장 실패','error');}
   finally{btn.disabled=false;btn.textContent='+ 투자 추가';}
@@ -2233,7 +2233,7 @@ async function renderAsset(){
         <div style="width:36px;height:36px;border-radius:9px;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${color};flex-shrink:0">${inv.type}</div>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:500;color:var(--text)">${inv.name}</div>
-          <div style="font-size:10px;color:var(--text3)">${inv.date||''}</div>
+          <div style="font-size:10px;color:var(--text3)">${inv.date||''}${inv.broker?` · ${inv.broker}`:''}</div>
         </div>
         <div style="font-family:'Gmarket Sans',sans-serif;font-size:14px;font-weight:700;color:${color}">${fmt(inv.amount)}</div>
         <button class="act-btn del" onclick="deleteInvestment('${inv.id}')">✕</button>`;
@@ -2324,7 +2324,7 @@ async function renderAsset(){
         <div style="margin-top:6px" id="lp-list-${loan.id}">
           ${loanPayments.filter(p=>p.loanId===loan.id).slice(-3).reverse().map(p=>`
             <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);padding:3px 0">
-              <span>${p.date||''}</span>
+              <span>${p.date||''}${p.broker?` · ${p.broker}`:''}</span>
               <span style="color:var(--accent);font-family:'Gmarket Sans',sans-serif">-${fmt(p.amount)}</span>
               <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px" onclick="deleteLoanPayment('${p.id}')">✕</button>
             </div>`).join('')}
@@ -2500,7 +2500,6 @@ window.switchNav=function(name,btn){
     document.getElementById('panel-'+name).classList.add('active');
     if(name==='chart')renderChart();
     if(name==='home')renderHome();
-    if(name==='calendar')renderCalendar();
     if(name==='asset')renderAsset();
   }
 };
