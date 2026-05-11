@@ -361,6 +361,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 <div class="modal-bg" id="edit-modal">
   <div class="modal">
     <div class="modal-title">✏️ 지출 수정 <button class="modal-close" onclick="closeModal('edit-modal')">×</button></div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button id="edit-tag-personal" onclick="setEditTag('personal')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--accent);background:var(--accent)22;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">👤 개인</button>
+      <button id="edit-tag-store" onclick="setEditTag('store')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">🏪 매장</button>
+    </div>
     <div class="form-row">
       <div class="form-group"><label>날짜</label><input type="date" id="edit-date"></div>
       <div class="form-group"><label>카테고리</label><select id="edit-cat"></select></div>
@@ -550,6 +554,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div id="inp-panel-expense">
       <div class="form-card">
         <h3>지출 추가</h3>
+        <!-- 지출 구분 -->
+        <div style="display:flex;gap:6px;margin-bottom:12px">
+          <button id="tag-personal" onclick="setExpenseTag('personal')" style="flex:1;padding:8px;border-radius:9px;border:1px solid var(--accent);background:var(--accent)22;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">👤 개인</button>
+          <button id="tag-store" onclick="setExpenseTag('store')" style="flex:1;padding:8px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">🏪 매장</button>
+        </div>
         <div class="form-row">
           <div class="form-group"><label>날짜</label><input type="date" id="inp-date"></div>
           <div class="form-group"><label>카테고리</label><select id="inp-cat"></select></div>
@@ -684,6 +693,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
   <!-- 분석 -->
   <div class="panel" id="panel-chart">
+    <!-- 개인/매장 필터 -->
+    <div style="display:flex;gap:4px;margin-bottom:8px" id="store-filter-tabs">
+      <button class="range-tab active" onclick="setChartStoreFilter('all',this)">전체</button>
+      <button class="range-tab" onclick="setChartStoreFilter('personal',this)">👤 개인</button>
+      <button class="range-tab" onclick="setChartStoreFilter('store',this)">🏪 매장</button>
+    </div>
     <!-- 지출 필터 제거 - 지출만 표시 -->
     <div class="stat-grid">
       <div class="stat-item"><div class="s-lbl">가장 많이 쓴 카테고리</div><div class="s-val" id="top-cat">—</div></div>
@@ -795,7 +810,7 @@ let donutChart=null,barChart=null,compareChart=null,budgetCompareChart=null,tren
 let trendCatId=null, trendPayId=null;
 let unsubExp=null,unsubBudget=null,unsubCats=null,unsubRec=null;
 let budgetTimer=null,catTimer=null;
-let instOn=false,instMonths=2;
+let instOn=false,instMonths=2,expenseTag='personal';
 let curUser=null,isDark=true,editId=null;
 let compareRange=6;
 
@@ -1575,10 +1590,11 @@ function renderList(){
     const pb=pay?`<span style="font-size:9px;background:${pay.color||'#6bb5ff'}22;color:${pay.color||'#6bb5ff'};padding:2px 5px;border-radius:99px;border:1px solid ${pay.color||'#6bb5ff'}44">${pay.emoji||'💳'} ${pay.name}</span>`:'';
     const loan=loans.find(l=>l.id===e.loanId);
     const lb=loan?`<span style="font-size:9px;background:rgba(255,107,107,.15);color:#ff6b6b;padding:2px 5px;border-radius:99px;border:1px solid rgba(255,107,107,.3)">🏦 ${loan.name}</span>`:'';
+    const sb=e.tag==='store'?`<span style="font-size:9px;background:rgba(255,179,71,.15);color:#ffb347;padding:2px 5px;border-radius:99px;border:1px solid rgba(255,179,71,.3)">🏪 매장</span>`:'';
     div.innerHTML=`
       <div class="cat-dot" style="background:${cat.color}22">${cat.emoji}</div>
       <div class="exp-info">
-        <div class="exp-desc">${e.desc||cat.name} ${ib}${rb}${pb}${lb}</div>
+        <div class="exp-desc">${e.desc||cat.name} ${ib}${rb}${pb}${lb}${sb}</div>
         <div class="exp-meta">${e.date} · ${cat.name}</div>
       </div>
       <div class="exp-amt">-${fmt(e.amount)}</div>
@@ -1890,6 +1906,29 @@ window.setRange=function(n,btn){
   renderCompareChart();
 };
 
+let chartStoreFilter='all'; // all / personal / store
+
+window.setExpenseTag=function(tag){
+  expenseTag=tag;
+  const isStore=tag==='store';
+  document.getElementById('tag-personal').style.cssText=`flex:1;padding:8px;border-radius:9px;border:1px solid ${!isStore?'var(--accent)':'var(--border)'};background:${!isStore?'var(--accent)22':'transparent'};color:${!isStore?'var(--accent)':'var(--text2)'};font-size:13px;font-weight:${!isStore?'700':'400'};cursor:pointer;font-family:'Noto Sans KR',sans-serif`;
+  document.getElementById('tag-store').style.cssText=`flex:1;padding:8px;border-radius:9px;border:1px solid ${isStore?'#ffb347':'var(--border)'};background:${isStore?'rgba(255,179,71,.15)':'transparent'};color:${isStore?'#ffb347':'var(--text2)'};font-size:13px;font-weight:${isStore?'700':'400'};cursor:pointer;font-family:'Noto Sans KR',sans-serif`;
+};
+
+let editExpenseTag='personal';
+window.setEditTag=function(tag){
+  editExpenseTag=tag;
+  const isStore=tag==='store';
+  document.getElementById('edit-tag-personal').style.cssText=`flex:1;padding:7px;border-radius:9px;border:1px solid ${!isStore?'var(--accent)':'var(--border)'};background:${!isStore?'var(--accent)22':'transparent'};color:${!isStore?'var(--accent)':'var(--text2)'};font-size:12px;font-weight:${!isStore?'700':'400'};cursor:pointer;font-family:'Noto Sans KR',sans-serif`;
+  document.getElementById('edit-tag-store').style.cssText=`flex:1;padding:7px;border-radius:9px;border:1px solid ${isStore?'#ffb347':'var(--border)'};background:${isStore?'rgba(255,179,71,.15)':'transparent'};color:${isStore?'#ffb347':'var(--text2)'};font-size:12px;font-weight:${isStore?'700':'400'};cursor:pointer;font-family:'Noto Sans KR',sans-serif`;
+};
+
+window.setChartStoreFilter=function(filter,btn){
+  chartStoreFilter=filter;
+  document.querySelectorAll('#store-filter-tabs .range-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderChart();
+};
 window.setChartFilter=function(filter,btn){
   chartFilter=filter;
   document.querySelectorAll('#chart-filter-tabs .range-tab').forEach(b=>b.classList.remove('active'));
@@ -1899,11 +1938,10 @@ window.setChartFilter=function(filter,btn){
 
 // 필터 적용된 지출 반환
 function filteredExpenses(){
-  if(chartFilter==='all')return expenses;
-  if(chartFilter==='loan')return expenses.filter(e=>e.isLoanPayment||e.loanId);
-  if(chartFilter==='invest')return expenses.filter(e=>e.isInvestment);
-  // 지출만: 대출/투자 제외
-  return expenses.filter(e=>!e.isLoanPayment&&!e.loanId&&!e.isInvestment);
+  let fe=expenses.filter(e=>!e.isLoanPayment&&!e.loanId&&!e.isInvestment);
+  if(chartStoreFilter==='personal')fe=fe.filter(e=>!e.tag||e.tag==='personal');
+  if(chartStoreFilter==='store')fe=fe.filter(e=>e.tag==='store');
+  return fe;
 }
 
 // ── 예산 대비 실제 지출 ───────────────────────────────────
@@ -2132,6 +2170,8 @@ window.openEdit=function(id){
   document.getElementById('edit-cat').value=e.cat;
   document.getElementById('edit-pay').value=e.payId||'';
   document.getElementById('edit-loan').value=e.loanId||'';
+  editExpenseTag=e.tag||'personal';
+  setEditTag(editExpenseTag);
   document.getElementById('edit-modal').classList.add('open');
 };
 window.saveEdit=async function(){
@@ -2142,9 +2182,10 @@ window.saveEdit=async function(){
   const amount=parseInt(document.getElementById('edit-amount').value)||0;
   const payId=document.getElementById('edit-pay').value||'';
   const loanId=document.getElementById('edit-loan').value||'';
+  const tag=editExpenseTag||'personal';
   if(!amount){showToast('금액을 입력해주세요','warning');return;}
   try{
-    await updateDoc(doc(db,up('expenses'),editId),{date,cat,desc,amount,month:date.slice(0,7),payId,loanId});
+    await updateDoc(doc(db,up('expenses'),editId),{date,cat,desc,amount,month:date.slice(0,7),payId,loanId,tag});
     closeModal('edit-modal');editId=null;showToast('수정됐어요 ✓','success');
   }catch(e){showToast('수정 실패','error');}
 };
@@ -2176,7 +2217,7 @@ window.addExpense=async function(){
       await batch.commit();showToast(`${instMonths}개월 할부로 추가됐어요 ✓`,'success');
       instOn=false;window.toggleInstallment();
     } else {
-      await setDoc(doc(db,up('expenses'),uid()),{date,cat,desc,amount:total,month:curMonth,payId,loanId});
+      await setDoc(doc(db,up('expenses'),uid()),{date,cat,desc,amount:total,month:curMonth,payId,loanId,tag:expenseTag});
       const b=Number(budgets[cat])||0;
       if(b>0){
         const spent=expenses.filter(e=>e.cat===cat).reduce((s,e)=>s+e.amount,0)+total;

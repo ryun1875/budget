@@ -455,6 +455,42 @@ body {
 .extra-total { font-size:11px; color:var(--accent3); margin-top:4px; text-align:right; }
 .record-extra { font-size:11px; color:var(--accent3); margin-top:3px; }
 
+/* ── 이의제기 ── */
+.dispute-btn {
+  padding:4px 10px; border-radius:6px; font-size:11px;
+  border:1px solid var(--accent4); background:rgba(255,179,71,.1);
+  color:var(--accent4); cursor:pointer; transition:var(--tr);
+}
+.dispute-btn:hover { background:rgba(255,179,71,.2); }
+.dispute-status {
+  font-size:10px; padding:2px 8px; border-radius:10px; margin-top:4px; display:inline-block;
+}
+.dispute-status.pending { background:rgba(255,179,71,.15); color:var(--accent4); }
+.dispute-status.approved { background:rgba(200,240,74,.15); color:var(--accent); }
+.dispute-status.rejected { background:rgba(255,107,107,.15); color:var(--accent2); }
+.dispute-item {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:14px 16px; margin-bottom:10px;
+}
+.dispute-item .d-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.dispute-item .d-name { font-size:13px; font-weight:700; }
+.dispute-item .d-date { font-size:11px; color:var(--text3); }
+.dispute-item .d-body { font-size:12px; color:var(--text2); line-height:1.6; margin-bottom:10px; }
+.dispute-item .d-actions { display:flex; gap:8px; }
+.dispute-item .d-actions button { flex:1; padding:8px; border-radius:8px; font-size:12px; font-weight:700; border:none; cursor:pointer; transition:var(--tr); }
+.btn-approve-d { background:rgba(200,240,74,.15); color:var(--accent); border:1px solid rgba(200,240,74,.3) !important; }
+.btn-reject-d { background:rgba(255,107,107,.1); color:var(--accent2); border:1px solid rgba(255,107,107,.3) !important; }
+
+/* ── 사전등록 직원 배지 ── */
+.pre-registered { opacity:.6; font-style:italic; }
+.btn-add-staff {
+  width:100%; padding:12px; border-radius:12px;
+  background:rgba(107,181,255,.1); border:1px dashed rgba(107,181,255,.4);
+  color:var(--accent3); font-size:13px; font-weight:600;
+  cursor:pointer; transition:var(--tr); margin-bottom:16px;
+}
+.btn-add-staff:hover { background:rgba(107,181,255,.15); }
+
 /* ── 탭 ── */
 .tabs { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; z-index:100; }
 .tab { flex:1; padding:12px 8px 16px; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; transition:var(--tr); border:none; background:none; color:var(--text3); }
@@ -635,11 +671,28 @@ body {
 
   <!-- 탭 페이지: 직원 관리 (관리자 전용) -->
   <div class="tab-page" id="page-manage">
-    <div style="margin-bottom:20px">
+    <div style="margin-bottom:16px">
       <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">👥 직원 관리</h2>
       <p style="font-size:12px;color:var(--text2)">승인된 직원만 앱을 이용할 수 있어요</p>
     </div>
+    <button class="btn-add-staff" id="preRegisterBtn">+ 직원 미리 등록하기</button>
     <div id="staffManageList"><div class="empty-state"><div class="emoji">👤</div><p>아직 접속한 직원이 없어요</p></div></div>
+
+    <!-- 이의제기 섹션 -->
+    <div style="margin-top:24px;margin-bottom:12px">
+      <h2 style="font-size:14px;font-weight:700">📋 이의제기 목록</h2>
+    </div>
+    <div id="disputeList"><div class="empty-state"><div class="emoji">✅</div><p>처리할 이의제기가 없어요</p></div></div>
+  </div>
+</div>
+
+  <!-- 탭 페이지: 내 이의제기 (직원용) -->
+  <div class="tab-page" id="page-mydisputes">
+    <div style="margin-bottom:16px">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">📝 내 이의제기</h2>
+      <p style="font-size:12px;color:var(--text2)">수정 요청 내역과 처리 결과를 확인해요</p>
+    </div>
+    <div id="myDisputeList"><div class="empty-state"><div class="emoji">✅</div><p>이의제기 내역이 없어요</p></div></div>
   </div>
 </div>
 
@@ -647,7 +700,8 @@ body {
 <div class="tabs" id="tabBar" style="display:none">
   <button class="tab active" data-page="home"><div class="icon">🏠</div><div class="label">홈</div></button>
   <button class="tab" data-page="stats"><div class="icon">📊</div><div class="label">분석</div></button>
-  <button class="tab admin-only" data-page="manage" style="display:none"><div class="icon">👥</div><div class="label">직원관리</div></button>
+  <button class="tab staff-only" data-page="mydisputes" style="display:none"><div class="icon">📝</div><div class="label">이의제기</div></button>
+  <button class="tab admin-only" data-page="manage" style="display:none"><div class="icon">👥</div><div class="label">직원관리</div><div id="disputeBadge" style="display:none;background:var(--accent2);color:#fff;font-size:9px;border-radius:10px;padding:1px 5px;margin-top:-2px"></div></button>
 </div>
 
 <!-- 시급 모달 -->
@@ -706,11 +760,54 @@ body {
   <button class="btn-logout" id="logoutBtn">로그아웃</button>
 </div>
 
+<!-- 직원 사전등록 모달 -->
+<div class="modal-overlay" id="preRegModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>👤 직원 미리 등록</h3>
+    <div class="form-group"><label>직원 이름</label><input type="text" id="preRegName" placeholder="예: 홍길동"></div>
+    <div class="form-group"><label>구글 이메일</label><input type="text" id="preRegEmail" placeholder="예: staff@gmail.com"></div>
+    <div style="font-size:12px;color:var(--text3);margin-top:-6px;margin-bottom:4px">직원이 이 이메일로 로그인하면 자동 연결돼요</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="preRegCancel">취소</button>
+      <button class="btn-confirm" id="preRegConfirm">등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- 이의제기 신청 모달 -->
+<div class="modal-overlay" id="disputeModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>📝 이의제기 신청</h3>
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text2)" id="disputeTargetInfo"></div>
+    <div class="form-group"><label>수정 요청 내용</label><input type="text" id="disputeContent" placeholder="예: 퇴근 시간이 01:00이어야 해요"></div>
+    <div class="form-group"><label>사유</label><input type="text" id="disputeReason" placeholder="예: 실수로 잘못 입력했어요"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="disputeCancel">취소</button>
+      <button class="btn-confirm" id="disputeConfirm">신청</button>
+    </div>
+  </div>
+</div>
+
+<!-- 반려 사유 모달 -->
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>❌ 반려 사유</h3>
+    <div class="form-group"><label>반려 사유를 입력해주세요</label><input type="text" id="rejectReason" placeholder="예: 영상 확인 결과 기록이 정확해요"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="rejectCancel">취소</button>
+      <button class="btn-confirm" id="rejectConfirm">반려</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
   from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, doc, addDoc, getDocs, deleteDoc, updateDoc, setDoc, getDoc, query, orderBy }
+import { getFirestore, collection, doc, addDoc, getDocs, deleteDoc, updateDoc, setDoc, getDoc, query, orderBy, where }
   from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // ── Firebase 설정 ──
@@ -743,6 +840,10 @@ let taxEnabled = false;
 let lightMode = false;
 let editingId = null;
 let extras = []; // [{start:'', end:'', reason:''}]
+let myDisputes = []; // 직원 본인의 이의제기 목록
+let allDisputes = []; // 관리자용 전체 이의제기
+let disputingRecord = null; // 현재 이의제기 대상 기록
+let rejectingDisputeId = null;
 
 const DAYS = ['일','월','화','수','목','금','토'];
 const HOLIDAYS = ['일','토'];
@@ -838,12 +939,30 @@ onAuthStateChanged(auth, async user => {
     document.getElementById('wageBanner').style.cursor = 'pointer';
     document.getElementById('wageEditBtn').style.display = 'block';
     loadAllStaff();
+    loadAllDisputes();
   } else {
     badge.textContent = '직원';
     badge.className = 'role-badge staff';
     document.getElementById('settingsRole').textContent = '직원';
     document.getElementById('wageEditBtn').style.display = 'none';
     document.getElementById('wageBanner').style.cursor = 'default';
+    // 직원용 탭 표시
+    document.querySelectorAll('.staff-only').forEach(el => el.style.display = 'flex');
+    // 사전등록 이메일 매칭: preregistered/{email} → staff/{uid} 연결
+    try {
+      const emailKey = user.email.replace(/\./g,'_').replace(/@/g,'__at__');
+      const preDoc = await getDoc(doc(db, 'preregistered', emailKey));
+      if (preDoc.exists() && !preDoc.data().linkedUid) {
+        await setDoc(doc(db, 'preregistered', emailKey), { linkedUid: user.uid }, { merge: true });
+        await setDoc(doc(db, 'staff', user.uid), {
+          uid: user.uid, email: user.email,
+          name: preDoc.data().name || user.displayName || '이름없음',
+          photo: user.photoURL || '', status: 'approved',
+          linkedAt: new Date().toISOString()
+        }, { merge: true });
+      }
+    } catch(e) {}
+    await loadMyDisputes();
   }
 
   await loadSettings();
@@ -861,7 +980,7 @@ async function loadAllStaff() {
 }
 
 function renderStaffTabs() {
-  const approved = allStaff.filter(s => s.status === 'approved');
+  const approved = allStaff.filter(s => s.status === 'approved' && !s.preRegistered);
   const tabs = document.getElementById('staffTabs');
   tabs.innerHTML = `<div class="staff-tab ${selectedStaffUid === null ? 'active' : ''}" data-uid="all">
     전체 보기
@@ -893,13 +1012,173 @@ function renderStaffManage() {
         <div class="name">${s.name}</div>
         <div class="email">${s.email}</div>
       </div>
-      ${s.status === 'approved'
-        ? `<button class="btn-revoke" onclick="revokeStaff('${s.uid}')">승인 취소</button>`
-        : `<button class="btn-approve" onclick="approveStaff('${s.uid}')">승인</button>`
+      ${s.preRegistered
+        ? `<span style="font-size:11px;color:var(--accent4);padding:3px 8px;border-radius:8px;background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.3)">⏳ 로그인 대기</span>`
+        : s.status === 'approved'
+          ? `<button class="btn-revoke" onclick="revokeStaff('${s.uid}')">승인 취소</button>`
+          : `<button class="btn-approve" onclick="approveStaff('${s.uid}')">승인</button>`
       }
     </div>
   `).join('');
 }
+
+// ── 사전등록 모달 ──
+document.getElementById('preRegisterBtn').addEventListener('click', () => {
+  document.getElementById('preRegName').value = '';
+  document.getElementById('preRegEmail').value = '';
+  document.getElementById('preRegModal').classList.add('show');
+});
+document.getElementById('preRegCancel').addEventListener('click', () => document.getElementById('preRegModal').classList.remove('show'));
+document.getElementById('preRegConfirm').addEventListener('click', async () => {
+  const name = document.getElementById('preRegName').value.trim();
+  const email = document.getElementById('preRegEmail').value.trim().toLowerCase();
+  if (!name || !email) return alert('이름과 이메일을 모두 입력해주세요');
+  const emailKey = email.replace(/\./g,'_').replace(/@/g,'__at__');
+  await setDoc(doc(db, 'preregistered', emailKey), {
+    name, email, status:'approved',
+    registeredAt: new Date().toISOString(), linkedUid: null
+  });
+  // staff에도 임시 등록 (uid 없이, 이메일로 식별)
+  await setDoc(doc(db, 'staff', 'pre_'+emailKey), {
+    uid: 'pre_'+emailKey, email, name, photo:'',
+    status:'approved', preRegistered: true
+  });
+  document.getElementById('preRegModal').classList.remove('show');
+  alert(`${name}님이 등록됐어요! 로그인하면 자동 연결돼요.`);
+  await loadAllStaff();
+});
+
+// ── 이의제기 모달 (직원) ──
+window.openDisputeModal = (recordId, ownerUid, date, start, end) => {
+  disputingRecord = { recordId, ownerUid };
+  document.getElementById('disputeTargetInfo').innerHTML =
+    `📅 ${date.replace(/-/g,'.')} &nbsp; 🕐 ${start} → ${end}`;
+  document.getElementById('disputeContent').value = '';
+  document.getElementById('disputeReason').value = '';
+  document.getElementById('disputeModal').classList.add('show');
+};
+document.getElementById('disputeCancel').addEventListener('click', () => document.getElementById('disputeModal').classList.remove('show'));
+document.getElementById('disputeConfirm').addEventListener('click', async () => {
+  const content = document.getElementById('disputeContent').value.trim();
+  const reason = document.getElementById('disputeReason').value.trim();
+  if (!content || !reason) return alert('수정 요청 내용과 사유를 모두 입력해주세요');
+  const staffInfo = allStaff.find(s => s.uid === currentUser.uid);
+  await addDoc(collection(db, 'disputes'), {
+    recordId: disputingRecord.recordId,
+    ownerUid: disputingRecord.ownerUid,
+    staffUid: currentUser.uid,
+    staffName: staffInfo?.name || currentUser.displayName || '직원',
+    content, reason, status: 'pending',
+    createdAt: new Date().toISOString()
+  });
+  document.getElementById('disputeModal').classList.remove('show');
+  alert('이의제기가 신청됐어요! 사장님이 확인 후 처리해드릴게요.');
+  await loadMyDisputes();
+  renderRecords();
+});
+
+// ── 반려 모달 (관리자) ──
+document.getElementById('rejectCancel').addEventListener('click', () => document.getElementById('rejectModal').classList.remove('show'));
+document.getElementById('rejectConfirm').addEventListener('click', async () => {
+  const reason = document.getElementById('rejectReason').value.trim();
+  if (!reason) return alert('반려 사유를 입력해주세요');
+  await updateDoc(doc(db, 'disputes', rejectingDisputeId), {
+    status: 'rejected', rejectReason: reason,
+    processedAt: new Date().toISOString()
+  });
+  document.getElementById('rejectModal').classList.remove('show');
+  await loadAllDisputes();
+  renderDisputeList();
+});
+
+// ── 이의제기 로드 ──
+async function loadMyDisputes() {
+  try {
+    const snap = await getDocs(query(collection(db, 'disputes'),
+      where('staffUid', '==', currentUser.uid)));
+    myDisputes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderMyDisputeList();
+  } catch(e) {}
+}
+
+async function loadAllDisputes() {
+  try {
+    const snap = await getDocs(query(collection(db, 'disputes'), orderBy('createdAt','desc')));
+    allDisputes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // 뱃지 업데이트
+    const pending = allDisputes.filter(d => d.status === 'pending').length;
+    const badge = document.getElementById('disputeBadge');
+    if (badge) { badge.textContent = pending; badge.style.display = pending ? 'block' : 'none'; }
+    renderDisputeList();
+  } catch(e) {}
+}
+
+function renderMyDisputeList() {
+  const container = document.getElementById('myDisputeList');
+  if (!container) return;
+  if (!myDisputes.length) {
+    container.innerHTML = `<div class="empty-state"><div class="emoji">✅</div><p>이의제기 내역이 없어요</p></div>`;
+    return;
+  }
+  container.innerHTML = myDisputes.map(d => `
+    <div class="dispute-item">
+      <div class="d-header">
+        <div class="d-name">기록 수정 요청</div>
+        <div class="d-date">${d.createdAt?.slice(0,10).replace(/-/g,'.')}</div>
+      </div>
+      <div class="d-body">
+        <b>요청 내용:</b> ${d.content}<br>
+        <b>사유:</b> ${d.reason}
+        ${d.status==='rejected' ? `<br><b style="color:var(--accent2)">반려 사유:</b> ${d.rejectReason}` : ''}
+      </div>
+      <div class="dispute-status ${d.status}">
+        ${d.status==='pending'?'⏳ 검토중':d.status==='approved'?'✅ 승인됨':'❌ 반려됨'}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderDisputeList() {
+  const container = document.getElementById('disputeList');
+  if (!container) return;
+  const pending = allDisputes.filter(d => d.status === 'pending');
+  if (!pending.length) {
+    container.innerHTML = `<div class="empty-state"><div class="emoji">✅</div><p>처리할 이의제기가 없어요</p></div>`;
+    return;
+  }
+  container.innerHTML = pending.map(d => `
+    <div class="dispute-item">
+      <div class="d-header">
+        <div class="d-name">👤 ${d.staffName}</div>
+        <div class="d-date">${d.createdAt?.slice(0,10).replace(/-/g,'.')}</div>
+      </div>
+      <div class="d-body">
+        <b>요청 내용:</b> ${d.content}<br>
+        <b>사유:</b> ${d.reason}
+      </div>
+      <div class="d-actions">
+        <button class="btn-approve-d" onclick="approveDispute('${d.id}','${d.ownerUid}','${d.recordId}')">✅ 승인</button>
+        <button class="btn-reject-d" onclick="openRejectModal('${d.id}')">❌ 반려</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.approveDispute = async (disputeId, ownerUid, recordId) => {
+  if (!confirm('이 이의제기를 승인할까요? 직원이 해당 기록을 1회 수정할 수 있게 돼요.')) return;
+  await updateDoc(doc(db, `users/${ownerUid}/workRecords`, recordId), { disputeApproved: true });
+  await updateDoc(doc(db, 'disputes', disputeId), {
+    status: 'approved', processedAt: new Date().toISOString()
+  });
+  await loadAllDisputes();
+  alert('승인됐어요! 직원이 해당 기록을 수정할 수 있어요.');
+};
+
+window.openRejectModal = (disputeId) => {
+  rejectingDisputeId = disputeId;
+  document.getElementById('rejectReason').value = '';
+  document.getElementById('rejectModal').classList.add('show');
+};
 
 window.approveStaff = async (uid) => {
   await setDoc(doc(db, 'staff', uid), { status: 'approved' }, { merge: true });
@@ -914,8 +1193,7 @@ window.revokeStaff = async (uid) => {
 // ── Settings ──
 async function loadSettings() {
   try {
-    const targetUid = isAdmin ? currentUser.uid : currentUser.uid;
-    const snap = await getDocs(collection(db, `users/${targetUid}/settings`));
+    const snap = await getDocs(collection(db, `users/${currentUser.uid}/settings`));
     snap.forEach(d => {
       const data = d.data();
       if (data.hourlyWage) hourlyWage = data.hourlyWage;
@@ -986,7 +1264,8 @@ document.querySelectorAll('.tab').forEach(btn => {
     btn.classList.add('active');
     document.getElementById(`page-${btn.dataset.page}`).classList.add('active');
     if (btn.dataset.page === 'stats') renderStats();
-    if (btn.dataset.page === 'manage') renderStaffManage();
+    if (btn.dataset.page === 'manage') { renderStaffManage(); if(isAdmin) loadAllDisputes(); }
+    if (btn.dataset.page === 'mydisputes') { loadMyDisputes(); }
   });
 });
 
@@ -1014,7 +1293,7 @@ function renderBreaks() {
 }
 
 window.updateBreak = (i, key, val) => { breaks[i][key] = val; updateBreakTotal(); updatePreview(); };
-window.removeBreak = (i) => { breaks.splice(i, 1); renderBreaks(); };
+window.removeBreak = (i) => { if (!confirm('이 휴식 기록을 삭제할까요?')) return; breaks.splice(i, 1); renderBreaks(); };
 
 function calcBreakTotal() {
   return breaks.reduce((sum, b) => {
@@ -1057,7 +1336,7 @@ function renderExtras() {
 }
 
 window.updateExtra = (i, key, val) => { extras[i][key] = val; updateExtraTotal(); updatePreview(); };
-window.removeExtra = (i) => { extras.splice(i, 1); renderExtras(); };
+window.removeExtra = (i) => { if (!confirm('이 추가근무 기록을 삭제할까요?')) return; extras.splice(i, 1); renderExtras(); };
 
 function calcExtraTotal() {
   return extras.reduce((sum, e) => {
@@ -1142,7 +1421,7 @@ async function loadRecords() {
       records = snap.docs.map(d => ({ id: d.id, ownerUid: selectedStaffUid, ...d.data() }));
     } else if (isAdmin && !selectedStaffUid) {
       // 전체 직원 기록
-      const approved = allStaff.filter(s => s.status === 'approved');
+      const approved = allStaff.filter(s => s.status === 'approved' && !s.preRegistered);
       for (const s of approved) {
         const snap = await getDocs(query(collection(db, `users/${s.uid}/workRecords`), orderBy('date','desc')));
         snap.docs.forEach(d => records.push({ id: d.id, ownerUid: s.uid, ownerName: s.name, ...d.data() }));
@@ -1151,7 +1430,8 @@ async function loadRecords() {
     } else {
       // 직원 본인 기록
       const snap = await getDocs(query(collection(db, `users/${currentUser.uid}/workRecords`), orderBy('date','desc')));
-      records = snap.docs.map(d => ({ id: d.id, ownerUid: currentUser.uid, ...d.data() }));
+      const myInfo = allStaff.find(s => s.uid === currentUser.uid);
+      records = snap.docs.map(d => ({ id: d.id, ownerUid: currentUser.uid, ownerName: myInfo?.name || '', ...d.data() }));
     }
   } catch(e) { setSyncStatus('offline', '연결 끊김'); }
   setSyncStatus('online', '실시간 연동 중');
@@ -1220,13 +1500,13 @@ document.getElementById('editConfirm').addEventListener('click', async () => {
   const breakMin = parseInt(document.getElementById('editBreak').value) || 0;
   const memo = document.getElementById('editMemo').value.trim();
   if (!date || !start || !end) return alert('필수 항목을 입력해주세요');
-  const r = calcPay(start, end, breakMin);
-  const origRecord = records.find(r => r.id === editingId.id);
-  const updated = { date, start, end, breakMin, breaks: origRecord?.breaks || [], memo, workMin: r.workMin, gross: r.gross, net: r.net };
+  const origRecord = records.find(rec => rec.id === editingId.id);
+  const r = calcPay(start, end, breakMin, origRecord?.extraMin || 0);
+  const updated = { date, start, end, breakMin, breaks: origRecord?.breaks || [], extras: origRecord?.extras || [], extraMin: origRecord?.extraMin || 0, memo, workMin: r.workMin, gross: r.gross, net: r.net };
   try {
-    await updateDoc(doc(db, `users/${editingId.ownerUid}/workRecords`, editingId.id), updated);
+    await updateDoc(doc(db, `users/${editingId.ownerUid}/workRecords`, editingId.id), { ...updated, disputeApproved: false });
     const idx = records.findIndex(r => r.id === editingId.id);
-    if (idx >= 0) records[idx] = { ...records[idx], ...updated };
+    if (idx >= 0) records[idx] = { ...records[idx], ...updated, disputeApproved: false };
     document.getElementById('editModal').classList.remove('show');
     renderRecords(); renderStats();
   } catch(e) { alert('수정 실패'); }
@@ -1263,14 +1543,14 @@ function renderRecords() {
     return;
   }
 
-  const canEdit = (r) => isAdmin || r.ownerUid === currentUser.uid;
-
   container.innerHTML = list.map(r => {
     const d = new Date(r.date);
     const dayName = DAYS[d.getDay()];
     const isHoliday = HOLIDAYS.includes(dayName);
     const wh = Math.floor(r.workMin/60), wm = r.workMin%60;
     const pay = taxEnabled ? r.net : r.gross;
+    // 이 기록에 대한 이의제기 여부
+    const myDispute = myDisputes.find(dd => dd.recordId === r.id);
     return `<div class="record-item">
       <div class="left">
         ${r.ownerName ? `<div class="staff-name">👤 ${r.ownerName}</div>` : ''}
@@ -1278,14 +1558,19 @@ function renderRecords() {
         <div class="times">${r.start}<span>→</span>${r.end}</div>
         <div class="detail">${r.breaks&&r.breaks.length ? r.breaks.map(b=>b.start+'~'+b.end).join(', ') : (r.breakMin ? '휴식 '+r.breakMin+'분' : '휴식없음')}${r.memo?' · '+r.memo:''}</div>
         ${r.extras&&r.extras.length ? `<div class="record-extra">➕ ${r.extras.map(e=>(e.reason||'추가근무')+' '+e.start+'~'+e.end).join(' · ')}</div>` : ''}
+        ${myDispute ? `<div class="dispute-status ${myDispute.status}">${myDispute.status==='pending'?'⏳ 이의제기 검토중':myDispute.status==='approved'?'✅ 승인됨':'❌ 반려: '+myDispute.rejectReason}</div>` : ''}
       </div>
       <div class="right">
         <div class="pay">₩${pay.toLocaleString()}</div>
         <div class="hours">${wh}시간${wm?' '+wm+'분':''} 근무</div>
-        ${canEdit(r) ? `<div class="actions">
-          <button class="btn-edit" onclick='editById("${r.id}","${r.ownerUid}")'>수정</button>
-          <button onclick='delRecord("${r.id}","${r.ownerUid}")'>삭제</button>
-        </div>` : ''}
+        <div class="actions">
+          ${isAdmin ? `
+            <button class="btn-edit" onclick='editById("${r.id}","${r.ownerUid}")'>수정</button>
+            <button onclick='delRecord("${r.id}","${r.ownerUid}")'>삭제</button>
+          ` : (!myDispute || myDispute.status==='rejected') ? `
+            <button class="dispute-btn" onclick='openDisputeModal("${r.id}","${r.ownerUid}","${r.date}","${r.start}","${r.end}")'>이의제기</button>
+          ` : ''}
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -1293,7 +1578,9 @@ function renderRecords() {
 
 window.editById = (id, ownerUid) => {
   const r = records.find(r => r.id === id && r.ownerUid === ownerUid);
-  if (r) openEditModal(r);
+  if (!r) return;
+  if (!isAdmin && !r.disputeApproved) return alert('수정 권한이 없어요. 이의제기를 신청해주세요.');
+  openEditModal(r);
 };
 window.delRecord = (id, ownerUid) => deleteRecord(id, ownerUid);
 
