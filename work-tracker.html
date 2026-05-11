@@ -491,6 +491,25 @@ body {
 }
 .btn-add-staff:hover { background:rgba(107,181,255,.15); }
 
+/* ── 휴무 ── */
+.cal-cell.dayoff { background:rgba(255,107,107,.06); border-color:rgba(255,107,107,.25); }
+.cal-cell.dayoff .c-date { color:var(--accent2); }
+.cal-cell.dayoff .c-dayoff { font-size:10px; color:var(--accent2); margin-top:2px; }
+.record-item.dayoff-item { border-color:rgba(255,107,107,.3); background:rgba(255,107,107,.04); }
+.dayoff-badge {
+  display:inline-block; font-size:10px; font-weight:700;
+  padding:2px 8px; border-radius:10px;
+  background:rgba(255,107,107,.15); color:var(--accent2);
+  border:1px solid rgba(255,107,107,.3);
+}
+.btn-dayoff {
+  padding:4px 10px; border-radius:6px; font-size:11px;
+  border:1px solid rgba(255,107,107,.4); background:rgba(255,107,107,.08);
+  color:var(--accent2); cursor:pointer; transition:var(--tr);
+}
+.btn-dayoff:hover { background:rgba(255,107,107,.18); }
+.btn-dayoff.cancel { border-color:var(--border); background:var(--surface2); color:var(--text3); }
+
 /* ── 탭 ── */
 .tabs { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; z-index:100; }
 .tab { flex:1; padding:12px 8px 16px; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; transition:var(--tr); border:none; background:none; color:var(--text3); }
@@ -636,7 +655,10 @@ body {
 
     <div class="records-header">
       <h2>📋 근무 기록</h2>
-      <span id="recordCount">0건</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="recordCount">0건</span>
+        <button class="btn-dayoff" id="addDayoffBtn" style="display:none">+ 휴무 등록</button>
+      </div>
     </div>
     <div id="recordList"></div>
   </div>
@@ -704,6 +726,21 @@ body {
   <button class="tab admin-only" data-page="manage" style="display:none"><div class="icon">👥</div><div class="label">직원관리</div><div id="disputeBadge" style="display:none;background:var(--accent2);color:#fff;font-size:9px;border-radius:10px;padding:1px 5px;margin-top:-2px"></div></button>
 </div>
 
+<!-- 휴무 등록 모달 -->
+<div class="modal-overlay" id="dayoffModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>🏖️ 휴무 등록</h3>
+    <div class="form-group"><label>날짜</label><input type="date" id="dayoffDate"></div>
+    <div class="form-group"><label>메모 (선택)</label><input type="text" id="dayoffMemo" placeholder="예: 개인 사유, 공휴일 등"></div>
+    <div style="font-size:12px;color:var(--text3);margin-top:-6px;margin-bottom:4px">달력과 기록에 휴무로 표시돼요</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="dayoffCancel">취소</button>
+      <button class="btn-confirm" id="dayoffConfirm">등록</button>
+    </div>
+  </div>
+</div>
+
 <!-- 시급 모달 -->
 <div class="modal-overlay" id="wageModal">
   <div class="modal">
@@ -720,7 +757,7 @@ body {
 
 <!-- 수정 모달 -->
 <div class="modal-overlay" id="editModal">
-  <div class="modal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto">
     <div class="modal-handle"></div>
     <h3>✏️ 기록 수정</h3>
     <div class="form-group"><label>날짜</label><input type="date" id="editDate"></div>
@@ -728,11 +765,29 @@ body {
       <div class="form-group"><label>출근</label><input type="time" id="editStart"></div>
       <div class="form-group"><label>퇴근</label><input type="time" id="editEnd"></div>
     </div>
-    <div class="form-group">
-      <label>휴식시간 (분)</label>
-      <input type="number" id="editBreak" min="0" step="10">
-      <div id="editBreakList" style="margin-top:6px"></div>
+
+    <!-- 휴식시간 -->
+    <div class="break-section">
+      <span class="break-label">휴식시간</span>
+      <div class="break-list" id="editBreakList"></div>
+      <button class="btn-add-break" id="editAddBreakBtn">+ 휴식 추가</button>
+      <div class="break-total" id="editBreakTotal"></div>
     </div>
+
+    <!-- 추가근무 -->
+    <div class="extra-section">
+      <span class="extra-label">추가근무 (시간대 + 사유)</span>
+      <div class="extra-list" id="editExtraList"></div>
+      <button class="btn-add-extra" id="editAddExtraBtn">+ 추가근무 입력</button>
+      <div class="extra-total" id="editExtraTotal"></div>
+    </div>
+
+    <!-- 예상 급여 미리보기 -->
+    <div class="calc-preview" style="margin-bottom:14px">
+      <div class="left"><span>수정 후 급여</span><strong id="editPreviewPay">₩0</strong></div>
+      <div class="right" id="editPreviewDetail">-</div>
+    </div>
+
     <div class="form-group"><label>메모</label><input type="text" id="editMemo"></div>
     <div class="modal-btns">
       <button class="btn-cancel" id="editCancel">취소</button>
@@ -855,6 +910,9 @@ let taxEnabled = false;
 let lightMode = false;
 let editingId = null;
 let extras = []; // [{start:'', end:'', reason:''}]
+let editBreaks = [];
+let editExtras = [];
+let dayoffs = []; // [{id, date, memo, ownerUid}]
 let myDisputes = []; // 직원 본인의 이의제기 목록
 let allDisputes = []; // 관리자용 전체 이의제기
 let disputingRecord = null; // 현재 이의제기 대상 기록
@@ -953,6 +1011,7 @@ onAuthStateChanged(auth, async user => {
     document.getElementById('staffSelector').classList.add('show');
     document.getElementById('wageBanner').style.cursor = 'pointer';
     document.getElementById('wageEditBtn').style.display = 'block';
+    document.getElementById('addDayoffBtn').style.display = 'inline-flex';
     loadAllStaff();
     loadAllDisputes();
     setTimeout(toggleAddForm, 100);
@@ -1513,6 +1572,35 @@ function updatePreview() {
 document.getElementById('startTime').addEventListener('input', updatePreview);
 document.getElementById('endTime').addEventListener('input', updatePreview);
 
+// ── 휴무 등록 ──
+document.getElementById('addDayoffBtn').addEventListener('click', () => {
+  const now = new Date();
+  document.getElementById('dayoffDate').value = now.toISOString().split('T')[0];
+  document.getElementById('dayoffMemo').value = '';
+  document.getElementById('dayoffModal').classList.add('show');
+});
+document.getElementById('dayoffCancel').addEventListener('click', () => document.getElementById('dayoffModal').classList.remove('show'));
+document.getElementById('dayoffConfirm').addEventListener('click', async () => {
+  const date = document.getElementById('dayoffDate').value;
+  const memo = document.getElementById('dayoffMemo').value.trim();
+  if (!date) return alert('날짜를 선택해주세요');
+  // 이미 근무기록 있으면 경고
+  const hasRecord = records.some(r => r.date === date && !r.isDayoff);
+  if (hasRecord && !confirm('이 날짜에 이미 근무 기록이 있어요. 그래도 휴무로 등록할까요?')) return;
+  const targetUid = (isAdmin && selectedStaffUid) ? selectedStaffUid : currentUser.uid;
+  try {
+    const ref = await addDoc(collection(db, `users/${targetUid}/workRecords`), {
+      date, memo, isDayoff: true, ownerUid: targetUid,
+      workMin:0, gross:0, net:0, breakMin:0, extraMin:0,
+      breaks:[], extras:[], start:'', end:'',
+      createdAt: new Date().toISOString()
+    });
+    records.unshift({ id: ref.id, ownerUid: targetUid, date, memo, isDayoff: true, workMin:0, gross:0, net:0, breakMin:0, extraMin:0, breaks:[], extras:[], start:'', end:'' });
+    document.getElementById('dayoffModal').classList.remove('show');
+    renderRecords(); renderStats(); renderWeekSummary();
+  } catch(e) { alert('저장 실패: ' + e.message); }
+});
+
 // ── Records 로드 ──
 async function loadRecords() {
   setSyncStatus('syncing', '동기화 중...');
@@ -1582,31 +1670,124 @@ async function deleteRecord(id, ownerUid) {
 }
 
 // ── 수정 모달 ──
-document.getElementById('editCancel').addEventListener('click', () => document.getElementById('editModal').classList.remove('show'));
+document.getElementById('editCancel').addEventListener('click', () => {
+  document.getElementById('editModal').classList.remove('show');
+});
+
+function renderEditBreaks() {
+  const list = document.getElementById('editBreakList');
+  if (!editBreaks.length) { list.innerHTML = ''; updateEditBreakTotal(); return; }
+  list.innerHTML = editBreaks.map((b, i) => `
+    <div class="break-row">
+      <input type="time" value="${b.start}" onchange="updateEditBreak(${i},'start',this.value)">
+      <input type="time" value="${b.end}" onchange="updateEditBreak(${i},'end',this.value)">
+      <button class="del-break" onclick="removeEditBreak(${i})">✕</button>
+    </div>
+  `).join('');
+  updateEditBreakTotal();
+  updateEditPreview();
+}
+window.updateEditBreak = (i,k,v) => { editBreaks[i][k]=v; updateEditBreakTotal(); updateEditPreview(); };
+window.removeEditBreak = (i) => { if(!confirm('이 휴식 기록을 삭제할까요?')) return; editBreaks.splice(i,1); renderEditBreaks(); };
+
+function calcEditBreakTotal() {
+  return editBreaks.reduce((sum,b) => {
+    if (!b.start||!b.end) return sum;
+    const [sh,sm]=b.start.split(':').map(Number);
+    const [eh,em]=b.end.split(':').map(Number);
+    let d=(eh*60+em)-(sh*60+sm); if(d<0)d+=24*60;
+    return sum+d;
+  },0);
+}
+function updateEditBreakTotal() {
+  const t=calcEditBreakTotal(), el=document.getElementById('editBreakTotal');
+  const h=Math.floor(t/60),m=t%60;
+  el.textContent = t>0 ? `총 휴식 ${h?h+'시간 ':''}${m?m+'분':''}` : '';
+}
+
+function renderEditExtras() {
+  const list = document.getElementById('editExtraList');
+  if (!editExtras.length) { list.innerHTML=''; updateEditExtraTotal(); return; }
+  list.innerHTML = editExtras.map((e,i) => `
+    <div class="extra-row">
+      <input type="time" value="${e.start}" placeholder="시작" onchange="updateEditExtra(${i},'start',this.value)">
+      <input type="time" value="${e.end}" placeholder="종료" onchange="updateEditExtra(${i},'end',this.value)">
+      <input type="text" value="${e.reason}" placeholder="사유" onchange="updateEditExtra(${i},'reason',this.value)">
+      <button class="del-extra" onclick="removeEditExtra(${i})">✕</button>
+    </div>
+  `).join('');
+  updateEditExtraTotal();
+}
+window.updateEditExtra = (i,k,v) => { editExtras[i][k]=v; updateEditExtraTotal(); updateEditPreview(); };
+window.removeEditExtra = (i) => { if(!confirm('이 추가근무 기록을 삭제할까요?')) return; editExtras.splice(i,1); renderEditExtras(); };
+
+function calcEditExtraTotal() {
+  return editExtras.reduce((sum,e) => {
+    if (!e.start||!e.end) return sum;
+    const [sh,sm]=e.start.split(':').map(Number);
+    const [eh,em]=e.end.split(':').map(Number);
+    let d=(eh*60+em)-(sh*60+sm); if(d<0)d+=24*60;
+    return sum+d;
+  },0);
+}
+function updateEditExtraTotal() {
+  const t=calcEditExtraTotal(), el=document.getElementById('editExtraTotal');
+  const h=Math.floor(t/60),m=t%60;
+  el.textContent = t>0 ? `추가근무 합계 +${h?h+'시간 ':''}${m?m+'분':''}` : '';
+}
+
+function updateEditPreview() {
+  const s=document.getElementById('editStart').value;
+  const e=document.getElementById('editEnd').value;
+  if (!s||!e) return;
+  const bMin=calcEditBreakTotal(), eMin=calcEditExtraTotal();
+  const r=calcPay(s,e,bMin,eMin);
+  const h=Math.floor(r.workMin/60),m=r.workMin%60;
+  document.getElementById('editPreviewPay').textContent=`₩${r.net.toLocaleString()}`;
+  const bh=Math.floor(bMin/60),bm=bMin%60,eh=Math.floor(eMin/60),em=eMin%60;
+  const bStr=bMin>0?` · 휴식 ${bh?bh+'시간 ':''}${bm?bm+'분':''}` :'';
+  const eStr=eMin>0?` · 추가 +${eh?eh+'시간 ':''}${em?em+'분':''}` :'';
+  document.getElementById('editPreviewDetail').textContent=`${h}시간${m?' '+m+'분':''}${bStr}${eStr}`;
+}
+
+document.getElementById('editAddBreakBtn').addEventListener('click', () => {
+  editBreaks.push({start:'',end:''}); renderEditBreaks();
+});
+document.getElementById('editAddExtraBtn').addEventListener('click', () => {
+  editExtras.push({start:'',end:'',reason:''}); renderEditExtras();
+});
+document.getElementById('editStart').addEventListener('input', updateEditPreview);
+document.getElementById('editEnd').addEventListener('input', updateEditPreview);
+
 function openEditModal(record) {
   editingId = { id: record.id, ownerUid: record.ownerUid };
   document.getElementById('editDate').value = record.date;
   document.getElementById('editStart').value = record.start;
   document.getElementById('editEnd').value = record.end;
-  document.getElementById('editBreak').value = record.breakMin;
   document.getElementById('editMemo').value = record.memo || '';
-  // 휴식 목록 렌더
-  const bl = document.getElementById('editBreakList');
-  if (bl && record.breaks && record.breaks.length) {
-    bl.innerHTML = record.breaks.map((b,i) => `<div style="font-size:12px;color:var(--text2);padding:2px 0">${b.start} ~ ${b.end}</div>`).join('');
-  } else if (bl) { bl.innerHTML = ''; }
+  // 기존 휴식/추가근무 불러오기
+  editBreaks = JSON.parse(JSON.stringify(record.breaks || []));
+  editExtras = JSON.parse(JSON.stringify(record.extras || []));
+  renderEditBreaks();
+  renderEditExtras();
+  updateEditPreview();
   document.getElementById('editModal').classList.add('show');
 }
 document.getElementById('editConfirm').addEventListener('click', async () => {
   const date = document.getElementById('editDate').value;
   const start = document.getElementById('editStart').value;
   const end = document.getElementById('editEnd').value;
-  const breakMin = parseInt(document.getElementById('editBreak').value) || 0;
   const memo = document.getElementById('editMemo').value.trim();
   if (!date || !start || !end) return alert('필수 항목을 입력해주세요');
-  const origRecord = records.find(rec => rec.id === editingId.id);
-  const r = calcPay(start, end, breakMin, origRecord?.extraMin || 0);
-  const updated = { date, start, end, breakMin, breaks: origRecord?.breaks || [], extras: origRecord?.extras || [], extraMin: origRecord?.extraMin || 0, memo, workMin: r.workMin, gross: r.gross, net: r.net };
+  const breakMin = calcEditBreakTotal();
+  const extraMin = calcEditExtraTotal();
+  const r = calcPay(start, end, breakMin, extraMin);
+  const updated = {
+    date, start, end,
+    breakMin, breaks: JSON.parse(JSON.stringify(editBreaks)),
+    extraMin, extras: JSON.parse(JSON.stringify(editExtras)),
+    memo, workMin: r.workMin, gross: r.gross, net: r.net
+  };
   try {
     await updateDoc(doc(db, `users/${editingId.ownerUid}/workRecords`, editingId.id), { ...updated, disputeApproved: false });
     const idx = records.findIndex(r => r.id === editingId.id);
@@ -1627,10 +1808,11 @@ function getMonthRecords() {
 function renderRecords() {
   const list = getMonthRecords();
   const container = document.getElementById('recordList');
-  const totalPay = list.reduce((s,r) => s + (taxEnabled ? r.net : r.gross), 0);
-  const totalMin = list.reduce((s,r) => s + r.workMin, 0);
-  const totalBreakMin = list.reduce((s,r) => s + r.breakMin, 0);
-  const days = list.length;
+  const workList = list.filter(r => !r.isDayoff);
+  const totalPay = workList.reduce((s,r) => s + (taxEnabled ? r.net : r.gross), 0);
+  const totalMin = workList.reduce((s,r) => s + r.workMin, 0);
+  const totalBreakMin = workList.reduce((s,r) => s + r.breakMin, 0);
+  const days = workList.length;
   const h = Math.floor(totalMin/60), m = totalMin%60;
   const avgMin = days ? Math.round(totalMin/days) : 0;
   const ah = Math.floor(avgMin/60), am = avgMin%60;
@@ -1653,8 +1835,25 @@ function renderRecords() {
     const isHoliday = HOLIDAYS.includes(dayName);
     const wh = Math.floor(r.workMin/60), wm = r.workMin%60;
     const pay = taxEnabled ? r.net : r.gross;
-    // 이 기록에 대한 이의제기 여부
     const myDispute = myDisputes.find(dd => dd.recordId === r.id);
+
+    // 휴무일
+    if (r.isDayoff) {
+      return `<div class="record-item dayoff-item">
+        <div class="left">
+          ${r.ownerName ? `<div class="staff-name">👤 ${r.ownerName}</div>` : ''}
+          <div class="date">${r.date.replace(/-/g,'.')}<span class="day-name ${isHoliday?'holiday':''}">${dayName}</span></div>
+          <div style="margin-top:4px"><span class="dayoff-badge">🏖️ 휴무</span></div>
+          ${r.memo ? `<div class="detail" style="margin-top:4px">${r.memo}</div>` : ''}
+        </div>
+        <div class="right">
+          <div class="actions">
+            ${isAdmin ? `<button onclick='delRecord("${r.id}","${r.ownerUid}")'>삭제</button>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }
+
     return `<div class="record-item">
       <div class="left">
         ${r.ownerName ? `<div class="staff-name">👤 ${r.ownerName}</div>` : ''}
@@ -1690,10 +1889,11 @@ window.delRecord = (id, ownerUid) => deleteRecord(id, ownerUid);
 
 function renderStats() {
   const list = getMonthRecords();
-  const totalGross = list.reduce((s,r) => s+r.gross, 0);
-  const totalNet = list.reduce((s,r) => s+r.net, 0);
+  const workOnly = list.filter(r => !r.isDayoff);
+  const totalGross = workOnly.reduce((s,r) => s+r.gross, 0);
+  const totalNet = workOnly.reduce((s,r) => s+r.net, 0);
   document.getElementById('statsTotalPay').textContent = `₩${totalGross.toLocaleString()}`;
-  document.getElementById('statsWorkDays').textContent = `${list.length}일`;
+  document.getElementById('statsWorkDays').textContent = `${workOnly.length}일`;
   document.getElementById('statsGross').textContent = `₩${totalGross.toLocaleString()}`;
   document.getElementById('statsTax').textContent = `-₩${(totalGross-totalNet).toLocaleString()}`;
   document.getElementById('statsNet').textContent = `₩${(taxEnabled?totalNet:totalGross).toLocaleString()}`;
@@ -1707,7 +1907,8 @@ function renderCalendar(list) {
   // 날짜별 기록 맵
   const dayMap = {};
   list.forEach(r => {
-    if (!dayMap[r.date]) dayMap[r.date] = { workMin:0, gross:0, net:0 };
+    if (!dayMap[r.date]) dayMap[r.date] = { workMin:0, gross:0, net:0, isDayoff:false };
+    if (r.isDayoff) { dayMap[r.date].isDayoff = true; return; }
     dayMap[r.date].workMin += r.workMin;
     dayMap[r.date].gross += r.gross;
     dayMap[r.date].net += r.net;
@@ -1731,14 +1932,16 @@ function renderCalendar(list) {
       'cal-cell',
       dow===0?'sun':'', dow===6?'sat':'',
       isToday?'today':'',
-      rec?'has-record':''
+      rec&&rec.isDayoff?'dayoff':'',
+      rec&&!rec.isDayoff&&rec.workMin>0?'has-record':''
     ].filter(Boolean).join(' ');
     const h = rec ? Math.floor(rec.workMin/60) : 0;
     const m = rec ? rec.workMin%60 : 0;
     const pay = rec ? (taxEnabled ? rec.net : rec.gross) : 0;
     html += `<div class="${classes}">
       <div class="c-date">${d}</div>
-      ${rec ? `<div class="c-hours">${h}h${m?m+'m':''}</div><div class="c-pay">₩${Math.round(pay/1000)}k</div>` : ''}
+      ${rec&&rec.isDayoff ? `<div class="c-dayoff">휴무</div>` :
+        rec&&rec.workMin>0 ? `<div class="c-hours">${h}h${m?m+'m':''}</div><div class="c-pay">₩${Math.round(pay/1000)}k</div>` : ''}
     </div>`;
   }
   grid.innerHTML = html;
