@@ -537,6 +537,60 @@ body {
 .btn-dayoff:hover { background:rgba(255,107,107,.18); }
 .btn-dayoff.cancel { border-color:var(--border); background:var(--surface2); color:var(--text3); }
 
+/* ── 주별 접기/펼치기 ── */
+.week-group { margin-bottom:10px; }
+.week-group-header {
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:12px 16px; cursor:pointer;
+  transition:var(--tr); user-select:none;
+}
+.week-group-header:hover { border-color:var(--accent); }
+.week-group-header.open { border-radius:12px 12px 0 0; border-bottom-color:transparent; }
+.week-group-header .wg-left { display:flex; flex-direction:column; gap:3px; }
+.week-group-header .wg-title { font-size:13px; font-weight:700; }
+.week-group-header .wg-sub { font-size:11px; color:var(--text3); }
+.week-group-header .wg-right { display:flex; align-items:center; gap:10px; }
+.week-group-header .wg-pay { font-family:'Gmarket Sans',sans-serif; font-size:15px; font-weight:700; color:var(--accent); }
+.week-group-header .wg-arrow { font-size:12px; color:var(--text3); transition:transform .2s; }
+.week-group-header.open .wg-arrow { transform:rotate(180deg); }
+.week-group-body {
+  display:none; border:1px solid var(--border);
+  border-top:none; border-radius:0 0 12px 12px;
+  overflow:hidden;
+}
+.week-group-body.open { display:block; }
+.week-group-body .record-item { border-radius:0; border-left:none; border-right:none; border-top:none; margin-bottom:0; }
+.week-group-body .record-item:last-child { border-bottom:none; }
+
+/* ── 목표 급여 카드 ── */
+.goal-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px; margin-bottom:20px;
+}
+.goal-card .goal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.goal-card .goal-title { font-size:13px; font-weight:700; }
+.goal-card .goal-edit { font-size:11px; color:var(--text3); cursor:pointer; padding:3px 8px; border:1px solid var(--border); border-radius:6px; background:var(--surface2); }
+.goal-progress-wrap { background:var(--surface2); border-radius:6px; height:8px; overflow:hidden; margin-bottom:10px; }
+.goal-progress-bar { height:100%; border-radius:6px; background:var(--accent); transition:width .6s ease; }
+.goal-progress-bar.danger { background:var(--accent2); }
+.goal-progress-bar.warning { background:var(--accent4); }
+.goal-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.goal-stat { text-align:center; }
+.goal-stat .gs-label { font-size:10px; color:var(--text3); margin-bottom:2px; }
+.goal-stat .gs-value { font-family:'Gmarket Sans',sans-serif; font-size:13px; font-weight:700; }
+
+/* ── 달력 날짜 클릭 상세 ── */
+.cal-detail {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px; margin-bottom:16px;
+  animation:fadeUp .2s ease;
+}
+.cal-detail .cd-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.cal-detail .cd-date { font-size:14px; font-weight:700; }
+.cal-detail .cd-close { font-size:18px; color:var(--text3); cursor:pointer; line-height:1; }
+.cal-cell.selected { border-color:var(--accent) !important; background:rgba(200,240,74,.1) !important; }
+
 /* ── 탭 ── */
 .tabs {
   position:fixed; bottom:0; left:0; right:0;
@@ -620,6 +674,21 @@ body {
     <div class="staff-selector" id="staffSelector">
       <label>직원 선택</label>
       <div class="staff-tabs" id="staffTabs"></div>
+    </div>
+
+    <!-- 목표 급여 카드 -->
+    <div class="goal-card" id="goalCard" style="display:none">
+      <div class="goal-header">
+        <div class="goal-title">🎯 이번 달 목표</div>
+        <div class="goal-edit" id="goalEditBtn">설정</div>
+      </div>
+      <div class="goal-progress-wrap"><div class="goal-progress-bar" id="goalBar" style="width:0%"></div></div>
+      <div class="goal-stats">
+        <div class="goal-stat"><div class="gs-label">달성</div><div class="gs-value" id="goalCurrent">₩0</div></div>
+        <div class="goal-stat"><div class="gs-label">목표</div><div class="gs-value" style="color:var(--text2)" id="goalTarget">₩0</div></div>
+        <div class="goal-stat"><div class="gs-label">부족</div><div class="gs-value" id="goalRemain" style="color:var(--accent2)">₩0</div></div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text3);text-align:center" id="goalTimeRemain"></div>
     </div>
 
     <!-- 이번 주 요약 -->
@@ -724,6 +793,15 @@ body {
     <!-- 달력 -->
     <div class="cal-grid" id="calGrid"></div>
 
+    <!-- 날짜 클릭 상세 -->
+    <div class="cal-detail" id="calDetail" style="display:none">
+      <div class="cd-header">
+        <div class="cd-date" id="calDetailDate"></div>
+        <div class="cd-close" id="calDetailClose">✕</div>
+      </div>
+      <div id="calDetailBody"></div>
+    </div>
+
     <!-- 수입 현황 -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:20px">
       <h2 style="font-size:14px;font-weight:700;margin-bottom:14px">수입 현황</h2>
@@ -785,6 +863,20 @@ body {
     <div class="modal-btns">
       <button class="btn-cancel" id="dayoffCancel">취소</button>
       <button class="btn-confirm" id="dayoffConfirm">등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- 목표 급여 모달 -->
+<div class="modal-overlay" id="goalModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>🎯 월 목표 급여 설정</h3>
+    <div class="form-group"><label>목표 금액 (원)</label><input type="number" id="goalInput" placeholder="예: 2200000" min="0" step="10000"></div>
+    <div style="font-size:12px;color:var(--text3);margin-top:-6px;margin-bottom:4px">0 입력 시 목표 카드가 숨겨져요</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="goalCancel">취소</button>
+      <button class="btn-confirm" id="goalConfirm">저장</button>
     </div>
   </div>
 </div>
@@ -957,10 +1049,12 @@ let hourlyWage = 10030;
 let taxEnabled = false;
 let lightMode = false;
 let editingId = null;
-let extras = []; // [{start:'', end:'', reason:''}]
+let extras = [];
 let editBreaks = [];
 let editExtras = [];
-let dayoffs = []; // [{id, date, memo, ownerUid}]
+let dayoffs = [];
+let monthlyGoal = 0;
+let openWeekGroups = new Set(); // 펼쳐진 주차
 let myDisputes = []; // 직원 본인의 이의제기 목록
 let allDisputes = []; // 관리자용 전체 이의제기
 let disputingRecord = null; // 현재 이의제기 대상 기록
@@ -1131,6 +1225,7 @@ function renderStaffTabs() {
   tabs.querySelectorAll('.staff-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       selectedStaffUid = tab.dataset.uid === 'all' ? null : tab.dataset.uid;
+      openWeekGroups = new Set();
       renderStaffTabs();
       loadRecords();
       toggleAddForm();
@@ -1221,6 +1316,10 @@ document.getElementById('disputeConfirm').addEventListener('click', async () => 
 
 // ── 반려 모달 (관리자) ──
 document.getElementById('rejectCancel').addEventListener('click', () => document.getElementById('rejectModal').classList.remove('show'));
+document.getElementById('calDetailClose').addEventListener('click', () => {
+  document.getElementById('calDetail').style.display = 'none';
+  document.querySelectorAll('.cal-cell.selected').forEach(c => c.classList.remove('selected'));
+});
 document.getElementById('rejectConfirm').addEventListener('click', async () => {
   const reason = document.getElementById('rejectReason').value.trim();
   if (!reason) return alert('반려 사유를 입력해주세요');
@@ -1413,6 +1512,70 @@ document.getElementById('taxToggle').addEventListener('click', () => {
   taxEnabled = !taxEnabled;
   saveSettings(); applySettings();
 });
+
+// ── 목표 급여 ──
+document.getElementById('goalEditBtn').addEventListener('click', () => {
+  document.getElementById('goalInput').value = monthlyGoal || '';
+  document.getElementById('goalModal').classList.add('show');
+});
+document.getElementById('goalCancel').addEventListener('click', () => document.getElementById('goalModal').classList.remove('show'));
+document.getElementById('goalConfirm').addEventListener('click', async () => {
+  const v = parseInt(document.getElementById('goalInput').value) || 0;
+  monthlyGoal = v;
+  // staff 문서에 목표 저장 (관리자가 직원별로 설정)
+  const targetUid = (isAdmin && selectedStaffUid) ? selectedStaffUid : currentUser.uid;
+  try {
+    await setDoc(doc(db, 'staff', targetUid === currentUser.uid ? currentUser.uid : selectedStaffUid), 
+      { monthlyGoal: v }, { merge: true });
+  } catch(e) {}
+  document.getElementById('goalModal').classList.remove('show');
+  renderGoalCard();
+});
+
+async function loadGoal() {
+  try {
+    const targetUid = (isAdmin && selectedStaffUid) ? selectedStaffUid : currentUser.uid;
+    const snap = await getDoc(doc(db, 'staff', targetUid));
+    if (snap.exists() && snap.data().monthlyGoal) {
+      monthlyGoal = snap.data().monthlyGoal;
+    } else { monthlyGoal = 0; }
+  } catch(e) { monthlyGoal = 0; }
+  renderGoalCard();
+}
+
+function renderGoalCard() {
+  const card = document.getElementById('goalCard');
+  // 관리자이고 특정 직원 선택 or 직원 본인
+  const show = isAdmin ? !!selectedStaffUid : true;
+  if (!show) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  const list = getMonthRecords().filter(r => !r.isDayoff);
+  const earned = list.reduce((s,r) => s + (taxEnabled ? r.net : r.gross), 0);
+  const remain = Math.max(0, monthlyGoal - earned);
+  const pct = monthlyGoal > 0 ? Math.min(100, Math.round(earned / monthlyGoal * 100)) : 0;
+
+  document.getElementById('goalCurrent').textContent = `₩${earned.toLocaleString()}`;
+  document.getElementById('goalTarget').textContent = monthlyGoal > 0 ? `₩${monthlyGoal.toLocaleString()}` : '미설정';
+  document.getElementById('goalRemain').textContent = remain > 0 ? `-₩${remain.toLocaleString()}` : '달성! 🎉';
+  document.getElementById('goalRemain').style.color = remain > 0 ? 'var(--accent2)' : 'var(--accent)';
+
+  const bar = document.getElementById('goalBar');
+  bar.style.width = pct + '%';
+  bar.className = 'goal-progress-bar' + (pct < 30 ? ' danger' : pct < 70 ? ' warning' : '');
+
+  // 부족 시간 계산
+  if (monthlyGoal > 0 && remain > 0) {
+    const needHours = (remain / hourlyWage).toFixed(1);
+    document.getElementById('goalTimeRemain').textContent = `목표까지 약 ${needHours}시간 더 필요해요`;
+  } else if (monthlyGoal > 0) {
+    document.getElementById('goalTimeRemain').textContent = `${pct}% 달성 🎉`;
+  } else {
+    document.getElementById('goalTimeRemain').textContent = '목표를 설정하면 달성률을 확인할 수 있어요';
+  }
+
+  document.getElementById('goalEditBtn').textContent = monthlyGoal > 0 ? '수정' : '설정';
+}
 
 // ── Wage modal ──
 function openWageModal() {
@@ -1667,6 +1830,7 @@ async function loadRecords() {
   setSyncStatus('online', '실시간 연동 중');
   renderRecords();
   renderStats();
+  await loadGoal();
 }
 
 // ── 기록 추가 ──
@@ -1844,6 +2008,12 @@ function getMonthRecords() {
   });
 }
 
+function getWeekNumber(dateStr) {
+  const d = new Date(dateStr);
+  const firstDay = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
+  return Math.ceil((d.getDate() + firstDay) / 7);
+}
+
 function renderRecords() {
   const list = getMonthRecords();
   const container = document.getElementById('recordList');
@@ -1863,12 +2033,123 @@ function renderRecords() {
   document.getElementById('totalBreak').textContent = `${totalBreakMin}분`;
   document.getElementById('recordCount').textContent = `${days}건`;
 
+  renderGoalCard();
+
   if (!list.length) {
     container.innerHTML = `<div class="empty-state"><div class="emoji">📝</div><p>이달 기록이 없어요</p></div>`;
     return;
   }
 
-  container.innerHTML = list.map(r => {
+  // 이번 주 자동 열기
+  const todayWeek = getWeekNumber(new Date().toISOString().split('T')[0]);
+  const todayMonth = new Date().getMonth();
+  if (currentMonth === todayMonth && openWeekGroups.size === 0) {
+    openWeekGroups.add(todayWeek);
+  }
+
+  // 주별로 그룹화
+  const weekGroups = {};
+  list.forEach(r => {
+    const wk = getWeekNumber(r.date);
+    if (!weekGroups[wk]) weekGroups[wk] = [];
+    weekGroups[wk].push(r);
+  });
+
+  const weekKeys = Object.keys(weekGroups).sort((a,b) => b-a);
+  container.innerHTML = weekKeys.map(wk => {
+    const wkList = weekGroups[wk];
+    const wkWork = wkList.filter(r => !r.isDayoff);
+    const wkPay = wkWork.reduce((s,r) => s+(taxEnabled?r.net:r.gross), 0);
+    const wkMin = wkWork.reduce((s,r) => s+r.workMin, 0);
+    const wkH = Math.floor(wkMin/60), wkM = wkMin%60;
+    const wkDays = wkWork.length;
+    const isOpen = openWeekGroups.has(parseInt(wk));
+    // 날짜 범위
+    const dates = wkList.map(r => r.date).sort();
+    const rangeStart = dates[0]?.slice(5).replace('-','/');
+    const rangeEnd = dates[dates.length-1]?.slice(5).replace('-','/');
+    const range = rangeStart === rangeEnd ? rangeStart : `${rangeStart}~${rangeEnd}`;
+
+    const recordsHtml = wkList.map(r => renderRecordItem(r)).join('');
+
+    return `<div class="week-group">
+      <div class="week-group-header ${isOpen?'open':''}" onclick="toggleWeekGroup(${wk})">
+        <div class="wg-left">
+          <div class="wg-title">${wk}주차</div>
+          <div class="wg-sub">${range} · ${wkDays}일 근무 · ${wkH}시간${wkM?wkM+'분':''}</div>
+        </div>
+        <div class="wg-right">
+          <div class="wg-pay">${wkPay>0?'₩'+wkPay.toLocaleString():''}</div>
+          <div class="wg-arrow">▼</div>
+        </div>
+      </div>
+      <div class="week-group-body ${isOpen?'open':''}" id="wg-body-${wk}">
+        ${recordsHtml}
+      </div>
+    </div>`;
+}
+
+window.toggleWeekGroup = (wk) => {
+  if (openWeekGroups.has(wk)) openWeekGroups.delete(wk);
+  else openWeekGroups.add(wk);
+  renderRecords();
+};
+
+function renderRecordItem(r) {
+  const dummy = document.createElement('div'); // 기존 map 로직 재활용
+  return renderSingleRecord(r);
+}
+
+function renderSingleRecord(r) {
+  const d = new Date(r.date);
+  const dayName = DAYS[d.getDay()];
+  const isHoliday = HOLIDAYS.includes(dayName);
+  const wh = Math.floor(r.workMin/60), wm = r.workMin%60;
+  const pay = taxEnabled ? r.net : r.gross;
+  const myDispute = myDisputes.find(dd => dd.recordId === r.id);
+
+  if (r.isDayoff) {
+    return `<div class="record-item dayoff-item">
+      <div class="left">
+        ${r.ownerName ? `<div class="staff-name">👤 ${r.ownerName}</div>` : ''}
+        <div class="date">${r.date.replace(/-/g,'.')}<span class="day-name ${isHoliday?'holiday':''}">${dayName}</span></div>
+        <div style="margin-top:4px"><span class="dayoff-badge">🏖️ 휴무</span></div>
+        ${r.memo ? `<div class="detail" style="margin-top:4px">${r.memo}</div>` : ''}
+      </div>
+      <div class="right">
+        <div class="actions">
+          ${isAdmin ? `<button onclick='delRecord("${r.id}","${r.ownerUid}")'>삭제</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  return `<div class="record-item">
+    <div class="left">
+      ${r.ownerName ? `<div class="staff-name">👤 ${r.ownerName}</div>` : ''}
+      <div class="date">${r.date.replace(/-/g,'.')}<span class="day-name ${isHoliday?'holiday':''}">${dayName}</span></div>
+      <div class="times">${r.start}<span>→</span>${r.end}</div>
+      <div class="detail">${r.breaks&&r.breaks.length ? r.breaks.map(b=>b.start+'~'+b.end).join(', ') : (r.breakMin ? '휴식 '+r.breakMin+'분' : '휴식없음')}${r.memo?' · '+r.memo:''}</div>
+      ${r.extras&&r.extras.length ? `<div class="record-extra">➕ ${r.extras.map(e=>(e.reason||'추가근무')+' '+e.start+'~'+e.end).join(' · ')}</div>` : ''}
+      ${myDispute ? `<div class="dispute-status ${myDispute.status}">${myDispute.status==='pending'?'⏳ 이의제기 검토중':myDispute.status==='approved'?'✅ 승인됨':'❌ 반려: '+myDispute.rejectReason}</div>` : ''}
+    </div>
+    <div class="right">
+      <div class="pay">₩${pay.toLocaleString()}</div>
+      <div class="hours">${wh}시간${wm?' '+wm+'분':''} 근무</div>
+      <div class="actions">
+        ${isAdmin ? `
+          <button class="btn-edit" onclick='editById("${r.id}","${r.ownerUid}")'>수정</button>
+          <button onclick='delRecord("${r.id}","${r.ownerUid}")'>삭제</button>
+        ` : (!myDispute || myDispute.status==='rejected') ? `
+          <button class="dispute-btn" onclick='openDisputeModal("${r.id}","${r.ownerUid}","${r.date}","${r.start}","${r.end}")'>이의제기</button>
+        ` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+// 기존 map 코드 제거 (아래 dummy로 대체)
+const _dummyList = []; _dummyList.map(r => {
     const d = new Date(r.date);
     const dayName = DAYS[d.getDay()];
     const isHoliday = HOLIDAYS.includes(dayName);
@@ -1984,6 +2265,40 @@ function renderCalendar(list) {
     </div>`;
   }
   grid.innerHTML = html;
+
+  // 날짜 클릭 이벤트
+  grid.querySelectorAll('.cal-cell:not(.empty)').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const dateNum = cell.querySelector('.c-date')?.textContent;
+      if (!dateNum) return;
+      const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(dateNum).padStart(2,'0')}`;
+      showCalDetail(dateStr, cell);
+    });
+  });
+}
+
+function showCalDetail(dateStr, cellEl) {
+  // 선택 표시
+  document.querySelectorAll('.cal-cell.selected').forEach(c => c.classList.remove('selected'));
+  if (cellEl) cellEl.classList.add('selected');
+
+  const dayRecords = records.filter(r => r.date === dateStr);
+  const detail = document.getElementById('calDetail');
+  const detailDate = document.getElementById('calDetailDate');
+  const detailBody = document.getElementById('calDetailBody');
+
+  if (!dayRecords.length) {
+    detail.style.display = 'none';
+    return;
+  }
+
+  const d = new Date(dateStr);
+  const dayName = DAYS[d.getDay()];
+  detailDate.textContent = `${dateStr.replace(/-/g,'.')} (${dayName})`;
+
+  detailBody.innerHTML = dayRecords.map(r => renderSingleRecord(r)).join('');
+  detail.style.display = 'block';
+  detail.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
 
 function renderWeekSummary() {
