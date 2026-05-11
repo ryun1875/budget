@@ -23,8 +23,25 @@ body.light {
 body {
   font-family:'Noto Sans KR',sans-serif;
   background:var(--bg); color:var(--text);
-  min-height:100vh; padding:24px 16px 100px;
+  min-height:100vh;
   transition:background .3s,color .3s;
+}
+#appWrap {
+  max-width:480px; margin:0 auto;
+  padding:24px 16px 100px;
+  min-height:100vh; position:relative;
+}
+/* PC에서 앱 바깥 배경 */
+@media (min-width:520px) {
+  body { background:#0a0a0f; }
+  body.light { background:#e8e8f0; }
+  #appWrap {
+    background:var(--bg);
+    box-shadow:0 0 60px rgba(0,0,0,.5);
+  }
+  .tabs { max-width:480px; left:50%; transform:translateX(-50%); }
+  .settings-panel { right:-100%; }
+  .settings-panel.open { right:calc(50% - 480px); }
 }
 
 /* ── 로그인 ── */
@@ -34,6 +51,17 @@ body {
   align-items:center; justify-content:center;
   z-index:9999; gap:20px; padding:32px;
   transition:background .3s;
+}
+@media (min-width:520px) {
+  .login-screen { background:#0a0a0f; }
+  body.light .login-screen { background:#e8e8f0; }
+  .login-screen > * { position:relative; z-index:1; }
+  .login-screen::after {
+    content:''; position:absolute;
+    width:480px; height:100%;
+    background:var(--bg); z-index:0;
+    box-shadow:0 0 60px rgba(0,0,0,.5);
+  }
 }
 .login-screen.hide { display:none; }
 .login-logo { font-size:52px; }
@@ -543,6 +571,7 @@ body {
 </div>
 
 <!-- 메인 -->
+<div id="appWrap">
 <div id="mainApp" style="display:none">
   <div class="header">
     <div class="header-left">
@@ -621,44 +650,47 @@ body {
     </div>
 
     <div class="today-card">
-      <div class="title">근무 기록 추가</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="title" style="margin-bottom:0">근무 기록 추가</div>
+        <div style="display:flex;align-items:center;gap:8px;cursor:pointer" id="dayoffToggleWrap">
+          <span style="font-size:12px;color:var(--text2)">휴무</span>
+          <div class="toggle" id="dayoffToggle"></div>
+        </div>
+      </div>
       <div class="date-input-group">
         <label>날짜</label>
         <input type="date" id="workDate">
       </div>
-      <div class="time-row">
+      <div id="timeRowWrap"><div class="time-row">
         <div class="time-input-group"><label>출근</label><input type="time" id="startTime"></div>
         <div class="time-input-group"><label>퇴근</label><input type="time" id="endTime"></div>
-      </div>
-      <div class="break-section">
+      </div></div>
+      <div id="breakSectionWrap"><div class="break-section">
         <span class="break-label">휴식시간 (여러 번 추가 가능)</span>
         <div class="break-list" id="breakList"></div>
         <button class="btn-add-break" id="addBreakBtn">+ 휴식 추가</button>
         <div class="break-total" id="breakTotal"></div>
-      </div>
-      <div class="extra-section">
+      </div></div>
+      <div id="extraSectionWrap"><div class="extra-section">
         <span class="extra-label">추가근무 (시간대 + 사유)</span>
         <div class="extra-list" id="extraList"></div>
         <button class="btn-add-extra" id="addExtraBtn">+ 추가근무 입력</button>
         <div class="extra-total" id="extraTotal"></div>
-      </div>
+      </div></div>
       <div class="memo-group">
         <label>메모 (선택)</label>
         <input type="text" id="workMemo" placeholder="예: 바쁜 날, 조기 퇴근 등">
       </div>
-      <div class="calc-preview">
+      <div id="previewWrap"><div class="calc-preview">
         <div class="left"><span>예상 급여</span><strong id="previewPay">₩0</strong></div>
         <div class="right" id="previewDetail">-</div>
-      </div>
+      </div></div>
       <button class="btn-add" id="addRecordBtn">기록 추가하기</button>
     </div>
 
     <div class="records-header">
       <h2>📋 근무 기록</h2>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span id="recordCount">0건</span>
-        <button class="btn-dayoff" id="addDayoffBtn" style="display:none">+ 휴무 등록</button>
-      </div>
+      <span id="recordCount">0건</span>
     </div>
     <div id="recordList"></div>
   </div>
@@ -717,6 +749,9 @@ body {
     <div id="myDisputeList"><div class="empty-state"><div class="emoji">✅</div><p>이의제기 내역이 없어요</p></div></div>
   </div>
 </div>
+
+</div><!-- /mainApp -->
+</div><!-- /appWrap -->
 
 <!-- 탭 바 -->
 <div class="tabs" id="tabBar" style="display:none">
@@ -1011,7 +1046,7 @@ onAuthStateChanged(auth, async user => {
     document.getElementById('staffSelector').classList.add('show');
     document.getElementById('wageBanner').style.cursor = 'pointer';
     document.getElementById('wageEditBtn').style.display = 'block';
-    document.getElementById('addDayoffBtn').style.display = 'inline-flex';
+
     loadAllStaff();
     loadAllDisputes();
     setTimeout(toggleAddForm, 100);
@@ -1572,34 +1607,25 @@ function updatePreview() {
 document.getElementById('startTime').addEventListener('input', updatePreview);
 document.getElementById('endTime').addEventListener('input', updatePreview);
 
-// ── 휴무 등록 ──
-document.getElementById('addDayoffBtn').addEventListener('click', () => {
-  const now = new Date();
-  document.getElementById('dayoffDate').value = now.toISOString().split('T')[0];
-  document.getElementById('dayoffMemo').value = '';
-  document.getElementById('dayoffModal').classList.add('show');
-});
-document.getElementById('dayoffCancel').addEventListener('click', () => document.getElementById('dayoffModal').classList.remove('show'));
-document.getElementById('dayoffConfirm').addEventListener('click', async () => {
-  const date = document.getElementById('dayoffDate').value;
-  const memo = document.getElementById('dayoffMemo').value.trim();
-  if (!date) return alert('날짜를 선택해주세요');
-  // 이미 근무기록 있으면 경고
-  const hasRecord = records.some(r => r.date === date && !r.isDayoff);
-  if (hasRecord && !confirm('이 날짜에 이미 근무 기록이 있어요. 그래도 휴무로 등록할까요?')) return;
-  const targetUid = (isAdmin && selectedStaffUid) ? selectedStaffUid : currentUser.uid;
-  try {
-    const ref = await addDoc(collection(db, `users/${targetUid}/workRecords`), {
-      date, memo, isDayoff: true, ownerUid: targetUid,
-      workMin:0, gross:0, net:0, breakMin:0, extraMin:0,
-      breaks:[], extras:[], start:'', end:'',
-      createdAt: new Date().toISOString()
-    });
-    records.unshift({ id: ref.id, ownerUid: targetUid, date, memo, isDayoff: true, workMin:0, gross:0, net:0, breakMin:0, extraMin:0, breaks:[], extras:[], start:'', end:'' });
-    document.getElementById('dayoffModal').classList.remove('show');
-    renderRecords(); renderStats(); renderWeekSummary();
-  } catch(e) { alert('저장 실패: ' + e.message); }
-});
+// ── 휴무 토글 ──
+let isDayoffMode = false;
+const dayoffToggle = document.getElementById('dayoffToggle');
+const dayoffToggleWrap = document.getElementById('dayoffToggleWrap');
+
+function setDayoffMode(on) {
+  isDayoffMode = on;
+  dayoffToggle.classList.toggle('on', on);
+  // 시간/휴식/추가근무 숨기기
+  const hideEls = ['timeRowWrap', 'breakSectionWrap', 'extraSectionWrap', 'previewWrap'];
+  hideEls.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = on ? 'none' : '';
+  });
+  document.getElementById('addRecordBtn').textContent = on ? '휴무 등록하기' : '기록 추가하기';
+  document.getElementById('addRecordBtn').style.background = on ? 'rgba(255,107,107,.8)' : '';
+  document.getElementById('addRecordBtn').style.color = on ? '#fff' : '';
+}
+dayoffToggleWrap.addEventListener('click', () => setDayoffMode(!isDayoffMode));
 
 // ── Records 로드 ──
 async function loadRecords() {
