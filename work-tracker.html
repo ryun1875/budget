@@ -39,7 +39,6 @@ body {
     background:var(--bg);
     box-shadow:0 0 60px rgba(0,0,0,.5);
   }
-  .tabs { max-width:480px; left:50%; transform:translateX(-50%); }
   .settings-panel { right:-100%; }
   .settings-panel.open { right:calc(50% - 480px); }
 }
@@ -539,13 +538,27 @@ body {
 .btn-dayoff.cancel { border-color:var(--border); background:var(--surface2); color:var(--text3); }
 
 /* ── 탭 ── */
-.tabs { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; z-index:100; }
+.tabs {
+  position:fixed; bottom:0; left:0; right:0;
+  background:var(--surface); border-top:1px solid var(--border);
+  display:flex; z-index:100;
+}
 .tab { flex:1; padding:12px 8px 16px; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; transition:var(--tr); border:none; background:none; color:var(--text3); }
 .tab.active { color:var(--accent); }
 .tab .icon { font-size:20px; }
 .tab .label { font-size:10px; letter-spacing:.5px; }
 .tab-page { display:none; }
 .tab-page.active { display:block; }
+@media (min-width:520px) {
+  .tabs {
+    left:50%; right:auto;
+    transform:translateX(-50%);
+    width:480px;
+    border-radius:16px 16px 0 0;
+    border-left:1px solid var(--border);
+    border-right:1px solid var(--border);
+  }
+}
 </style>
 </head>
 <body>

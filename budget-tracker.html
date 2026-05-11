@@ -23,7 +23,9 @@ body.light{
   --text:#111118;--text2:#555566;--text3:#aaaabc;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:24px 16px 90px;transition:background .3s,color .3s;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0;transition:background .3s,color .3s;}
+#app-container{max-width:480px;margin:0 auto;padding:24px 16px 90px;min-height:100vh;position:relative;}
+.bottom-nav{max-width:480px;left:50%;transform:translateX(-50%);}
 
 /* 로그인 */
 .login-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:24px;padding:32px;}
@@ -500,6 +502,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
 <!-- 메인 앱 -->
 <div id="app" style="display:none">
+<div id="app-container">
   <div class="header">
     <div class="header-left">
       <h1>가계부 💰</h1>
@@ -754,7 +757,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div id="portfolio-wrap"></div>
   </div>
 
-</div>
+</div><!-- app-container -->
+</div><!-- app -->
 
 <div class="toast" id="toast"></div>
 
