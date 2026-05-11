@@ -204,15 +204,87 @@ body {
   color:var(--text); padding:10px 12px; font-size:14px; outline:none; transition:var(--tr); font-family:inherit;
 }
 .date-input-group input[type="date"]:focus { border-color:var(--accent); }
+/* ── 휴식시간 직접입력 ── */
 .break-section { margin-bottom:14px; }
 .break-label { font-size:11px; color:var(--text3); margin-bottom:8px; display:block; }
-.break-chips { display:flex; gap:8px; flex-wrap:wrap; }
-.break-chip {
-  padding:6px 14px; border-radius:20px;
-  border:1px solid var(--border); background:var(--surface2);
-  font-size:12px; color:var(--text2); cursor:pointer; transition:var(--tr);
+.break-list { display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
+.break-row {
+  display:grid; grid-template-columns:1fr 1fr auto;
+  gap:6px; align-items:center;
 }
-.break-chip.active { border-color:var(--accent4); background:rgba(255,179,71,.12); color:var(--accent4); }
+.break-row input[type="time"] {
+  background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+  color:var(--text); padding:7px 10px; font-size:13px;
+  font-family:'Gmarket Sans',sans-serif; outline:none; transition:var(--tr); width:100%;
+}
+.break-row input[type="time"]:focus { border-color:var(--accent4); }
+.break-row .del-break {
+  width:28px; height:28px; border-radius:8px; border:1px solid var(--border);
+  background:var(--surface2); color:var(--accent2); cursor:pointer;
+  font-size:14px; display:flex; align-items:center; justify-content:center;
+  transition:var(--tr); flex-shrink:0;
+}
+.break-row .del-break:hover { background:rgba(255,107,107,.15); border-color:var(--accent2); }
+.btn-add-break {
+  display:flex; align-items:center; gap:5px;
+  background:transparent; border:1px dashed var(--border);
+  border-radius:8px; padding:7px 12px; font-size:12px; color:var(--text3);
+  cursor:pointer; transition:var(--tr); width:100%;
+}
+.btn-add-break:hover { border-color:var(--accent4); color:var(--accent4); }
+.break-total {
+  font-size:11px; color:var(--accent4); margin-top:4px; text-align:right;
+}
+
+/* ── 주간 요약 카드 (홈) ── */
+.week-summary {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px; margin-bottom:20px;
+}
+.week-summary .ws-title { font-size:11px; color:var(--text2); margin-bottom:12px; letter-spacing:.5px; }
+.ws-days { display:flex; gap:6px; justify-content:space-between; }
+.ws-day {
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+}
+.ws-day .d-name { font-size:10px; color:var(--text3); }
+.ws-day .d-dot {
+  width:28px; height:28px; border-radius:50%;
+  background:var(--surface2); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; color:var(--text3); transition:var(--tr);
+}
+.ws-day.worked .d-dot { background:rgba(200,240,74,.15); border-color:var(--accent); color:var(--accent); font-size:9px; font-weight:700; }
+.ws-day.today .d-dot { border-color:var(--accent3); box-shadow:0 0 0 2px rgba(107,181,255,.2); }
+.ws-day .d-pay { font-size:9px; color:var(--text3); }
+
+/* ── 달력 뷰 (분석탭) ── */
+.cal-grid {
+  display:grid; grid-template-columns:repeat(7,1fr);
+  gap:3px; margin-bottom:20px;
+}
+.cal-head {
+  text-align:center; font-size:10px; color:var(--text3);
+  padding:6px 0; font-weight:600;
+}
+.cal-head:first-child { color:var(--accent2); }
+.cal-head:last-child { color:var(--accent3); }
+.cal-cell {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:6px 4px; min-height:56px;
+  cursor:pointer; transition:var(--tr); position:relative;
+}
+.cal-cell:hover { border-color:var(--accent); }
+.cal-cell.empty { background:transparent; border-color:transparent; cursor:default; }
+.cal-cell.today { border-color:var(--accent3); }
+.cal-cell.has-record { background:rgba(200,240,74,.05); border-color:rgba(200,240,74,.3); }
+.cal-cell .c-date {
+  font-size:11px; font-weight:700; color:var(--text2); margin-bottom:3px;
+}
+.cal-cell.sun .c-date { color:var(--accent2); }
+.cal-cell.sat .c-date { color:var(--accent3); }
+.cal-cell.today .c-date { color:var(--accent3); }
+.cal-cell .c-hours { font-size:10px; color:var(--accent); font-family:'Gmarket Sans',sans-serif; font-weight:700; }
+.cal-cell .c-pay { font-size:9px; color:var(--text3); margin-top:1px; }
 .memo-group { margin-bottom:14px; }
 .memo-group label { font-size:11px; color:var(--text3); margin-bottom:4px; display:block; }
 .memo-group input {
@@ -344,13 +416,7 @@ body {
 .btn-logout { width:100%; padding:12px; border-radius:12px; background:rgba(255,107,107,.1); border:1px solid rgba(255,107,107,.3); color:var(--accent2); font-size:14px; font-weight:600; cursor:pointer; transition:var(--tr); margin-top:8px; }
 .btn-logout:hover { background:rgba(255,107,107,.2); }
 
-/* ── 주간 분석 ── */
-.week-bar-list { display:flex; flex-direction:column; gap:8px; }
-.week-bar-item { display:flex; align-items:center; gap:10px; }
-.week-bar-item .day-label { font-size:12px; color:var(--text2); width:24px; }
-.week-bar-item .bar-wrap { flex:1; height:8px; background:var(--surface2); border-radius:4px; overflow:hidden; }
-.week-bar-item .bar-fill { height:100%; border-radius:4px; background:var(--accent); transition:width .5s ease; }
-.week-bar-item .bar-val { font-size:11px; color:var(--text3); min-width:36px; text-align:right; }
+
 
 /* ── 탭 ── */
 .tabs { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; z-index:100; }
@@ -422,6 +488,12 @@ body {
       <div class="staff-tabs" id="staffTabs"></div>
     </div>
 
+    <!-- 이번 주 요약 -->
+    <div class="week-summary" id="weekSummary">
+      <div class="ws-title">이번 주 근무</div>
+      <div class="ws-days" id="wsDays"></div>
+    </div>
+
     <div class="summary-grid">
       <div class="summary-card accent">
         <div class="label">이번 달 총 급여</div>
@@ -467,14 +539,10 @@ body {
         <div class="time-input-group"><label>퇴근</label><input type="time" id="endTime"></div>
       </div>
       <div class="break-section">
-        <span class="break-label">휴식시간</span>
-        <div class="break-chips">
-          <div class="break-chip" data-min="0">없음</div>
-          <div class="break-chip" data-min="30">30분</div>
-          <div class="break-chip active" data-min="60">1시간</div>
-          <div class="break-chip" data-min="90">1.5시간</div>
-          <div class="break-chip" data-min="120">2시간</div>
-        </div>
+        <span class="break-label">휴식시간 (여러 번 추가 가능)</span>
+        <div class="break-list" id="breakList"></div>
+        <button class="btn-add-break" id="addBreakBtn">+ 휴식 추가</button>
+        <div class="break-total" id="breakTotal"></div>
       </div>
       <div class="memo-group">
         <label>메모 (선택)</label>
@@ -494,21 +562,24 @@ body {
     <div id="recordList"></div>
   </div>
 
-  <!-- 탭 페이지: 분석 -->
+  <!-- 탭 페이지: 분석 (달력) -->
   <div class="tab-page" id="page-stats">
-    <div style="margin-bottom:20px">
-      <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">📊 근무 분석</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2 style="font-size:18px;font-weight:700">📅 월별 달력</h2>
       <p style="font-size:12px;color:var(--text2)" id="statsMonthLabel"></p>
     </div>
-    <div class="summary-grid" style="margin-bottom:20px">
+
+    <!-- 월 요약 -->
+    <div class="summary-grid" style="margin-bottom:16px">
       <div class="summary-card accent"><div class="label">월 급여 합계</div><div class="value" id="statsTotalPay">₩0</div></div>
       <div class="summary-card"><div class="label">월 근무일</div><div class="value blue" id="statsWorkDays">0일</div></div>
     </div>
-    <div style="margin-bottom:20px">
-      <h2 style="font-size:14px;font-weight:700;margin-bottom:12px">요일별 근무시간</h2>
-      <div class="week-bar-list" id="weekBarList"></div>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px">
+
+    <!-- 달력 -->
+    <div class="cal-grid" id="calGrid"></div>
+
+    <!-- 수입 현황 -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:20px">
       <h2 style="font-size:14px;font-weight:700;margin-bottom:14px">수입 현황</h2>
       <div style="display:grid;gap:10px">
         <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--text2)">총 급여</span><span style="font-family:Gmarket Sans;font-weight:700;color:var(--accent)" id="statsGross">₩0</span></div>
@@ -560,7 +631,11 @@ body {
       <div class="form-group"><label>출근</label><input type="time" id="editStart"></div>
       <div class="form-group"><label>퇴근</label><input type="time" id="editEnd"></div>
     </div>
-    <div class="form-group"><label>휴식시간 (분)</label><input type="number" id="editBreak" min="0" step="10"></div>
+    <div class="form-group">
+      <label>휴식시간 (분)</label>
+      <input type="number" id="editBreak" min="0" step="10">
+      <div id="editBreakList" style="margin-top:6px"></div>
+    </div>
     <div class="form-group"><label>메모</label><input type="text" id="editMemo"></div>
     <div class="modal-btns">
       <button class="btn-cancel" id="editCancel">취소</button>
@@ -624,7 +699,6 @@ let hourlyWage = 10030;
 let taxEnabled = false;
 let lightMode = false;
 let editingId = null;
-let selectedBreak = 60;
 
 const DAYS = ['일','월','화','수','목','금','토'];
 const HOLIDAYS = ['일','토'];
@@ -875,18 +949,55 @@ document.querySelectorAll('.tab').forEach(btn => {
 // ── 날짜/시간 기본값 ──
 const now = new Date();
 document.getElementById('workDate').value = now.toISOString().split('T')[0];
-document.getElementById('startTime').value = '09:00';
-document.getElementById('endTime').value = '18:00';
+document.getElementById('startTime').value = '17:00';
+document.getElementById('endTime').value = '00:30';
 
-// ── Break chips ──
-document.querySelectorAll('.break-chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    document.querySelectorAll('.break-chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    selectedBreak = parseInt(chip.dataset.min);
-    updatePreview();
-  });
+// ── 휴식 추가 ──
+let breaks = []; // [{start:'19:00', end:'19:30'}]
+
+function renderBreaks() {
+  const list = document.getElementById('breakList');
+  if (!breaks.length) { list.innerHTML = ''; updateBreakTotal(); return; }
+  list.innerHTML = breaks.map((b, i) => `
+    <div class="break-row">
+      <input type="time" value="${b.start}" onchange="updateBreak(${i},'start',this.value)">
+      <input type="time" value="${b.end}" onchange="updateBreak(${i},'end',this.value)">
+      <button class="del-break" onclick="removeBreak(${i})">✕</button>
+    </div>
+  `).join('');
+  updateBreakTotal();
+  updatePreview();
+}
+
+window.updateBreak = (i, key, val) => { breaks[i][key] = val; updateBreakTotal(); updatePreview(); };
+window.removeBreak = (i) => { breaks.splice(i, 1); renderBreaks(); };
+
+function calcBreakTotal() {
+  return breaks.reduce((sum, b) => {
+    if (!b.start || !b.end) return sum;
+    const [sh,sm] = b.start.split(':').map(Number);
+    const [eh,em] = b.end.split(':').map(Number);
+    let d = (eh*60+em)-(sh*60+sm);
+    if (d < 0) d += 24*60;
+    return sum + d;
+  }, 0);
+}
+
+function updateBreakTotal() {
+  const total = calcBreakTotal();
+  const el = document.getElementById('breakTotal');
+  if (total > 0) {
+    const h = Math.floor(total/60), m = total%60;
+    el.textContent = `총 휴식 ${h ? h+'시간 ' : ''}${m ? m+'분' : ''}`;
+  } else { el.textContent = ''; }
+}
+
+document.getElementById('addBreakBtn').addEventListener('click', () => {
+  breaks.push({ start:'', end:'' });
+  renderBreaks();
 });
+
+renderBreaks();
 
 // ── 월 네비 ──
 function updateMonthDisplay() {
@@ -918,10 +1029,13 @@ function updatePreview() {
   const s = document.getElementById('startTime').value;
   const e = document.getElementById('endTime').value;
   if (!s || !e) return;
-  const r = calcPay(s, e, selectedBreak);
+  const breakMin = calcBreakTotal();
+  const r = calcPay(s, e, breakMin);
   const h = Math.floor(r.workMin / 60), m = r.workMin % 60;
   document.getElementById('previewPay').textContent = `₩${r.net.toLocaleString()}`;
-  document.getElementById('previewDetail').textContent = `${h}시간${m ? ' '+m+'분' : ''} · 휴식 ${selectedBreak}분`;
+  const bh = Math.floor(breakMin/60), bm = breakMin%60;
+  const breakStr = breakMin > 0 ? ` · 휴식 ${bh?bh+'시간 ':''}${bm?bm+'분':''}` : '';
+  document.getElementById('previewDetail').textContent = `${h}시간${m?' '+m+'분':''}${breakStr}`;
 }
 document.getElementById('startTime').addEventListener('input', updatePreview);
 document.getElementById('endTime').addEventListener('input', updatePreview);
@@ -961,16 +1075,17 @@ document.getElementById('addRecordBtn').addEventListener('click', async () => {
   const end = document.getElementById('endTime').value;
   const memo = document.getElementById('workMemo').value.trim();
   if (!date || !start || !end) return alert('날짜와 시간을 모두 입력해주세요');
-  const r = calcPay(start, end, selectedBreak);
+  const breakMin = calcBreakTotal();
+  const r = calcPay(start, end, breakMin);
 
-  // 관리자가 특정 직원 선택한 경우 그 직원 uid에 저장, 아니면 본인
   const targetUid = (isAdmin && selectedStaffUid) ? selectedStaffUid : currentUser.uid;
-  const record = { date, start, end, breakMin: selectedBreak, memo, workMin: r.workMin, gross: r.gross, net: r.net };
+  const record = { date, start, end, breakMin, breaks: JSON.parse(JSON.stringify(breaks)), memo, workMin: r.workMin, gross: r.gross, net: r.net };
   try {
     const ref = await addDoc(collection(db, `users/${targetUid}/workRecords`), record);
     records.unshift({ id: ref.id, ownerUid: targetUid, ...record });
     document.getElementById('workMemo').value = '';
-    renderRecords(); renderStats();
+    breaks = []; renderBreaks();
+    renderRecords(); renderStats(); renderWeekSummary();
   } catch(e) { alert('저장 실패: ' + e.message); }
 });
 
@@ -993,6 +1108,11 @@ function openEditModal(record) {
   document.getElementById('editEnd').value = record.end;
   document.getElementById('editBreak').value = record.breakMin;
   document.getElementById('editMemo').value = record.memo || '';
+  // 휴식 목록 렌더
+  const bl = document.getElementById('editBreakList');
+  if (bl && record.breaks && record.breaks.length) {
+    bl.innerHTML = record.breaks.map((b,i) => `<div style="font-size:12px;color:var(--text2);padding:2px 0">${b.start} ~ ${b.end}</div>`).join('');
+  } else if (bl) { bl.innerHTML = ''; }
   document.getElementById('editModal').classList.add('show');
 }
 document.getElementById('editConfirm').addEventListener('click', async () => {
@@ -1003,7 +1123,8 @@ document.getElementById('editConfirm').addEventListener('click', async () => {
   const memo = document.getElementById('editMemo').value.trim();
   if (!date || !start || !end) return alert('필수 항목을 입력해주세요');
   const r = calcPay(start, end, breakMin);
-  const updated = { date, start, end, breakMin, memo, workMin: r.workMin, gross: r.gross, net: r.net };
+  const origRecord = records.find(r => r.id === editingId.id);
+  const updated = { date, start, end, breakMin, breaks: origRecord?.breaks || [], memo, workMin: r.workMin, gross: r.gross, net: r.net };
   try {
     await updateDoc(doc(db, `users/${editingId.ownerUid}/workRecords`, editingId.id), updated);
     const idx = records.findIndex(r => r.id === editingId.id);
@@ -1057,7 +1178,7 @@ function renderRecords() {
         ${r.ownerName ? `<div class="staff-name">👤 ${r.ownerName}</div>` : ''}
         <div class="date">${r.date.replace(/-/g,'.')}<span class="day-name ${isHoliday?'holiday':''}">${dayName}</span></div>
         <div class="times">${r.start}<span>→</span>${r.end}</div>
-        <div class="detail">휴식 ${r.breakMin}분${r.memo?' · '+r.memo:''}</div>
+        <div class="detail">${r.breaks&&r.breaks.length ? r.breaks.map(b=>b.start+'~'+b.end).join(', ') : (r.breakMin ? '휴식 '+r.breakMin+'분' : '휴식없음')}${r.memo?' · '+r.memo:''}</div>
       </div>
       <div class="right">
         <div class="pay">₩${pay.toLocaleString()}</div>
@@ -1087,21 +1208,86 @@ function renderStats() {
   document.getElementById('statsTax').textContent = `-₩${(totalGross-totalNet).toLocaleString()}`;
   document.getElementById('statsNet').textContent = `₩${(taxEnabled?totalNet:totalGross).toLocaleString()}`;
   document.getElementById('taxRow').style.display = taxEnabled ? 'flex' : 'none';
+  renderCalendar(list);
+}
 
-  const dayTotals = Array(7).fill(0);
-  list.forEach(r => { dayTotals[new Date(r.date).getDay()] += r.workMin; });
-  const maxMin = Math.max(...dayTotals, 1);
-  document.getElementById('weekBarList').innerHTML = DAYS.map((d,i) => {
-    const h = Math.floor(dayTotals[i]/60), m = dayTotals[i]%60;
-    return `<div class="week-bar-item">
-      <div class="day-label">${d}</div>
-      <div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(dayTotals[i]/maxMin*100)}%"></div></div>
-      <div class="bar-val">${dayTotals[i]?h+'h'+(m?m+'m':''):'-'}</div>
+function renderCalendar(list) {
+  const grid = document.getElementById('calGrid');
+  if (!grid) return;
+  // 날짜별 기록 맵
+  const dayMap = {};
+  list.forEach(r => {
+    if (!dayMap[r.date]) dayMap[r.date] = { workMin:0, gross:0, net:0 };
+    dayMap[r.date].workMin += r.workMin;
+    dayMap[r.date].gross += r.gross;
+    dayMap[r.date].net += r.net;
+  });
+
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  let html = DAYS.map(d => `<div class="cal-head">${d}</div>`).join('');
+
+  // 빈 칸
+  for (let i=0; i<firstDay; i++) html += `<div class="cal-cell empty"></div>`;
+
+  for (let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = new Date(currentYear, currentMonth, d).getDay();
+    const rec = dayMap[dateStr];
+    const isToday = dateStr === todayStr;
+    const classes = [
+      'cal-cell',
+      dow===0?'sun':'', dow===6?'sat':'',
+      isToday?'today':'',
+      rec?'has-record':''
+    ].filter(Boolean).join(' ');
+    const h = rec ? Math.floor(rec.workMin/60) : 0;
+    const m = rec ? rec.workMin%60 : 0;
+    const pay = rec ? (taxEnabled ? rec.net : rec.gross) : 0;
+    html += `<div class="${classes}">
+      <div class="c-date">${d}</div>
+      ${rec ? `<div class="c-hours">${h}h${m?m+'m':''}</div><div class="c-pay">₩${Math.round(pay/1000)}k</div>` : ''}
     </div>`;
-  }).join('');
+  }
+  grid.innerHTML = html;
+}
+
+function renderWeekSummary() {
+  const container = document.getElementById('wsDays');
+  if (!container) return;
+  // 이번 주 월~일
+  const today = new Date();
+  const dow = today.getDay(); // 0=일
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - dow); // 이번 주 일요일
+
+  const dayMap = {};
+  records.forEach(r => { dayMap[r.date] = r; });
+
+  const dayNames = ['일','월','화','수','목','금','토'];
+  let html = '';
+  for (let i=0; i<7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const dateStr = d.toISOString().split('T')[0];
+    const rec = dayMap[dateStr];
+    const isToday = dateStr === today.toISOString().split('T')[0];
+    const h = rec ? Math.floor(rec.workMin/60) : 0;
+    const m = rec ? rec.workMin%60 : 0;
+    const pay = rec ? (taxEnabled ? rec.net : rec.gross) : 0;
+    html += `<div class="ws-day ${rec?'worked':''} ${isToday?'today':''}">
+      <div class="d-name">${dayNames[i]}</div>
+      <div class="d-dot">${rec ? h+'h' : ''}</div>
+      <div class="d-pay">${rec ? '₩'+Math.round(pay/1000)+'k' : ''}</div>
+    </div>`;
+  }
+  container.innerHTML = html;
 }
 
 updatePreview();
+renderWeekSummary();
 </script>
 </body>
 </html>
