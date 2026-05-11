@@ -418,6 +418,43 @@ body {
 
 
 
+/* ── 추가근무 ── */
+.extra-section { margin-bottom:14px; }
+.extra-label { font-size:11px; color:var(--text3); margin-bottom:8px; display:block; }
+.extra-list { display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
+.extra-row {
+  display:grid; grid-template-columns:1fr 1fr 1fr auto;
+  gap:6px; align-items:center;
+}
+.extra-row input[type="time"] {
+  background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+  color:var(--text); padding:7px 10px; font-size:13px;
+  font-family:'Gmarket Sans',sans-serif; outline:none; transition:var(--tr); width:100%;
+}
+.extra-row input[type="time"]:focus { border-color:var(--accent3); }
+.extra-row input[type="text"] {
+  background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+  color:var(--text); padding:7px 10px; font-size:12px;
+  outline:none; transition:var(--tr); width:100%; font-family:inherit;
+}
+.extra-row input[type="text"]:focus { border-color:var(--accent3); }
+.extra-row .del-extra {
+  width:28px; height:28px; border-radius:8px; border:1px solid var(--border);
+  background:var(--surface2); color:var(--accent2); cursor:pointer;
+  font-size:14px; display:flex; align-items:center; justify-content:center;
+  transition:var(--tr); flex-shrink:0;
+}
+.extra-row .del-extra:hover { background:rgba(255,107,107,.15); border-color:var(--accent2); }
+.btn-add-extra {
+  display:flex; align-items:center; gap:5px;
+  background:transparent; border:1px dashed var(--border);
+  border-radius:8px; padding:7px 12px; font-size:12px; color:var(--text3);
+  cursor:pointer; transition:var(--tr); width:100%;
+}
+.btn-add-extra:hover { border-color:var(--accent3); color:var(--accent3); }
+.extra-total { font-size:11px; color:var(--accent3); margin-top:4px; text-align:right; }
+.record-extra { font-size:11px; color:var(--accent3); margin-top:3px; }
+
 /* ── 탭 ── */
 .tabs { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; z-index:100; }
 .tab { flex:1; padding:12px 8px 16px; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; transition:var(--tr); border:none; background:none; color:var(--text3); }
@@ -543,6 +580,12 @@ body {
         <div class="break-list" id="breakList"></div>
         <button class="btn-add-break" id="addBreakBtn">+ 휴식 추가</button>
         <div class="break-total" id="breakTotal"></div>
+      </div>
+      <div class="extra-section">
+        <span class="extra-label">추가근무 (시간대 + 사유)</span>
+        <div class="extra-list" id="extraList"></div>
+        <button class="btn-add-extra" id="addExtraBtn">+ 추가근무 입력</button>
+        <div class="extra-total" id="extraTotal"></div>
       </div>
       <div class="memo-group">
         <label>메모 (선택)</label>
@@ -699,6 +742,7 @@ let hourlyWage = 10030;
 let taxEnabled = false;
 let lightMode = false;
 let editingId = null;
+let extras = []; // [{start:'', end:'', reason:''}]
 
 const DAYS = ['일','월','화','수','목','금','토'];
 const HOLIDAYS = ['일','토'];
@@ -997,7 +1041,51 @@ document.getElementById('addBreakBtn').addEventListener('click', () => {
   renderBreaks();
 });
 
+// ── 추가근무 ──
+function renderExtras() {
+  const list = document.getElementById('extraList');
+  if (!extras.length) { list.innerHTML = ''; updateExtraTotal(); return; }
+  list.innerHTML = extras.map((e, i) => `
+    <div class="extra-row">
+      <input type="time" value="${e.start}" placeholder="시작" onchange="updateExtra(${i},'start',this.value)">
+      <input type="time" value="${e.end}" placeholder="종료" onchange="updateExtra(${i},'end',this.value)">
+      <input type="text" value="${e.reason}" placeholder="사유(예:운동보조)" onchange="updateExtra(${i},'reason',this.value)">
+      <button class="del-extra" onclick="removeExtra(${i})">✕</button>
+    </div>
+  `).join('');
+  updateExtraTotal();
+}
+
+window.updateExtra = (i, key, val) => { extras[i][key] = val; updateExtraTotal(); updatePreview(); };
+window.removeExtra = (i) => { extras.splice(i, 1); renderExtras(); };
+
+function calcExtraTotal() {
+  return extras.reduce((sum, e) => {
+    if (!e.start || !e.end) return sum;
+    const [sh,sm] = e.start.split(':').map(Number);
+    const [eh,em] = e.end.split(':').map(Number);
+    let d = (eh*60+em)-(sh*60+sm);
+    if (d < 0) d += 24*60;
+    return sum + d;
+  }, 0);
+}
+
+function updateExtraTotal() {
+  const total = calcExtraTotal();
+  const el = document.getElementById('extraTotal');
+  if (total > 0) {
+    const h = Math.floor(total/60), m = total%60;
+    el.textContent = `추가근무 합계 +${h ? h+'시간 ' : ''}${m ? m+'분' : ''}`;
+  } else { el.textContent = ''; }
+}
+
+document.getElementById('addExtraBtn').addEventListener('click', () => {
+  extras.push({ start:'', end:'', reason:'' });
+  renderExtras();
+});
+
 renderBreaks();
+renderExtras();
 
 // ── 월 네비 ──
 function updateMonthDisplay() {
@@ -1015,12 +1103,12 @@ document.getElementById('nextMonth').addEventListener('click', () => {
 updateMonthDisplay();
 
 // ── 급여 계산 ──
-function calcPay(startTime, endTime, breakMin) {
+function calcPay(startTime, endTime, breakMin, extraMin=0) {
   const [sh, sm] = startTime.split(':').map(Number);
   const [eh, em] = endTime.split(':').map(Number);
   let totalMin = (eh * 60 + em) - (sh * 60 + sm);
   if (totalMin <= 0) totalMin += 24 * 60;
-  const workMin = Math.max(0, totalMin - breakMin);
+  const workMin = Math.max(0, totalMin - breakMin + extraMin);
   const gross = Math.round(workMin / 60 * hourlyWage);
   return { workMin, gross, net: taxEnabled ? Math.round(gross * 0.967) : gross };
 }
@@ -1030,12 +1118,15 @@ function updatePreview() {
   const e = document.getElementById('endTime').value;
   if (!s || !e) return;
   const breakMin = calcBreakTotal();
-  const r = calcPay(s, e, breakMin);
+  const extraMin = calcExtraTotal();
+  const r = calcPay(s, e, breakMin, extraMin);
   const h = Math.floor(r.workMin / 60), m = r.workMin % 60;
   document.getElementById('previewPay').textContent = `₩${r.net.toLocaleString()}`;
   const bh = Math.floor(breakMin/60), bm = breakMin%60;
+  const eh = Math.floor(extraMin/60), em = extraMin%60;
   const breakStr = breakMin > 0 ? ` · 휴식 ${bh?bh+'시간 ':''}${bm?bm+'분':''}` : '';
-  document.getElementById('previewDetail').textContent = `${h}시간${m?' '+m+'분':''}${breakStr}`;
+  const extraStr = extraMin > 0 ? ` · 추가 +${eh?eh+'시간 ':''}${em?em+'분':''}` : '';
+  document.getElementById('previewDetail').textContent = `${h}시간${m?' '+m+'분':''}${breakStr}${extraStr}`;
 }
 document.getElementById('startTime').addEventListener('input', updatePreview);
 document.getElementById('endTime').addEventListener('input', updatePreview);
@@ -1076,15 +1167,22 @@ document.getElementById('addRecordBtn').addEventListener('click', async () => {
   const memo = document.getElementById('workMemo').value.trim();
   if (!date || !start || !end) return alert('날짜와 시간을 모두 입력해주세요');
   const breakMin = calcBreakTotal();
-  const r = calcPay(start, end, breakMin);
+  const extraMin = calcExtraTotal();
+  const r = calcPay(start, end, breakMin, extraMin);
 
   const targetUid = (isAdmin && selectedStaffUid) ? selectedStaffUid : currentUser.uid;
-  const record = { date, start, end, breakMin, breaks: JSON.parse(JSON.stringify(breaks)), memo, workMin: r.workMin, gross: r.gross, net: r.net };
+  const record = {
+    date, start, end,
+    breakMin, breaks: JSON.parse(JSON.stringify(breaks)),
+    extraMin, extras: JSON.parse(JSON.stringify(extras)),
+    memo, workMin: r.workMin, gross: r.gross, net: r.net
+  };
   try {
     const ref = await addDoc(collection(db, `users/${targetUid}/workRecords`), record);
     records.unshift({ id: ref.id, ownerUid: targetUid, ...record });
     document.getElementById('workMemo').value = '';
     breaks = []; renderBreaks();
+    extras = []; renderExtras();
     renderRecords(); renderStats(); renderWeekSummary();
   } catch(e) { alert('저장 실패: ' + e.message); }
 });
@@ -1179,6 +1277,7 @@ function renderRecords() {
         <div class="date">${r.date.replace(/-/g,'.')}<span class="day-name ${isHoliday?'holiday':''}">${dayName}</span></div>
         <div class="times">${r.start}<span>→</span>${r.end}</div>
         <div class="detail">${r.breaks&&r.breaks.length ? r.breaks.map(b=>b.start+'~'+b.end).join(', ') : (r.breakMin ? '휴식 '+r.breakMin+'분' : '휴식없음')}${r.memo?' · '+r.memo:''}</div>
+        ${r.extras&&r.extras.length ? `<div class="record-extra">➕ ${r.extras.map(e=>(e.reason||'추가근무')+' '+e.start+'~'+e.end).join(' · ')}</div>` : ''}
       </div>
       <div class="right">
         <div class="pay">₩${pay.toLocaleString()}</div>
