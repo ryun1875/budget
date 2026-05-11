@@ -10,409 +10,356 @@
 <link href="https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;500;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0f0f13;
-  --surface: #1a1a22;
-  --surface2: #22222e;
-  --border: #2e2e3e;
-  --accent: #c8f04a;
-  --accent2: #ff6b6b;
-  --accent3: #6bb5ff;
-  --accent4: #ffb347;
-  --text: #f0f0f5;
-  --text2: #9090aa;
-  --text3: #5a5a70;
-  --radius: 16px;
-  --tr: 0.2s cubic-bezier(0.4,0,0.2,1);
+  --bg:#0f0f13; --surface:#1a1a22; --surface2:#22222e; --border:#2e2e3e;
+  --accent:#c8f04a; --accent2:#ff6b6b; --accent3:#6bb5ff; --accent4:#ffb347;
+  --text:#f0f0f5; --text2:#9090aa; --text3:#5a5a70;
+  --radius:16px; --tr:0.2s cubic-bezier(0.4,0,0.2,1);
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
+body.light {
+  --bg:#f4f4f8; --surface:#ffffff; --surface2:#f0f0f5; --border:#e0e0ea;
+  --text:#111118; --text2:#555566; --text3:#aaaabc;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
 body {
-  font-family: 'Noto Sans KR', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  padding: 24px 16px 100px;
+  font-family:'Noto Sans KR',sans-serif;
+  background:var(--bg); color:var(--text);
+  min-height:100vh; padding:24px 16px 100px;
+  transition:background .3s,color .3s;
 }
 
 /* ── 로그인 ── */
 .login-screen {
-  position: fixed; inset: 0;
-  background: var(--bg);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  z-index: 9999; gap: 20px; padding: 32px;
+  position:fixed; inset:0; background:var(--bg);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  z-index:9999; gap:20px; padding:32px;
+  transition:background .3s;
 }
-.login-screen.hide { display: none; }
-.login-logo { font-size: 52px; }
-.login-title { font-family: 'Gmarket Sans', sans-serif; font-size: 26px; font-weight: 700; color: var(--accent); }
-.login-sub { font-size: 13px; color: var(--text2); text-align: center; line-height: 1.7; }
+.login-screen.hide { display:none; }
+.login-logo { font-size:52px; }
+.login-title { font-family:'Gmarket Sans',sans-serif; font-size:26px; font-weight:700; color:var(--accent); }
+.login-sub { font-size:13px; color:var(--text2); text-align:center; line-height:1.7; }
 .btn-google {
-  display: flex; align-items: center; gap: 12px;
-  background: #fff; color: #1a1a1a;
-  border: none; border-radius: 12px;
-  padding: 14px 28px; font-size: 15px; font-weight: 600;
-  cursor: pointer; transition: var(--tr);
-  box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  display:flex; align-items:center; gap:12px;
+  background:#fff; color:#1a1a1a;
+  border:1px solid #dadce0; border-radius:12px;
+  padding:12px 24px; font-size:15px; font-weight:600;
+  font-family:'Noto Sans KR',sans-serif;
+  cursor:pointer; transition:var(--tr);
+  box-shadow:0 1px 3px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.08);
 }
-.btn-google:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,.4); }
+.btn-google:hover { box-shadow:0 2px 8px rgba(0,0,0,.2); background:#f8f8f8; }
+.btn-google svg { width:20px; height:20px; flex-shrink:0; }
+
+/* ── 접근 거부 화면 ── */
+.denied-screen {
+  position:fixed; inset:0; background:var(--bg);
+  display:none; flex-direction:column;
+  align-items:center; justify-content:center;
+  z-index:9998; gap:16px; padding:32px; text-align:center;
+}
+.denied-screen.show { display:flex; }
+.denied-icon { font-size:52px; }
+.denied-title { font-family:'Gmarket Sans',sans-serif; font-size:22px; font-weight:700; color:var(--accent2); }
+.denied-sub { font-size:13px; color:var(--text2); line-height:1.7; }
+.denied-email { font-size:12px; color:var(--text3); background:var(--surface2); padding:8px 16px; border-radius:8px; }
+.btn-denied-logout {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:10px 24px;
+  font-size:14px; color:var(--text2); cursor:pointer; margin-top:8px;
+}
 
 /* ── 헤더 ── */
 .header {
-  display: flex; align-items: flex-end;
-  justify-content: space-between; margin-bottom: 24px;
+  display:flex; align-items:center;
+  justify-content:space-between; margin-bottom:8px;
 }
+.header-meta {
+  display:flex; align-items:center;
+  justify-content:flex-end; gap:8px;
+  margin-bottom:20px;
+}
+.sync-badge {
+  display:flex; align-items:center; gap:5px;
+  font-size:11px; color:var(--text2);
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:20px; padding:4px 10px; transition:var(--tr);
+}
+.sync-dot {
+  width:7px; height:7px; border-radius:50%;
+  background:var(--text3); transition:background .4s;
+  flex-shrink:0;
+}
+.sync-badge.online .sync-dot { background:#4caf50; box-shadow:0 0 0 2px rgba(76,175,80,.25); }
+.sync-badge.syncing .sync-dot { background:var(--accent4); animation:blink .8s infinite; }
+.sync-badge.offline .sync-dot { background:var(--accent2); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.theme-btn {
+  display:flex; align-items:center; gap:5px;
+  font-size:11px; color:var(--text2);
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:20px; padding:4px 10px;
+  cursor:pointer; transition:var(--tr); user-select:none;
+}
+.theme-btn:hover { border-color:var(--accent); color:var(--accent); }
 .header-left h1 {
-  font-family: 'Gmarket Sans', sans-serif;
-  font-size: 26px; font-weight: 700;
-  letter-spacing: -1px; color: var(--accent);
+  font-family:'Gmarket Sans',sans-serif;
+  font-size:26px; font-weight:700;
+  letter-spacing:-1px; color:var(--accent);
 }
-.header-left p { font-size: 12px; color: var(--text2); margin-top: 2px; }
-.header-right { display: flex; align-items: center; gap: 10px; }
+.header-left p { font-size:12px; color:var(--text2); margin-top:2px; }
+.header-right { display:flex; align-items:center; gap:8px; }
+.role-badge {
+  font-size:11px; font-weight:700; padding:3px 10px;
+  border-radius:20px; letter-spacing:.5px;
+}
+.role-badge.admin { background:rgba(200,240,74,.15); color:var(--accent); border:1px solid rgba(200,240,74,.3); }
+.role-badge.staff { background:rgba(107,181,255,.15); color:var(--accent3); border:1px solid rgba(107,181,255,.3); }
 .user-avatar {
-  width: 34px; height: 34px; border-radius: 50%;
-  background: var(--surface2); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; cursor: pointer; overflow: hidden;
+  width:34px; height:34px; border-radius:50%;
+  background:var(--surface2); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; cursor:pointer; overflow:hidden;
 }
-.user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.user-avatar img { width:100%; height:100%; object-fit:cover; }
 .settings-btn {
-  width: 34px; height: 34px; border-radius: 50%;
-  background: var(--surface); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; cursor: pointer; transition: var(--tr);
+  width:34px; height:34px; border-radius:50%;
+  background:var(--surface); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; cursor:pointer; transition:var(--tr);
 }
-.settings-btn:hover { background: var(--surface2); }
+.settings-btn:hover { background:var(--surface2); }
 
 /* ── 월 네비 ── */
 .month-nav {
-  display: flex; align-items: center;
-  justify-content: center; gap: 16px; margin-bottom: 20px;
+  display:flex; align-items:center;
+  justify-content:center; gap:16px; margin-bottom:20px;
 }
 .month-nav button {
-  width: 32px; height: 32px; border-radius: 50%;
-  border: 1px solid var(--border); background: var(--surface);
-  color: var(--text2); cursor: pointer; font-size: 16px;
-  transition: var(--tr); display: flex; align-items: center; justify-content: center;
+  width:32px; height:32px; border-radius:50%;
+  border:1px solid var(--border); background:var(--surface);
+  color:var(--text2); cursor:pointer; font-size:16px;
+  transition:var(--tr); display:flex; align-items:center; justify-content:center;
 }
-.month-nav button:hover { background: var(--surface2); color: var(--text); }
-.month-nav span {
-  font-family: 'Gmarket Sans', sans-serif;
-  font-size: 16px; font-weight: 700; min-width: 80px; text-align: center;
+.month-nav button:hover { background:var(--surface2); color:var(--text); }
+.month-nav span { font-family:'Gmarket Sans',sans-serif; font-size:16px; font-weight:700; min-width:80px; text-align:center; }
+
+/* ── 직원 선택 (관리자용) ── */
+.staff-selector {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 16px;
+  margin-bottom:20px; display:none;
 }
+.staff-selector.show { display:block; }
+.staff-selector label { font-size:11px; color:var(--text3); margin-bottom:8px; display:block; }
+.staff-tabs { display:flex; gap:8px; flex-wrap:wrap; }
+.staff-tab {
+  display:flex; align-items:center; gap:6px;
+  padding:6px 14px; border-radius:20px;
+  border:1px solid var(--border); background:var(--surface2);
+  font-size:12px; color:var(--text2); cursor:pointer; transition:var(--tr);
+}
+.staff-tab.active { border-color:var(--accent3); background:rgba(107,181,255,.12); color:var(--accent3); }
+.staff-tab img { width:18px; height:18px; border-radius:50%; }
 
 /* ── 요약 카드 ── */
-.summary-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 12px; margin-bottom: 20px;
-}
-.summary-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px;
-}
-.summary-card.accent { border-color: var(--accent); background: rgba(200,240,74,.06); }
-.summary-card .label { font-size: 11px; color: var(--text2); margin-bottom: 6px; letter-spacing: .5px; }
-.summary-card .value {
-  font-family: 'Gmarket Sans', sans-serif;
-  font-size: 22px; font-weight: 700; color: var(--accent);
-}
-.summary-card .value.blue { color: var(--accent3); }
-.summary-card .value.orange { color: var(--accent4); }
-.summary-card .sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; }
+.summary-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+.summary-card.accent { border-color:var(--accent); background:rgba(200,240,74,.06); }
+.summary-card .label { font-size:11px; color:var(--text2); margin-bottom:6px; letter-spacing:.5px; }
+.summary-card .value { font-family:'Gmarket Sans',sans-serif; font-size:22px; font-weight:700; color:var(--accent); }
+.summary-card .value.blue { color:var(--accent3); }
+.summary-card .value.orange { color:var(--accent4); }
+.summary-card .sub { font-size:11px; color:var(--text3); margin-top:4px; }
 
-/* ── 시급 설정 배너 ── */
+/* ── 시급 배너 ── */
 .wage-banner {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 14px 16px;
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 20px; cursor: pointer; transition: var(--tr);
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 16px;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:20px; cursor:pointer; transition:var(--tr);
 }
-.wage-banner:hover { border-color: var(--accent); }
-.wage-banner .left { display: flex; align-items: center; gap: 10px; }
-.wage-banner .icon { font-size: 20px; }
-.wage-banner .info .title { font-size: 13px; font-weight: 600; }
-.wage-banner .info .amount {
-  font-family: 'Gmarket Sans', sans-serif;
-  font-size: 17px; color: var(--accent); font-weight: 700;
-}
-.wage-banner .edit-btn {
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 8px; padding: 6px 14px;
-  font-size: 12px; color: var(--text2); cursor: pointer;
-}
+.wage-banner:hover { border-color:var(--accent); }
+.wage-banner .left { display:flex; align-items:center; gap:10px; }
+.wage-banner .icon { font-size:20px; }
+.wage-banner .info .title { font-size:13px; font-weight:600; }
+.wage-banner .info .amount { font-family:'Gmarket Sans',sans-serif; font-size:17px; color:var(--accent); font-weight:700; }
+.wage-banner .edit-btn { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:6px 14px; font-size:12px; color:var(--text2); cursor:pointer; }
 
-/* ── 오늘 출퇴근 카드 ── */
-.today-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 18px;
-  margin-bottom: 20px;
-}
-.today-card .title { font-size: 13px; color: var(--text2); margin-bottom: 14px; letter-spacing: .5px; }
-.time-row {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 12px; margin-bottom: 14px;
-}
-.time-input-group label { font-size: 11px; color: var(--text3); margin-bottom: 4px; display: block; }
+/* ── 기록 추가 카드 ── */
+.today-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:20px; }
+.today-card .title { font-size:13px; color:var(--text2); margin-bottom:14px; letter-spacing:.5px; }
+.time-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+.time-input-group label { font-size:11px; color:var(--text3); margin-bottom:4px; display:block; }
 .time-input-group input[type="time"] {
-  width: 100%; background: var(--surface2);
-  border: 1px solid var(--border); border-radius: 10px;
-  color: var(--text); padding: 10px 12px; font-size: 15px;
-  font-family: 'Gmarket Sans', sans-serif; font-weight: 500;
-  outline: none; transition: var(--tr);
+  width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+  color:var(--text); padding:10px 12px; font-size:15px;
+  font-family:'Gmarket Sans',sans-serif; font-weight:500; outline:none; transition:var(--tr);
 }
-.time-input-group input[type="time"]:focus { border-color: var(--accent); }
-
-/* 날짜 입력 */
-.date-input-group { margin-bottom: 14px; }
-.date-input-group label { font-size: 11px; color: var(--text3); margin-bottom: 4px; display: block; }
+.time-input-group input[type="time"]:focus { border-color:var(--accent); }
+.date-input-group { margin-bottom:14px; }
+.date-input-group label { font-size:11px; color:var(--text3); margin-bottom:4px; display:block; }
 .date-input-group input[type="date"] {
-  width: 100%; background: var(--surface2);
-  border: 1px solid var(--border); border-radius: 10px;
-  color: var(--text); padding: 10px 12px; font-size: 14px;
-  outline: none; transition: var(--tr); font-family: inherit;
+  width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+  color:var(--text); padding:10px 12px; font-size:14px; outline:none; transition:var(--tr); font-family:inherit;
 }
-.date-input-group input[type="date"]:focus { border-color: var(--accent); }
-
-/* 휴식 */
-.break-section { margin-bottom: 14px; }
-.break-label {
-  font-size: 11px; color: var(--text3);
-  margin-bottom: 8px; display: block;
-}
-.break-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.date-input-group input[type="date"]:focus { border-color:var(--accent); }
+.break-section { margin-bottom:14px; }
+.break-label { font-size:11px; color:var(--text3); margin-bottom:8px; display:block; }
+.break-chips { display:flex; gap:8px; flex-wrap:wrap; }
 .break-chip {
-  padding: 6px 14px; border-radius: 20px;
-  border: 1px solid var(--border); background: var(--surface2);
-  font-size: 12px; color: var(--text2); cursor: pointer; transition: var(--tr);
+  padding:6px 14px; border-radius:20px;
+  border:1px solid var(--border); background:var(--surface2);
+  font-size:12px; color:var(--text2); cursor:pointer; transition:var(--tr);
 }
-.break-chip.active {
-  border-color: var(--accent4); background: rgba(255,179,71,.12);
-  color: var(--accent4);
-}
-
-/* 메모 */
-.memo-group { margin-bottom: 14px; }
-.memo-group label { font-size: 11px; color: var(--text3); margin-bottom: 4px; display: block; }
+.break-chip.active { border-color:var(--accent4); background:rgba(255,179,71,.12); color:var(--accent4); }
+.memo-group { margin-bottom:14px; }
+.memo-group label { font-size:11px; color:var(--text3); margin-bottom:4px; display:block; }
 .memo-group input {
-  width: 100%; background: var(--surface2);
-  border: 1px solid var(--border); border-radius: 10px;
-  color: var(--text); padding: 10px 12px; font-size: 13px;
-  outline: none; transition: var(--tr); font-family: inherit;
+  width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+  color:var(--text); padding:10px 12px; font-size:13px; outline:none; transition:var(--tr); font-family:inherit;
 }
-.memo-group input:focus { border-color: var(--accent3); }
-
-/* 미리보기 */
+.memo-group input:focus { border-color:var(--accent3); }
 .calc-preview {
-  background: var(--surface2); border-radius: 10px;
-  padding: 12px 14px; margin-bottom: 14px;
-  display: flex; justify-content: space-between; align-items: center;
+  background:var(--surface2); border-radius:10px; padding:12px 14px;
+  margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;
 }
-.calc-preview .left span { font-size: 12px; color: var(--text2); }
-.calc-preview .left strong {
-  font-family: 'Gmarket Sans', sans-serif;
-  font-size: 18px; color: var(--accent); margin-left: 6px;
-}
-.calc-preview .right { font-size: 12px; color: var(--text3); }
-
-/* 버튼 */
+.calc-preview .left span { font-size:12px; color:var(--text2); }
+.calc-preview .left strong { font-family:'Gmarket Sans',sans-serif; font-size:18px; color:var(--accent); margin-left:6px; }
+.calc-preview .right { font-size:12px; color:var(--text3); }
 .btn-add {
-  width: 100%; background: var(--accent); color: #0f0f13;
-  border: none; border-radius: 12px; padding: 14px;
-  font-size: 15px; font-weight: 700; font-family: 'Gmarket Sans', sans-serif;
-  cursor: pointer; transition: var(--tr);
+  width:100%; background:var(--accent); color:#0f0f13;
+  border:none; border-radius:12px; padding:14px;
+  font-size:15px; font-weight:700; font-family:'Gmarket Sans',sans-serif;
+  cursor:pointer; transition:var(--tr);
 }
-.btn-add:hover { filter: brightness(1.1); transform: translateY(-1px); }
-.btn-add:active { transform: translateY(0); }
+.btn-add:hover { filter:brightness(1.1); transform:translateY(-1px); }
 
 /* ── 기록 목록 ── */
-.records-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 12px;
-}
-.records-header h2 { font-size: 14px; font-weight: 700; }
-.records-header span { font-size: 12px; color: var(--text3); }
-
+.records-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.records-header h2 { font-size:14px; font-weight:700; }
+.records-header span { font-size:12px; color:var(--text3); }
 .record-item {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
-  display: flex; justify-content: space-between; align-items: center;
-  animation: fadeUp .3s ease;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:14px 16px; margin-bottom:10px;
+  display:flex; justify-content:space-between; align-items:center;
+  animation:fadeUp .3s ease;
 }
-@keyframes fadeUp {
-  from { opacity:0; transform: translateY(8px); }
-  to { opacity:1; transform: translateY(0); }
-}
-.record-item .left .date {
-  font-size: 11px; color: var(--text3); margin-bottom: 4px;
-}
-.record-item .left .day-name {
-  display: inline-block; font-size: 10px;
-  padding: 1px 6px; border-radius: 4px; margin-left: 4px;
-  background: var(--surface2); color: var(--text2);
-}
-.record-item .left .day-name.holiday { background: rgba(255,107,107,.15); color: var(--accent2); }
-.record-item .left .times {
-  font-size: 14px; font-weight: 600; color: var(--text);
-  font-family: 'Gmarket Sans', sans-serif;
-}
-.record-item .left .times span { color: var(--text3); margin: 0 4px; font-size: 12px; }
-.record-item .left .detail {
-  font-size: 11px; color: var(--text3); margin-top: 3px;
-}
-.record-item .right { text-align: right; }
-.record-item .right .pay {
-  font-family: 'Gmarket Sans', sans-serif;
-  font-size: 17px; font-weight: 700; color: var(--accent);
-}
-.record-item .right .hours { font-size: 11px; color: var(--text3); margin-top: 2px; }
-.record-item .right .actions { display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end; }
-.record-item .right .actions button {
-  padding: 4px 10px; border-radius: 6px; font-size: 11px;
-  border: 1px solid var(--border); background: var(--surface2);
-  color: var(--text2); cursor: pointer; transition: var(--tr);
-}
-.record-item .right .actions button:hover { border-color: var(--accent2); color: var(--accent2); }
-.record-item .right .actions .btn-edit:hover { border-color: var(--accent3); color: var(--accent3); }
-
-.empty-state {
-  text-align: center; padding: 40px 20px; color: var(--text3);
-}
-.empty-state .emoji { font-size: 36px; margin-bottom: 12px; }
-.empty-state p { font-size: 13px; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.record-item .left .date { font-size:11px; color:var(--text3); margin-bottom:4px; }
+.record-item .left .day-name { display:inline-block; font-size:10px; padding:1px 6px; border-radius:4px; margin-left:4px; background:var(--surface2); color:var(--text2); }
+.record-item .left .day-name.holiday { background:rgba(255,107,107,.15); color:var(--accent2); }
+.record-item .left .staff-name { font-size:10px; color:var(--accent3); margin-bottom:4px; }
+.record-item .left .times { font-size:14px; font-weight:600; color:var(--text); font-family:'Gmarket Sans',sans-serif; }
+.record-item .left .times span { color:var(--text3); margin:0 4px; font-size:12px; }
+.record-item .left .detail { font-size:11px; color:var(--text3); margin-top:3px; }
+.record-item .right { text-align:right; }
+.record-item .right .pay { font-family:'Gmarket Sans',sans-serif; font-size:17px; font-weight:700; color:var(--accent); }
+.record-item .right .hours { font-size:11px; color:var(--text3); margin-top:2px; }
+.record-item .right .actions { display:flex; gap:6px; margin-top:6px; justify-content:flex-end; }
+.record-item .right .actions button { padding:4px 10px; border-radius:6px; font-size:11px; border:1px solid var(--border); background:var(--surface2); color:var(--text2); cursor:pointer; transition:var(--tr); }
+.record-item .right .actions button:hover { border-color:var(--accent2); color:var(--accent2); }
+.record-item .right .actions .btn-edit:hover { border-color:var(--accent3); color:var(--accent3); }
+.empty-state { text-align:center; padding:40px 20px; color:var(--text3); }
+.empty-state .emoji { font-size:36px; margin-bottom:12px; }
+.empty-state p { font-size:13px; }
 
 /* ── 모달 ── */
 .modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.7); z-index: 1000;
-  display: flex; align-items: flex-end; justify-content: center;
-  opacity: 0; pointer-events: none; transition: opacity .25s;
+  position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000;
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .25s;
 }
-.modal-overlay.show { opacity: 1; pointer-events: all; }
+.modal-overlay.show { opacity:1; pointer-events:all; }
 .modal {
-  background: var(--surface); border-radius: 20px 20px 0 0;
-  padding: 24px 20px 36px; width: 100%; max-width: 480px;
-  transform: translateY(100%); transition: transform .3s cubic-bezier(0.4,0,0.2,1);
+  background:var(--surface); border-radius:20px 20px 0 0;
+  padding:24px 20px 36px; width:100%; max-width:480px;
+  transform:translateY(100%); transition:transform .3s cubic-bezier(0.4,0,0.2,1);
 }
-.modal-overlay.show .modal { transform: translateY(0); }
-.modal-handle {
-  width: 40px; height: 4px; border-radius: 2px;
-  background: var(--border); margin: -8px auto 20px;
-}
-.modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 18px; }
-.modal .form-group { margin-bottom: 14px; }
-.modal .form-group label { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; }
+.modal-overlay.show .modal { transform:translateY(0); }
+.modal-handle { width:40px; height:4px; border-radius:2px; background:var(--border); margin:-8px auto 20px; }
+.modal h3 { font-size:16px; font-weight:700; margin-bottom:18px; }
+.modal .form-group { margin-bottom:14px; }
+.modal .form-group label { font-size:12px; color:var(--text2); margin-bottom:6px; display:block; }
 .modal .form-group input {
-  width: 100%; background: var(--surface2);
-  border: 1px solid var(--border); border-radius: 10px;
-  color: var(--text); padding: 12px 14px; font-size: 15px;
-  outline: none; transition: var(--tr); font-family: inherit;
+  width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+  color:var(--text); padding:12px 14px; font-size:15px; outline:none; transition:var(--tr); font-family:inherit;
 }
-.modal .form-group input:focus { border-color: var(--accent); }
-.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
-.modal-btns button {
-  flex: 1; padding: 14px; border-radius: 12px;
-  font-size: 14px; font-weight: 700; font-family: 'Gmarket Sans', sans-serif;
-  cursor: pointer; transition: var(--tr); border: none;
+.modal .form-group input:focus { border-color:var(--accent); }
+.modal-btns { display:flex; gap:10px; margin-top:20px; }
+.modal-btns button { flex:1; padding:14px; border-radius:12px; font-size:14px; font-weight:700; font-family:'Gmarket Sans',sans-serif; cursor:pointer; transition:var(--tr); border:none; }
+.btn-cancel { background:var(--surface2); color:var(--text2); }
+.btn-confirm { background:var(--accent); color:#0f0f13; }
+.btn-confirm:hover { filter:brightness(1.1); }
+
+/* ── 관리자 직원 관리 탭 ── */
+.staff-list-item {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:14px 16px; margin-bottom:10px;
+  display:flex; align-items:center; gap:12px;
 }
-.btn-cancel { background: var(--surface2); color: var(--text2); }
-.btn-confirm { background: var(--accent); color: #0f0f13; }
-.btn-confirm:hover { filter: brightness(1.1); }
+.staff-list-item img { width:36px; height:36px; border-radius:50%; }
+.staff-list-item .info { flex:1; }
+.staff-list-item .info .name { font-size:14px; font-weight:600; }
+.staff-list-item .info .email { font-size:11px; color:var(--text3); margin-top:2px; }
+.staff-list-item .status {
+  font-size:11px; font-weight:700; padding:3px 10px;
+  border-radius:20px;
+}
+.staff-list-item .status.approved { background:rgba(200,240,74,.15); color:var(--accent); }
+.staff-list-item .status.pending { background:rgba(255,179,71,.15); color:var(--accent4); }
+.staff-list-item .btn-approve {
+  padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600;
+  border:1px solid var(--accent); background:rgba(200,240,74,.1);
+  color:var(--accent); cursor:pointer; transition:var(--tr);
+}
+.staff-list-item .btn-revoke {
+  padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600;
+  border:1px solid var(--accent2); background:rgba(255,107,107,.1);
+  color:var(--accent2); cursor:pointer; transition:var(--tr);
+}
 
 /* ── 설정 패널 ── */
 .settings-panel {
-  position: fixed; top: 0; right: -100%;
-  width: min(320px, 100%); height: 100%;
-  background: var(--surface); z-index: 2000;
-  padding: 60px 24px 40px;
-  transition: right .3s cubic-bezier(0.4,0,0.2,1);
-  border-left: 1px solid var(--border);
-  overflow-y: auto;
+  position:fixed; top:0; right:-100%; width:min(320px,100%); height:100%;
+  background:var(--surface); z-index:2000; padding:60px 24px 40px;
+  transition:right .3s cubic-bezier(0.4,0,0.2,1);
+  border-left:1px solid var(--border); overflow-y:auto;
 }
-.settings-panel.open { right: 0; }
-.settings-backdrop {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.6); z-index: 1999;
-  opacity: 0; pointer-events: none; transition: opacity .3s;
-}
-.settings-backdrop.show { opacity: 1; pointer-events: all; }
-.settings-panel h2 { font-size: 18px; font-weight: 700; margin-bottom: 28px; }
-.settings-panel .close-btn {
-  position: absolute; top: 20px; right: 20px;
-  width: 32px; height: 32px; border-radius: 50%;
-  background: var(--surface2); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; cursor: pointer; color: var(--text2);
-}
-.settings-section { margin-bottom: 28px; }
-.settings-section h3 { font-size: 11px; color: var(--text3); letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase; }
-.settings-row {
-  display: flex; align-items: center;
-  justify-content: space-between; padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-.settings-row:last-child { border-bottom: none; }
-.settings-row .lbl { font-size: 14px; }
-.settings-row .val {
-  font-family: 'Gmarket Sans', sans-serif;
-  font-size: 14px; color: var(--accent); cursor: pointer;
-}
-.tax-toggle {
-  display: flex; align-items: center; gap: 8px;
-}
-.toggle {
-  width: 44px; height: 24px; border-radius: 12px;
-  background: var(--surface2); border: 1px solid var(--border);
-  position: relative; cursor: pointer; transition: background .2s;
-}
-.toggle.on { background: var(--accent); border-color: var(--accent); }
-.toggle::after {
-  content: ''; position: absolute;
-  width: 18px; height: 18px; border-radius: 50%;
-  background: var(--text2); top: 2px; left: 2px;
-  transition: transform .2s, background .2s;
-}
-.toggle.on::after { transform: translateX(20px); background: #0f0f13; }
-.btn-logout {
-  width: 100%; padding: 12px; border-radius: 12px;
-  background: rgba(255,107,107,.1); border: 1px solid rgba(255,107,107,.3);
-  color: var(--accent2); font-size: 14px; font-weight: 600;
-  cursor: pointer; transition: var(--tr); margin-top: 8px;
-}
-.btn-logout:hover { background: rgba(255,107,107,.2); }
+.settings-panel.open { right:0; }
+.settings-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1999; opacity:0; pointer-events:none; transition:opacity .3s; }
+.settings-backdrop.show { opacity:1; pointer-events:all; }
+.settings-panel h2 { font-size:18px; font-weight:700; margin-bottom:28px; }
+.settings-panel .close-btn { position:absolute; top:20px; right:20px; width:32px; height:32px; border-radius:50%; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; color:var(--text2); }
+.settings-section { margin-bottom:28px; }
+.settings-section h3 { font-size:11px; color:var(--text3); letter-spacing:1px; margin-bottom:12px; text-transform:uppercase; }
+.settings-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
+.settings-row:last-child { border-bottom:none; }
+.settings-row .lbl { font-size:14px; }
+.settings-row .val { font-family:'Gmarket Sans',sans-serif; font-size:14px; color:var(--accent); cursor:pointer; }
+.toggle { width:44px; height:24px; border-radius:12px; background:var(--surface2); border:1px solid var(--border); position:relative; cursor:pointer; transition:background .2s; }
+.toggle.on { background:var(--accent); border-color:var(--accent); }
+.toggle::after { content:''; position:absolute; width:18px; height:18px; border-radius:50%; background:var(--text2); top:2px; left:2px; transition:transform .2s,background .2s; }
+.toggle.on::after { transform:translateX(20px); background:#0f0f13; }
+.btn-logout { width:100%; padding:12px; border-radius:12px; background:rgba(255,107,107,.1); border:1px solid rgba(255,107,107,.3); color:var(--accent2); font-size:14px; font-weight:600; cursor:pointer; transition:var(--tr); margin-top:8px; }
+.btn-logout:hover { background:rgba(255,107,107,.2); }
 
 /* ── 주간 분석 ── */
-.weekly-section { margin-bottom: 20px; }
-.weekly-section h2 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
-.week-bar-list { display: flex; flex-direction: column; gap: 8px; }
-.week-bar-item { display: flex; align-items: center; gap: 10px; }
-.week-bar-item .day-label { font-size: 12px; color: var(--text2); width: 24px; }
-.week-bar-item .bar-wrap {
-  flex: 1; height: 8px; background: var(--surface2);
-  border-radius: 4px; overflow: hidden;
-}
-.week-bar-item .bar-fill {
-  height: 100%; border-radius: 4px;
-  background: var(--accent); transition: width .5s ease;
-}
-.week-bar-item .bar-val { font-size: 11px; color: var(--text3); min-width: 36px; text-align: right; }
+.week-bar-list { display:flex; flex-direction:column; gap:8px; }
+.week-bar-item { display:flex; align-items:center; gap:10px; }
+.week-bar-item .day-label { font-size:12px; color:var(--text2); width:24px; }
+.week-bar-item .bar-wrap { flex:1; height:8px; background:var(--surface2); border-radius:4px; overflow:hidden; }
+.week-bar-item .bar-fill { height:100%; border-radius:4px; background:var(--accent); transition:width .5s ease; }
+.week-bar-item .bar-val { font-size:11px; color:var(--text3); min-width:36px; text-align:right; }
 
 /* ── 탭 ── */
-.tabs {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--surface); border-top: 1px solid var(--border);
-  display: flex; z-index: 100;
-}
-.tab {
-  flex: 1; padding: 12px 8px 16px;
-  display: flex; flex-direction: column; align-items: center;
-  gap: 4px; cursor: pointer; transition: var(--tr);
-  border: none; background: none; color: var(--text3);
-}
-.tab.active { color: var(--accent); }
-.tab .icon { font-size: 20px; }
-.tab .label { font-size: 10px; letter-spacing: .5px; }
-
-/* ── 탭 페이지 ── */
-.tab-page { display: none; }
-.tab-page.active { display: block; }
+.tabs { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; z-index:100; }
+.tab { flex:1; padding:12px 8px 16px; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; transition:var(--tr); border:none; background:none; color:var(--text3); }
+.tab.active { color:var(--accent); }
+.tab .icon { font-size:20px; }
+.tab .label { font-size:10px; letter-spacing:.5px; }
+.tab-page { display:none; }
+.tab-page.active { display:block; }
 </style>
 </head>
 <body>
@@ -421,39 +368,60 @@ body {
 <div class="login-screen" id="loginScreen">
   <div class="login-logo">⏱️</div>
   <div class="login-title">출퇴근 기록부</div>
-  <div class="login-sub">동생의 알바 시간과 급여를<br>한눈에 관리해요</div>
+  <div class="login-sub">사장님과 직원 모두를 위한<br>스마트 근무 관리</div>
   <button class="btn-google" id="loginBtn">
-    <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C33.8 6.5 29.2 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.6-7.9 19.6-20 0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C33.8 6.5 29.2 4 24 4 16.3 4 9.7 8.6 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.8-1.9 13.4-5l-6.2-5.2C29.3 35.4 26.8 36 24 36c-5.2 0-9.5-2.9-11.3-7.1l-6.5 5C9.8 39.6 16.4 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.8l6.2 5.2C41.3 35.3 44 30 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
-    Google로 시작하기
+    <svg viewBox="0 0 48 48"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 29.9 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.4-.2-2.7-.5-4z"/><path fill="#34A853" d="M6.3 14.7l7 5.1C15.1 15.1 19.1 12 24 12c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3c-7.6 0-14.2 4.6-17.7 11.7z"/><path fill="#FBBC05" d="M24 45c5.8 0 10.7-1.9 14.3-5.2l-6.6-5.4C29.9 36 27.1 37 24 37c-5.8 0-10.7-3.9-12.5-9.3l-7 5.4C8 40.2 15.4 45 24 45z"/><path fill="#EA4335" d="M44.5 20H24v8.5h11.8c-.8 2.4-2.3 4.4-4.3 5.9l6.6 5.4C41.6 36.4 45 30.6 45 24c0-1.4-.2-2.7-.5-4z"/></svg>
+    Google로 로그인
   </button>
+</div>
+
+<!-- 접근 거부 -->
+<div class="denied-screen" id="deniedScreen">
+  <div class="denied-icon">🔒</div>
+  <div class="denied-title">접근 권한이 없어요</div>
+  <div class="denied-sub">사장님에게 승인을 요청해주세요.<br>승인 후 다시 로그인하면 이용 가능해요.</div>
+  <div class="denied-email" id="deniedEmail"></div>
+  <button class="btn-denied-logout" id="deniedLogout">다른 계정으로 로그인</button>
 </div>
 
 <!-- 메인 -->
 <div id="mainApp" style="display:none">
-
-  <!-- 헤더 -->
   <div class="header">
     <div class="header-left">
       <h1>⏱ 출퇴근</h1>
       <p id="headerSub">기록 · 계산 · 관리</p>
     </div>
     <div class="header-right">
+      <div class="role-badge" id="roleBadge">직원</div>
       <div class="user-avatar" id="userAvatar">👤</div>
       <div class="settings-btn" id="settingsOpenBtn">⚙️</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="sync-badge" id="syncBadge">
+      <div class="sync-dot"></div>
+      <span id="syncText">연결 중...</span>
+    </div>
+    <div class="theme-btn" id="themeBtnTop">
+      <span id="themeIcon">🌙</span>
+      <span id="themeLabel">다크</span>
     </div>
   </div>
 
   <!-- 탭 페이지: 홈 -->
   <div class="tab-page active" id="page-home">
-
-    <!-- 월 네비 -->
     <div class="month-nav">
       <button id="prevMonth">‹</button>
       <span id="currentMonth"></span>
       <button id="nextMonth">›</button>
     </div>
 
-    <!-- 요약 카드 -->
+    <!-- 관리자: 직원 선택 탭 -->
+    <div class="staff-selector" id="staffSelector">
+      <label>직원 선택</label>
+      <div class="staff-tabs" id="staffTabs"></div>
+    </div>
+
     <div class="summary-grid">
       <div class="summary-card accent">
         <div class="label">이번 달 총 급여</div>
@@ -463,7 +431,7 @@ body {
       <div class="summary-card">
         <div class="label">총 근무시간</div>
         <div class="value blue" id="totalHours">0시간</div>
-        <div class="sub" id="totalHoursSub">휴식 제외</div>
+        <div class="sub">휴식 제외</div>
       </div>
       <div class="summary-card">
         <div class="label">평균 근무시간</div>
@@ -477,7 +445,6 @@ body {
       </div>
     </div>
 
-    <!-- 시급 배너 -->
     <div class="wage-banner" id="wageBanner">
       <div class="left">
         <div class="icon">💰</div>
@@ -486,29 +453,19 @@ body {
           <div class="amount" id="wageDisplay">₩0</div>
         </div>
       </div>
-      <div class="edit-btn">변경</div>
+      <div class="edit-btn" id="wageEditBtn">변경</div>
     </div>
 
-    <!-- 기록 추가 -->
     <div class="today-card">
       <div class="title">근무 기록 추가</div>
-
       <div class="date-input-group">
         <label>날짜</label>
         <input type="date" id="workDate">
       </div>
-
       <div class="time-row">
-        <div class="time-input-group">
-          <label>출근</label>
-          <input type="time" id="startTime">
-        </div>
-        <div class="time-input-group">
-          <label>퇴근</label>
-          <input type="time" id="endTime">
-        </div>
+        <div class="time-input-group"><label>출근</label><input type="time" id="startTime"></div>
+        <div class="time-input-group"><label>퇴근</label><input type="time" id="endTime"></div>
       </div>
-
       <div class="break-section">
         <span class="break-label">휴식시간</span>
         <div class="break-chips">
@@ -519,34 +476,22 @@ body {
           <div class="break-chip" data-min="120">2시간</div>
         </div>
       </div>
-
       <div class="memo-group">
         <label>메모 (선택)</label>
         <input type="text" id="workMemo" placeholder="예: 바쁜 날, 조기 퇴근 등">
       </div>
-
       <div class="calc-preview">
-        <div class="left">
-          <span>예상 급여</span>
-          <strong id="previewPay">₩0</strong>
-        </div>
+        <div class="left"><span>예상 급여</span><strong id="previewPay">₩0</strong></div>
         <div class="right" id="previewDetail">-</div>
       </div>
-
       <button class="btn-add" id="addRecordBtn">기록 추가하기</button>
     </div>
 
-    <!-- 기록 목록 -->
     <div class="records-header">
       <h2>📋 근무 기록</h2>
       <span id="recordCount">0건</span>
     </div>
-    <div id="recordList">
-      <div class="empty-state">
-        <div class="emoji">📝</div>
-        <p>아직 기록이 없어요<br>위에서 추가해보세요!</p>
-      </div>
-    </div>
+    <div id="recordList"></div>
   </div>
 
   <!-- 탭 페이지: 분석 -->
@@ -555,55 +500,40 @@ body {
       <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">📊 근무 분석</h2>
       <p style="font-size:12px;color:var(--text2)" id="statsMonthLabel"></p>
     </div>
-
     <div class="summary-grid" style="margin-bottom:20px">
-      <div class="summary-card accent">
-        <div class="label">월 급여 합계</div>
-        <div class="value" id="statsTotalPay">₩0</div>
-      </div>
-      <div class="summary-card">
-        <div class="label">월 근무일</div>
-        <div class="value blue" id="statsWorkDays">0일</div>
-      </div>
+      <div class="summary-card accent"><div class="label">월 급여 합계</div><div class="value" id="statsTotalPay">₩0</div></div>
+      <div class="summary-card"><div class="label">월 근무일</div><div class="value blue" id="statsWorkDays">0일</div></div>
     </div>
-
-    <div class="weekly-section">
-      <h2>요일별 근무시간</h2>
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:14px;font-weight:700;margin-bottom:12px">요일별 근무시간</h2>
       <div class="week-bar-list" id="weekBarList"></div>
     </div>
-
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:20px">
-      <h2 style="font-size:14px;font-weight:700;margin-bottom:14px">이번 달 수입 현황</h2>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px">
+      <h2 style="font-size:14px;font-weight:700;margin-bottom:14px">수입 현황</h2>
       <div style="display:grid;gap:10px">
-        <div style="display:flex;justify-content:space-between;font-size:13px">
-          <span style="color:var(--text2)">총 급여</span>
-          <span style="font-family:Gmarket Sans;font-weight:700;color:var(--accent)" id="statsGross">₩0</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:13px" id="taxRow">
-          <span style="color:var(--text2)">세금 (3.3%)</span>
-          <span style="color:var(--accent2)" id="statsTax">-₩0</span>
-        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--text2)">총 급여</span><span style="font-family:Gmarket Sans;font-weight:700;color:var(--accent)" id="statsGross">₩0</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px" id="taxRow"><span style="color:var(--text2)">세금 (3.3%)</span><span style="color:var(--accent2)" id="statsTax">-₩0</span></div>
         <div style="height:1px;background:var(--border)"></div>
-        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700">
-          <span>실수령액</span>
-          <span style="font-family:Gmarket Sans;color:var(--accent)" id="statsNet">₩0</span>
-        </div>
+        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700"><span>실수령액</span><span style="font-family:Gmarket Sans;color:var(--accent)" id="statsNet">₩0</span></div>
       </div>
     </div>
   </div>
 
+  <!-- 탭 페이지: 직원 관리 (관리자 전용) -->
+  <div class="tab-page" id="page-manage">
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">👥 직원 관리</h2>
+      <p style="font-size:12px;color:var(--text2)">승인된 직원만 앱을 이용할 수 있어요</p>
+    </div>
+    <div id="staffManageList"><div class="empty-state"><div class="emoji">👤</div><p>아직 접속한 직원이 없어요</p></div></div>
+  </div>
 </div>
 
 <!-- 탭 바 -->
 <div class="tabs" id="tabBar" style="display:none">
-  <button class="tab active" data-page="home">
-    <div class="icon">🏠</div>
-    <div class="label">홈</div>
-  </button>
-  <button class="tab" data-page="stats">
-    <div class="icon">📊</div>
-    <div class="label">분석</div>
-  </button>
+  <button class="tab active" data-page="home"><div class="icon">🏠</div><div class="label">홈</div></button>
+  <button class="tab" data-page="stats"><div class="icon">📊</div><div class="label">분석</div></button>
+  <button class="tab admin-only" data-page="manage" style="display:none"><div class="icon">👥</div><div class="label">직원관리</div></button>
 </div>
 
 <!-- 시급 모달 -->
@@ -611,13 +541,8 @@ body {
   <div class="modal">
     <div class="modal-handle"></div>
     <h3>💰 시급 설정</h3>
-    <div class="form-group">
-      <label>시급 (원)</label>
-      <input type="number" id="wageInput" placeholder="예: 10030" min="0" step="10">
-    </div>
-    <div style="font-size:12px;color:var(--text3);margin-top:-6px;margin-bottom:4px">
-      2025년 최저시급: ₩10,030
-    </div>
+    <div class="form-group"><label>시급 (원)</label><input type="number" id="wageInput" placeholder="예: 10030" min="0" step="10"></div>
+    <div style="font-size:12px;color:var(--text3);margin-top:-6px;margin-bottom:4px">2025년 최저시급: ₩10,030</div>
     <div class="modal-btns">
       <button class="btn-cancel" id="wageCancel">취소</button>
       <button class="btn-confirm" id="wageConfirm">저장</button>
@@ -630,28 +555,13 @@ body {
   <div class="modal">
     <div class="modal-handle"></div>
     <h3>✏️ 기록 수정</h3>
-    <div class="form-group">
-      <label>날짜</label>
-      <input type="date" id="editDate">
-    </div>
+    <div class="form-group"><label>날짜</label><input type="date" id="editDate"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="form-group">
-        <label>출근</label>
-        <input type="time" id="editStart">
-      </div>
-      <div class="form-group">
-        <label>퇴근</label>
-        <input type="time" id="editEnd">
-      </div>
+      <div class="form-group"><label>출근</label><input type="time" id="editStart"></div>
+      <div class="form-group"><label>퇴근</label><input type="time" id="editEnd"></div>
     </div>
-    <div class="form-group">
-      <label>휴식시간 (분)</label>
-      <input type="number" id="editBreak" min="0" step="10">
-    </div>
-    <div class="form-group">
-      <label>메모</label>
-      <input type="text" id="editMemo">
-    </div>
+    <div class="form-group"><label>휴식시간 (분)</label><input type="number" id="editBreak" min="0" step="10"></div>
+    <div class="form-group"><label>메모</label><input type="text" id="editMemo"></div>
     <div class="modal-btns">
       <button class="btn-cancel" id="editCancel">취소</button>
       <button class="btn-confirm" id="editConfirm">저장</button>
@@ -664,41 +574,28 @@ body {
 <div class="settings-panel" id="settingsPanel">
   <button class="close-btn" id="settingsCloseBtn">✕</button>
   <h2>⚙️ 설정</h2>
-
   <div class="settings-section">
     <h3>급여 설정</h3>
-    <div class="settings-row">
-      <span class="lbl">현재 시급</span>
-      <span class="val" id="settingsWage" style="cursor:pointer">₩0</span>
-    </div>
-    <div class="settings-row">
-      <span class="lbl">세금 공제 (3.3%)</span>
-      <div class="tax-toggle">
-        <div class="toggle" id="taxToggle"></div>
-      </div>
-    </div>
+    <div class="settings-row"><span class="lbl">현재 시급</span><span class="val" id="settingsWage">₩0</span></div>
+    <div class="settings-row"><span class="lbl">세금 공제 (3.3%)</span><div class="toggle" id="taxToggle"></div></div>
   </div>
 
   <div class="settings-section">
     <h3>계정</h3>
-    <div class="settings-row">
-      <span class="lbl">로그인 계정</span>
-      <span style="font-size:12px;color:var(--text3)" id="settingsEmail">-</span>
-    </div>
+    <div class="settings-row"><span class="lbl">이메일</span><span style="font-size:12px;color:var(--text3)" id="settingsEmail">-</span></div>
+    <div class="settings-row"><span class="lbl">권한</span><span style="font-size:12px;color:var(--text3)" id="settingsRole">-</span></div>
   </div>
-
   <button class="btn-logout" id="logoutBtn">로그아웃</button>
 </div>
 
-<!-- Firebase -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
   from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, doc, addDoc, getDocs, deleteDoc, updateDoc, query, where, orderBy }
+import { getFirestore, collection, doc, addDoc, getDocs, deleteDoc, updateDoc, setDoc, getDoc, query, orderBy }
   from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-// ──────────────── Firebase 설정 (가계부와 같은 프로젝트 사용 가능) ────────────────
+// ── Firebase 설정 ──
 const firebaseConfig = {
   apiKey: "AIzaSyB0hxBZ4X-CB_x6DXwj73qEuJlBWp6trtw",
   authDomain: "personal-apps-hty.firebaseapp.com",
@@ -708,56 +605,199 @@ const firebaseConfig = {
   appId: "1:1094404789428:web:87efdfbbb9bc08a00433e1",
   measurementId: "G-48CFC1W4ZR"
 };
-// ─────────────────────────────────────────────────────────────────────────────────
+
+// ── 관리자 계정 ──
+const ADMIN_EMAIL = 'ryun1875@gmail.com';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 let currentUser = null;
+let isAdmin = false;
 let records = [];
+let allStaff = [];
+let selectedStaffUid = null; // 관리자가 선택한 직원
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
 let hourlyWage = 10030;
 let taxEnabled = false;
+let lightMode = false;
 let editingId = null;
 let selectedBreak = 60;
 
 const DAYS = ['일','월','화','수','목','금','토'];
 const HOLIDAYS = ['일','토'];
 
-// ── Auth ──
-document.getElementById('loginBtn').addEventListener('click', async () => {
-  try {
-    await signInWithPopup(auth, new GoogleAuthProvider());
-  } catch(e) { alert('로그인 실패: ' + e.message); }
+// ── 테마 ──
+function applyTheme() {
+  document.body.classList.toggle('light', lightMode);
+  const icon = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  if (icon) icon.textContent = lightMode ? '☀️' : '🌙';
+  if (label) label.textContent = lightMode ? '라이트' : '다크';
+}
+
+// 상단 테마 버튼
+document.getElementById('themeBtnTop').addEventListener('click', () => {
+  lightMode = !lightMode;
+  localStorage.setItem('lightMode', lightMode);
+  applyTheme();
 });
 
-onAuthStateChanged(auth, user => {
-  if (user) {
-    currentUser = user;
-    document.getElementById('loginScreen').classList.add('hide');
-    document.getElementById('mainApp').style.display = 'block';
-    document.getElementById('tabBar').style.display = 'flex';
-    const av = document.getElementById('userAvatar');
-    if (user.photoURL) av.innerHTML = `<img src="${user.photoURL}">`;
-    document.getElementById('settingsEmail').textContent = user.email;
-    loadSettings();
-    loadRecords();
-  } else {
+// 연동 상태
+function setSyncStatus(status, text) {
+  const badge = document.getElementById('syncBadge');
+  const label = document.getElementById('syncText');
+  badge.className = 'sync-badge ' + status;
+  label.textContent = text;
+}
+
+lightMode = localStorage.getItem('lightMode') === 'true';
+applyTheme();
+
+// ── Auth ──
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch(e) { alert('로그인 실패: ' + e.message); }
+});
+
+document.getElementById('deniedLogout').addEventListener('click', () => signOut(auth));
+document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+
+onAuthStateChanged(auth, async user => {
+  document.getElementById('deniedScreen').classList.remove('show');
+  if (!user) {
     currentUser = null;
     document.getElementById('loginScreen').classList.remove('hide');
     document.getElementById('mainApp').style.display = 'none';
     document.getElementById('tabBar').style.display = 'none';
+    return;
   }
+
+  currentUser = user;
+  isAdmin = user.email === ADMIN_EMAIL;
+  setSyncStatus('syncing', '연결 중...');
+
+  // 접근 권한 확인
+  if (!isAdmin) {
+    const staffDoc = await getDoc(doc(db, 'staff', user.uid));
+    if (!staffDoc.exists() || staffDoc.data().status !== 'approved') {
+      // 미승인 → 대기 등록 후 접근 거부
+      await setDoc(doc(db, 'staff', user.uid), {
+        uid: user.uid,
+        email: user.email,
+        name: user.displayName || '이름없음',
+        photo: user.photoURL || '',
+        status: staffDoc.exists() ? staffDoc.data().status : 'pending',
+        requestedAt: staffDoc.exists() ? staffDoc.data().requestedAt : new Date().toISOString()
+      }, { merge: true });
+      document.getElementById('loginScreen').classList.add('hide');
+      document.getElementById('deniedScreen').classList.add('show');
+      document.getElementById('deniedEmail').textContent = user.email;
+      return;
+    }
+  }
+
+  // 승인됨 → 메인 진입
+  document.getElementById('loginScreen').classList.add('hide');
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('tabBar').style.display = 'flex';
+
+  const av = document.getElementById('userAvatar');
+  if (user.photoURL) av.innerHTML = `<img src="${user.photoURL}">`;
+  document.getElementById('settingsEmail').textContent = user.email;
+
+  // 역할 표시
+  const badge = document.getElementById('roleBadge');
+  if (isAdmin) {
+    badge.textContent = '관리자';
+    badge.className = 'role-badge admin';
+    document.getElementById('settingsRole').textContent = '관리자 (사장님)';
+    // 관리자 전용 탭 표시
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+    document.getElementById('staffSelector').classList.add('show');
+    document.getElementById('wageBanner').style.cursor = 'pointer';
+    document.getElementById('wageEditBtn').style.display = 'block';
+    loadAllStaff();
+  } else {
+    badge.textContent = '직원';
+    badge.className = 'role-badge staff';
+    document.getElementById('settingsRole').textContent = '직원';
+    document.getElementById('wageEditBtn').style.display = 'none';
+    document.getElementById('wageBanner').style.cursor = 'default';
+  }
+
+  await loadSettings();
+  await loadRecords();
 });
 
-document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+// ── 직원 목록 로드 (관리자) ──
+async function loadAllStaff() {
+  try {
+    const snap = await getDocs(collection(db, 'staff'));
+    allStaff = snap.docs.map(d => d.data());
+    renderStaffTabs();
+    renderStaffManage();
+  } catch(e) {}
+}
+
+function renderStaffTabs() {
+  const approved = allStaff.filter(s => s.status === 'approved');
+  const tabs = document.getElementById('staffTabs');
+  tabs.innerHTML = `<div class="staff-tab ${selectedStaffUid === null ? 'active' : ''}" data-uid="all">
+    전체 보기
+  </div>` + approved.map(s => `
+    <div class="staff-tab ${selectedStaffUid === s.uid ? 'active' : ''}" data-uid="${s.uid}">
+      ${s.photo ? `<img src="${s.photo}">` : ''}
+      ${s.name}
+    </div>
+  `).join('');
+  tabs.querySelectorAll('.staff-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      selectedStaffUid = tab.dataset.uid === 'all' ? null : tab.dataset.uid;
+      renderStaffTabs();
+      loadRecords();
+    });
+  });
+}
+
+function renderStaffManage() {
+  const container = document.getElementById('staffManageList');
+  if (!allStaff.length) {
+    container.innerHTML = `<div class="empty-state"><div class="emoji">👤</div><p>아직 접속한 직원이 없어요</p></div>`;
+    return;
+  }
+  container.innerHTML = allStaff.map(s => `
+    <div class="staff-list-item">
+      ${s.photo ? `<img src="${s.photo}">` : '<div style="width:36px;height:36px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center">👤</div>'}
+      <div class="info">
+        <div class="name">${s.name}</div>
+        <div class="email">${s.email}</div>
+      </div>
+      ${s.status === 'approved'
+        ? `<button class="btn-revoke" onclick="revokeStaff('${s.uid}')">승인 취소</button>`
+        : `<button class="btn-approve" onclick="approveStaff('${s.uid}')">승인</button>`
+      }
+    </div>
+  `).join('');
+}
+
+window.approveStaff = async (uid) => {
+  await setDoc(doc(db, 'staff', uid), { status: 'approved' }, { merge: true });
+  await loadAllStaff();
+};
+window.revokeStaff = async (uid) => {
+  if (!confirm('이 직원의 접근 권한을 취소할까요?')) return;
+  await setDoc(doc(db, 'staff', uid), { status: 'pending' }, { merge: true });
+  await loadAllStaff();
+};
 
 // ── Settings ──
 async function loadSettings() {
   try {
-    const snap = await getDocs(collection(db, `users/${currentUser.uid}/settings`));
+    const targetUid = isAdmin ? currentUser.uid : currentUser.uid;
+    const snap = await getDocs(collection(db, `users/${targetUid}/settings`));
     snap.forEach(d => {
       const data = d.data();
       if (data.hourlyWage) hourlyWage = data.hourlyWage;
@@ -766,48 +806,45 @@ async function loadSettings() {
   } catch(e) {}
   applySettings();
 }
+
 async function saveSettings() {
   try {
     const snap = await getDocs(collection(db, `users/${currentUser.uid}/settings`));
-    if (snap.empty) {
-      await addDoc(collection(db, `users/${currentUser.uid}/settings`), { hourlyWage, taxEnabled });
-    } else {
-      await updateDoc(snap.docs[0].ref, { hourlyWage, taxEnabled });
-    }
+    const data = { hourlyWage, taxEnabled };
+    if (snap.empty) await addDoc(collection(db, `users/${currentUser.uid}/settings`), data);
+    else await updateDoc(snap.docs[0].ref, data);
   } catch(e) {}
 }
+
 function applySettings() {
   document.getElementById('wageDisplay').textContent = `₩${hourlyWage.toLocaleString()}`;
   document.getElementById('settingsWage').textContent = `₩${hourlyWage.toLocaleString()}`;
-  const tt = document.getElementById('taxToggle');
-  tt.classList.toggle('on', taxEnabled);
+  document.getElementById('taxToggle').classList.toggle('on', taxEnabled);
   document.getElementById('taxRow').style.display = taxEnabled ? 'flex' : 'none';
   updatePreview();
   renderRecords();
   renderStats();
 }
 
-// ── Tax toggle ──
 document.getElementById('taxToggle').addEventListener('click', () => {
   taxEnabled = !taxEnabled;
-  saveSettings();
-  applySettings();
+  saveSettings(); applySettings();
 });
 
 // ── Wage modal ──
-document.getElementById('wageBanner').addEventListener('click', () => openWageModal());
-document.getElementById('settingsWage').addEventListener('click', () => openWageModal());
 function openWageModal() {
+  if (!isAdmin) return;
   document.getElementById('wageInput').value = hourlyWage;
   document.getElementById('wageModal').classList.add('show');
 }
+document.getElementById('wageBanner').addEventListener('click', openWageModal);
+document.getElementById('settingsWage').addEventListener('click', openWageModal);
 document.getElementById('wageCancel').addEventListener('click', () => document.getElementById('wageModal').classList.remove('show'));
 document.getElementById('wageConfirm').addEventListener('click', () => {
   const v = parseInt(document.getElementById('wageInput').value);
   if (!v || v < 0) return alert('올바른 시급을 입력해주세요');
   hourlyWage = v;
-  saveSettings();
-  applySettings();
+  saveSettings(); applySettings();
   document.getElementById('wageModal').classList.remove('show');
 });
 
@@ -831,17 +868,15 @@ document.querySelectorAll('.tab').forEach(btn => {
     btn.classList.add('active');
     document.getElementById(`page-${btn.dataset.page}`).classList.add('active');
     if (btn.dataset.page === 'stats') renderStats();
+    if (btn.dataset.page === 'manage') renderStaffManage();
   });
 });
 
-// ── Date/Time defaults ──
-function setDefaults() {
-  const now = new Date();
-  document.getElementById('workDate').value = now.toISOString().split('T')[0];
-  document.getElementById('startTime').value = '09:00';
-  document.getElementById('endTime').value = '18:00';
-}
-setDefaults();
+// ── 날짜/시간 기본값 ──
+const now = new Date();
+document.getElementById('workDate').value = now.toISOString().split('T')[0];
+document.getElementById('startTime').value = '09:00';
+document.getElementById('endTime').value = '18:00';
 
 // ── Break chips ──
 document.querySelectorAll('.break-chip').forEach(chip => {
@@ -853,17 +888,32 @@ document.querySelectorAll('.break-chip').forEach(chip => {
   });
 });
 
-// ── Preview ──
+// ── 월 네비 ──
+function updateMonthDisplay() {
+  document.getElementById('currentMonth').textContent = `${currentYear}.${String(currentMonth+1).padStart(2,'0')}`;
+  document.getElementById('statsMonthLabel').textContent = `${currentYear}년 ${currentMonth+1}월 근무 현황`;
+}
+document.getElementById('prevMonth').addEventListener('click', () => {
+  if (currentMonth === 0) { currentYear--; currentMonth = 11; } else currentMonth--;
+  updateMonthDisplay(); renderRecords(); renderStats();
+});
+document.getElementById('nextMonth').addEventListener('click', () => {
+  if (currentMonth === 11) { currentYear++; currentMonth = 0; } else currentMonth++;
+  updateMonthDisplay(); renderRecords(); renderStats();
+});
+updateMonthDisplay();
+
+// ── 급여 계산 ──
 function calcPay(startTime, endTime, breakMin) {
   const [sh, sm] = startTime.split(':').map(Number);
   const [eh, em] = endTime.split(':').map(Number);
   let totalMin = (eh * 60 + em) - (sh * 60 + sm);
   if (totalMin <= 0) totalMin += 24 * 60;
   const workMin = Math.max(0, totalMin - breakMin);
-  const workHours = workMin / 60;
-  let pay = Math.round(workHours * hourlyWage);
-  return { workMin, workHours, gross: pay, net: taxEnabled ? Math.round(pay * 0.967) : pay };
+  const gross = Math.round(workMin / 60 * hourlyWage);
+  return { workMin, gross, net: taxEnabled ? Math.round(gross * 0.967) : gross };
 }
+
 function updatePreview() {
   const s = document.getElementById('startTime').value;
   const e = document.getElementById('endTime').value;
@@ -871,41 +921,40 @@ function updatePreview() {
   const r = calcPay(s, e, selectedBreak);
   const h = Math.floor(r.workMin / 60), m = r.workMin % 60;
   document.getElementById('previewPay').textContent = `₩${r.net.toLocaleString()}`;
-  document.getElementById('previewDetail').textContent =
-    `${h}시간 ${m ? m+'분' : ''} · 휴식 ${selectedBreak}분`;
+  document.getElementById('previewDetail').textContent = `${h}시간${m ? ' '+m+'분' : ''} · 휴식 ${selectedBreak}분`;
 }
 document.getElementById('startTime').addEventListener('input', updatePreview);
 document.getElementById('endTime').addEventListener('input', updatePreview);
 
-// ── Month nav ──
-function updateMonthDisplay() {
-  document.getElementById('currentMonth').textContent = `${currentYear}.${String(currentMonth+1).padStart(2,'0')}`;
-  document.getElementById('statsMonthLabel').textContent = `${currentYear}년 ${currentMonth+1}월 근무 현황`;
-}
-document.getElementById('prevMonth').addEventListener('click', () => {
-  if (currentMonth === 0) { currentYear--; currentMonth = 11; }
-  else currentMonth--;
-  updateMonthDisplay(); renderRecords(); renderStats();
-});
-document.getElementById('nextMonth').addEventListener('click', () => {
-  if (currentMonth === 11) { currentYear++; currentMonth = 0; }
-  else currentMonth++;
-  updateMonthDisplay(); renderRecords(); renderStats();
-});
-updateMonthDisplay();
-
-// ── Records CRUD ──
+// ── Records 로드 ──
 async function loadRecords() {
+  setSyncStatus('syncing', '동기화 중...');
+  records = [];
   try {
-    const snap = await getDocs(
-      query(collection(db, `users/${currentUser.uid}/workRecords`), orderBy('date','desc'))
-    );
-    records = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  } catch(e) { records = []; }
+    if (isAdmin && selectedStaffUid) {
+      // 특정 직원 기록
+      const snap = await getDocs(query(collection(db, `users/${selectedStaffUid}/workRecords`), orderBy('date','desc')));
+      records = snap.docs.map(d => ({ id: d.id, ownerUid: selectedStaffUid, ...d.data() }));
+    } else if (isAdmin && !selectedStaffUid) {
+      // 전체 직원 기록
+      const approved = allStaff.filter(s => s.status === 'approved');
+      for (const s of approved) {
+        const snap = await getDocs(query(collection(db, `users/${s.uid}/workRecords`), orderBy('date','desc')));
+        snap.docs.forEach(d => records.push({ id: d.id, ownerUid: s.uid, ownerName: s.name, ...d.data() }));
+      }
+      records.sort((a,b) => b.date.localeCompare(a.date));
+    } else {
+      // 직원 본인 기록
+      const snap = await getDocs(query(collection(db, `users/${currentUser.uid}/workRecords`), orderBy('date','desc')));
+      records = snap.docs.map(d => ({ id: d.id, ownerUid: currentUser.uid, ...d.data() }));
+    }
+  } catch(e) { setSyncStatus('offline', '연결 끊김'); }
+  setSyncStatus('online', '실시간 연동 중');
   renderRecords();
   renderStats();
 }
 
+// ── 기록 추가 ──
 document.getElementById('addRecordBtn').addEventListener('click', async () => {
   const date = document.getElementById('workDate').value;
   const start = document.getElementById('startTime').value;
@@ -913,29 +962,32 @@ document.getElementById('addRecordBtn').addEventListener('click', async () => {
   const memo = document.getElementById('workMemo').value.trim();
   if (!date || !start || !end) return alert('날짜와 시간을 모두 입력해주세요');
   const r = calcPay(start, end, selectedBreak);
-  const record = { date, start, end, breakMin: selectedBreak, memo,
-    workMin: r.workMin, gross: r.gross, net: r.net };
+
+  // 관리자가 특정 직원 선택한 경우 그 직원 uid에 저장, 아니면 본인
+  const targetUid = (isAdmin && selectedStaffUid) ? selectedStaffUid : currentUser.uid;
+  const record = { date, start, end, breakMin: selectedBreak, memo, workMin: r.workMin, gross: r.gross, net: r.net };
   try {
-    const ref = await addDoc(collection(db, `users/${currentUser.uid}/workRecords`), record);
-    records.unshift({ id: ref.id, ...record });
+    const ref = await addDoc(collection(db, `users/${targetUid}/workRecords`), record);
+    records.unshift({ id: ref.id, ownerUid: targetUid, ...record });
     document.getElementById('workMemo').value = '';
     renderRecords(); renderStats();
   } catch(e) { alert('저장 실패: ' + e.message); }
 });
 
-async function deleteRecord(id) {
+// ── 삭제 ──
+async function deleteRecord(id, ownerUid) {
   if (!confirm('이 기록을 삭제할까요?')) return;
   try {
-    await deleteDoc(doc(db, `users/${currentUser.uid}/workRecords`, id));
+    await deleteDoc(doc(db, `users/${ownerUid}/workRecords`, id));
     records = records.filter(r => r.id !== id);
     renderRecords(); renderStats();
   } catch(e) { alert('삭제 실패'); }
 }
 
-// ── Edit modal ──
+// ── 수정 모달 ──
 document.getElementById('editCancel').addEventListener('click', () => document.getElementById('editModal').classList.remove('show'));
 function openEditModal(record) {
-  editingId = record.id;
+  editingId = { id: record.id, ownerUid: record.ownerUid };
   document.getElementById('editDate').value = record.date;
   document.getElementById('editStart').value = record.start;
   document.getElementById('editEnd').value = record.end;
@@ -953,113 +1005,98 @@ document.getElementById('editConfirm').addEventListener('click', async () => {
   const r = calcPay(start, end, breakMin);
   const updated = { date, start, end, breakMin, memo, workMin: r.workMin, gross: r.gross, net: r.net };
   try {
-    await updateDoc(doc(db, `users/${currentUser.uid}/workRecords`, editingId), updated);
-    const idx = records.findIndex(r => r.id === editingId);
-    if (idx >= 0) records[idx] = { id: editingId, ...updated };
+    await updateDoc(doc(db, `users/${editingId.ownerUid}/workRecords`, editingId.id), updated);
+    const idx = records.findIndex(r => r.id === editingId.id);
+    if (idx >= 0) records[idx] = { ...records[idx], ...updated };
     document.getElementById('editModal').classList.remove('show');
     renderRecords(); renderStats();
   } catch(e) { alert('수정 실패'); }
 });
 
-// ── Render Records ──
+// ── 렌더 ──
 function getMonthRecords() {
   return records.filter(r => {
     const d = new Date(r.date);
     return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
-  }).sort((a,b) => b.date.localeCompare(a.date));
+  });
 }
 
 function renderRecords() {
   const list = getMonthRecords();
   const container = document.getElementById('recordList');
-
-  // summary
-  const totalPay = list.reduce((s, r) => s + (taxEnabled ? r.net : r.gross), 0);
-  const totalMin = list.reduce((s, r) => s + r.workMin, 0);
-  const totalBreakMin = list.reduce((s, r) => s + r.breakMin, 0);
+  const totalPay = list.reduce((s,r) => s + (taxEnabled ? r.net : r.gross), 0);
+  const totalMin = list.reduce((s,r) => s + r.workMin, 0);
+  const totalBreakMin = list.reduce((s,r) => s + r.breakMin, 0);
   const days = list.length;
-  const h = Math.floor(totalMin / 60), m = totalMin % 60;
-  const avgMin = days ? Math.round(totalMin / days) : 0;
-  const ah = Math.floor(avgMin / 60), am = avgMin % 60;
+  const h = Math.floor(totalMin/60), m = totalMin%60;
+  const avgMin = days ? Math.round(totalMin/days) : 0;
+  const ah = Math.floor(avgMin/60), am = avgMin%60;
 
   document.getElementById('totalPay').textContent = `₩${totalPay.toLocaleString()}`;
   document.getElementById('totalPaySub').textContent = `${days}일 근무`;
-  document.getElementById('totalHours').textContent = `${h}시간${m ? ' '+m+'분' : ''}`;
-  document.getElementById('totalHoursSub').textContent = '휴식 제외';
-  document.getElementById('avgHours').textContent = `${ah}시간${am ? ' '+am+'분' : ''}`;
+  document.getElementById('totalHours').textContent = `${h}시간${m?' '+m+'분':''}`;
+  document.getElementById('avgHours').textContent = `${ah}시간${am?' '+am+'분':''}`;
   document.getElementById('totalBreak').textContent = `${totalBreakMin}분`;
   document.getElementById('recordCount').textContent = `${days}건`;
 
-  if (list.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="emoji">📝</div><p>이달 기록이 없어요<br>위에서 추가해보세요!</p></div>`;
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><div class="emoji">📝</div><p>이달 기록이 없어요</p></div>`;
     return;
   }
+
+  const canEdit = (r) => isAdmin || r.ownerUid === currentUser.uid;
 
   container.innerHTML = list.map(r => {
     const d = new Date(r.date);
     const dayName = DAYS[d.getDay()];
     const isHoliday = HOLIDAYS.includes(dayName);
-    const wh = Math.floor(r.workMin / 60), wm = r.workMin % 60;
+    const wh = Math.floor(r.workMin/60), wm = r.workMin%60;
     const pay = taxEnabled ? r.net : r.gross;
-    return `
-    <div class="record-item">
+    return `<div class="record-item">
       <div class="left">
-        <div class="date">
-          ${r.date.replace(/-/g,'.')}
-          <span class="day-name ${isHoliday ? 'holiday' : ''}">${dayName}</span>
-        </div>
+        ${r.ownerName ? `<div class="staff-name">👤 ${r.ownerName}</div>` : ''}
+        <div class="date">${r.date.replace(/-/g,'.')}<span class="day-name ${isHoliday?'holiday':''}">${dayName}</span></div>
         <div class="times">${r.start}<span>→</span>${r.end}</div>
-        <div class="detail">휴식 ${r.breakMin}분${r.memo ? ' · ' + r.memo : ''}</div>
+        <div class="detail">휴식 ${r.breakMin}분${r.memo?' · '+r.memo:''}</div>
       </div>
       <div class="right">
         <div class="pay">₩${pay.toLocaleString()}</div>
-        <div class="hours">${wh}시간${wm ? ' '+wm+'분' : ''} 근무</div>
-        <div class="actions">
-          <button class="btn-edit" onclick='openEditById("${r.id}")'>수정</button>
-          <button onclick='deleteRecord("${r.id}")'>삭제</button>
-        </div>
+        <div class="hours">${wh}시간${wm?' '+wm+'분':''} 근무</div>
+        ${canEdit(r) ? `<div class="actions">
+          <button class="btn-edit" onclick='editById("${r.id}","${r.ownerUid}")'>수정</button>
+          <button onclick='delRecord("${r.id}","${r.ownerUid}")'>삭제</button>
+        </div>` : ''}
       </div>
     </div>`;
   }).join('');
 }
 
-window.openEditById = id => {
-  const r = records.find(r => r.id === id);
+window.editById = (id, ownerUid) => {
+  const r = records.find(r => r.id === id && r.ownerUid === ownerUid);
   if (r) openEditModal(r);
 };
-window.deleteRecord = deleteRecord;
+window.delRecord = (id, ownerUid) => deleteRecord(id, ownerUid);
 
-// ── Stats ──
 function renderStats() {
   const list = getMonthRecords();
-  const totalPay = list.reduce((s, r) => s + r.gross, 0);
-  const totalNet = list.reduce((s, r) => s + r.net, 0);
-  const tax = totalPay - totalNet;
-
-  document.getElementById('statsTotalPay').textContent = `₩${totalPay.toLocaleString()}`;
+  const totalGross = list.reduce((s,r) => s+r.gross, 0);
+  const totalNet = list.reduce((s,r) => s+r.net, 0);
+  document.getElementById('statsTotalPay').textContent = `₩${totalGross.toLocaleString()}`;
   document.getElementById('statsWorkDays').textContent = `${list.length}일`;
-  document.getElementById('statsGross').textContent = `₩${totalPay.toLocaleString()}`;
-  document.getElementById('statsTax').textContent = `-₩${tax.toLocaleString()}`;
-  document.getElementById('statsNet').textContent = `₩${(taxEnabled ? totalNet : totalPay).toLocaleString()}`;
+  document.getElementById('statsGross').textContent = `₩${totalGross.toLocaleString()}`;
+  document.getElementById('statsTax').textContent = `-₩${(totalGross-totalNet).toLocaleString()}`;
+  document.getElementById('statsNet').textContent = `₩${(taxEnabled?totalNet:totalGross).toLocaleString()}`;
   document.getElementById('taxRow').style.display = taxEnabled ? 'flex' : 'none';
 
-  // 요일별
   const dayTotals = Array(7).fill(0);
-  const dayCounts = Array(7).fill(0);
-  list.forEach(r => {
-    const dow = new Date(r.date).getDay();
-    dayTotals[dow] += r.workMin;
-    dayCounts[dow]++;
-  });
+  list.forEach(r => { dayTotals[new Date(r.date).getDay()] += r.workMin; });
   const maxMin = Math.max(...dayTotals, 1);
-  const wbl = document.getElementById('weekBarList');
-  wbl.innerHTML = DAYS.map((d, i) => {
+  document.getElementById('weekBarList').innerHTML = DAYS.map((d,i) => {
     const h = Math.floor(dayTotals[i]/60), m = dayTotals[i]%60;
-    const pct = Math.round(dayTotals[i]/maxMin*100);
     return `<div class="week-bar-item">
       <div class="day-label">${d}</div>
-      <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div>
-      <div class="bar-val">${dayTotals[i] ? h+'h'+(m?m+'m':'') : '-'}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(dayTotals[i]/maxMin*100)}%"></div></div>
+      <div class="bar-val">${dayTotals[i]?h+'h'+(m?m+'m':''):'-'}</div>
     </div>`;
   }).join('');
 }
