@@ -1783,6 +1783,13 @@ function updatePreview() {
 document.getElementById('startTime').addEventListener('input', updatePreview);
 document.getElementById('endTime').addEventListener('input', updatePreview);
 
+// ── 휴무 모달 버튼 ──
+document.getElementById('dayoffCancel').addEventListener('click', () => document.getElementById('dayoffModal').classList.remove('show'));
+document.getElementById('dayoffConfirm').addEventListener('click', async () => {
+  alert('휴무 모달은 토글 방식으로 변경됐어요. 폼에서 휴무 토글을 사용해주세요.');
+  document.getElementById('dayoffModal').classList.remove('show');
+});
+
 // ── 휴무 토글 ──
 let isDayoffMode = false;
 const dayoffToggle = document.getElementById('dayoffToggle');
@@ -2087,6 +2094,7 @@ function renderRecords() {
         ${recordsHtml}
       </div>
     </div>`;
+  }).join('');
 }
 
 window.toggleWeekGroup = (wk) => {
@@ -2096,7 +2104,6 @@ window.toggleWeekGroup = (wk) => {
 };
 
 function renderRecordItem(r) {
-  const dummy = document.createElement('div'); // 기존 map 로직 재활용
   return renderSingleRecord(r);
 }
 
@@ -2148,56 +2155,6 @@ function renderSingleRecord(r) {
   </div>`;
 }
 
-// 기존 map 코드 제거 (아래 dummy로 대체)
-const _dummyList = []; _dummyList.map(r => {
-    const d = new Date(r.date);
-    const dayName = DAYS[d.getDay()];
-    const isHoliday = HOLIDAYS.includes(dayName);
-    const wh = Math.floor(r.workMin/60), wm = r.workMin%60;
-    const pay = taxEnabled ? r.net : r.gross;
-    const myDispute = myDisputes.find(dd => dd.recordId === r.id);
-
-    // 휴무일
-    if (r.isDayoff) {
-      return `<div class="record-item dayoff-item">
-        <div class="left">
-          ${r.ownerName ? `<div class="staff-name">👤 ${r.ownerName}</div>` : ''}
-          <div class="date">${r.date.replace(/-/g,'.')}<span class="day-name ${isHoliday?'holiday':''}">${dayName}</span></div>
-          <div style="margin-top:4px"><span class="dayoff-badge">🏖️ 휴무</span></div>
-          ${r.memo ? `<div class="detail" style="margin-top:4px">${r.memo}</div>` : ''}
-        </div>
-        <div class="right">
-          <div class="actions">
-            ${isAdmin ? `<button onclick='delRecord("${r.id}","${r.ownerUid}")'>삭제</button>` : ''}
-          </div>
-        </div>
-      </div>`;
-    }
-
-    return `<div class="record-item">
-      <div class="left">
-        ${r.ownerName ? `<div class="staff-name">👤 ${r.ownerName}</div>` : ''}
-        <div class="date">${r.date.replace(/-/g,'.')}<span class="day-name ${isHoliday?'holiday':''}">${dayName}</span></div>
-        <div class="times">${r.start}<span>→</span>${r.end}</div>
-        <div class="detail">${r.breaks&&r.breaks.length ? r.breaks.map(b=>b.start+'~'+b.end).join(', ') : (r.breakMin ? '휴식 '+r.breakMin+'분' : '휴식없음')}${r.memo?' · '+r.memo:''}</div>
-        ${r.extras&&r.extras.length ? `<div class="record-extra">➕ ${r.extras.map(e=>(e.reason||'추가근무')+' '+e.start+'~'+e.end).join(' · ')}</div>` : ''}
-        ${myDispute ? `<div class="dispute-status ${myDispute.status}">${myDispute.status==='pending'?'⏳ 이의제기 검토중':myDispute.status==='approved'?'✅ 승인됨':'❌ 반려: '+myDispute.rejectReason}</div>` : ''}
-      </div>
-      <div class="right">
-        <div class="pay">₩${pay.toLocaleString()}</div>
-        <div class="hours">${wh}시간${wm?' '+wm+'분':''} 근무</div>
-        <div class="actions">
-          ${isAdmin ? `
-            <button class="btn-edit" onclick='editById("${r.id}","${r.ownerUid}")'>수정</button>
-            <button onclick='delRecord("${r.id}","${r.ownerUid}")'>삭제</button>
-          ` : (!myDispute || myDispute.status==='rejected') ? `
-            <button class="dispute-btn" onclick='openDisputeModal("${r.id}","${r.ownerUid}","${r.date}","${r.start}","${r.end}")'>이의제기</button>
-          ` : ''}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
 
 window.editById = (id, ownerUid) => {
   const r = records.find(r => r.id === id && r.ownerUid === ownerUid);
