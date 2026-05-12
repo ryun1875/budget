@@ -404,7 +404,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="form-group"><label>시작일</label><input type="date" id="le-start"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>상환기간 (개월)</label><input type="number" id="le-term" placeholder="예: 360"></div>
+      <div class="form-group"><label>만기일</label><input type="date" id="le-maturity"></div>
     </div>
     <button class="btn-primary" onclick="saveLoanEdit()">수정 완료</button>
   </div>
@@ -2561,13 +2561,12 @@ async function renderAsset(){
         <div class="form-group" style="flex:2"><input type="text" id="loan-name" placeholder="대출명 (예: 주택담보대출)" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
         <div class="form-group"><input type="number" id="loan-rate" placeholder="금리 %" step="0.1" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
       </div>
-      <div class="form-row" style="margin-bottom:6px">
+      <div class="form-row" style="margin-bottom:8px">
         <div class="form-group"><input type="number" id="loan-principal" placeholder="원금 (원)" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
-        <div class="form-group"><input type="date" id="loan-start" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
+        <div class="form-group"><input type="date" id="loan-start" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"><div style="font-size:10px;color:var(--text3);margin-top:2px">시작일</div></div>
       </div>
       <div class="form-row" style="margin-bottom:8px">
-        <div class="form-group"><input type="number" id="loan-term" placeholder="상환기간 (개월, 예: 360)" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"></div>
-        <div class="form-group" style="display:flex;align-items:center;font-size:11px;color:var(--text3)">30년=360개월<br>20년=240개월</div>
+        <div class="form-group"><input type="date" id="loan-maturity" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;width:100%"><div style="font-size:10px;color:var(--text3);margin-top:2px">만기일</div></div>
       </div>
       <button class="btn-primary" style="margin-top:0" onclick="addLoan()">+ 대출 등록</button>
     </div>
@@ -2607,19 +2606,26 @@ async function renderAsset(){
         </div>
         ${(()=>{
           if(!loan.term||!loan.rate||!loan.principal)return '';
-          // 원리금균등 월 납입액 계산
           const r=loan.rate/100/12;
           const n=loan.term;
           const monthlyPayment=r>0?Math.round(loan.principal*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1)):Math.round(loan.principal/n);
           const totalInterest=Math.round(monthlyPayment*n-loan.principal);
-          // 완납 예정일
-          let endDate='';
-          if(loan.start){
-            const s=new Date(loan.start);
-            s.setMonth(s.getMonth()+n);
-            endDate=`${s.getFullYear()}년 ${s.getMonth()+1}월`;
+          // 만기일 표시
+          const maturityStr=loan.maturity?`${new Date(loan.maturity).getFullYear()}년 ${new Date(loan.maturity).getMonth()+1}월`:'';
+          // 남은 기간 계산
+          let remainMonths=0;
+          if(loan.maturity){
+            const now=new Date();
+            const end=new Date(loan.maturity);
+            remainMonths=Math.max(0,(end.getFullYear()-now.getFullYear())*12+(end.getMonth()-now.getMonth()));
           }
-          const remainMonths=Math.max(0,n-Math.round(paid/monthlyPayment));
+          // 경과 기간
+          let elapsedMonths=0;
+          if(loan.start){
+            const now=new Date();
+            const start=new Date(loan.start);
+            elapsedMonths=Math.max(0,(now.getFullYear()-start.getFullYear())*12+(now.getMonth()-start.getMonth()));
+          }
           return `<div style="background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px">
             <div style="display:flex;justify-content:space-between;margin-bottom:3px">
               <span style="color:var(--text3)">월 납입액</span>
@@ -2630,12 +2636,20 @@ async function renderAsset(){
               <span style="color:var(--accent2)">+${fmt(totalInterest)}</span>
             </div>
             <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-              <span style="color:var(--text3)">상환기간</span>
+              <span style="color:var(--text3)">총 상환기간</span>
               <span style="color:var(--text)">${Math.floor(n/12)}년 ${n%12?n%12+'개월':''} (${n}개월)</span>
             </div>
-            ${endDate?`<div style="display:flex;justify-content:space-between">
-              <span style="color:var(--text3)">완납 예정</span>
-              <span style="color:var(--accent)">${endDate}</span>
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <span style="color:var(--text3)">경과</span>
+              <span style="color:var(--text)">${Math.floor(elapsedMonths/12)}년 ${elapsedMonths%12?elapsedMonths%12+'개월':''}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <span style="color:var(--text3)">남은 기간</span>
+              <span style="color:var(--accent3)">${Math.floor(remainMonths/12)}년 ${remainMonths%12?remainMonths%12+'개월':''} (${remainMonths}개월)</span>
+            </div>
+            ${maturityStr?`<div style="display:flex;justify-content:space-between">
+              <span style="color:var(--text3)">만기일</span>
+              <span style="color:var(--accent)">${maturityStr}</span>
             </div>`:''}
           </div>`;
         })()}
@@ -2787,14 +2801,20 @@ window.addLoan=async function(){
   const rate=parseFloat(document.getElementById('loan-rate').value)||0;
   const principal=parseInt(document.getElementById('loan-principal').value)||0;
   const start=document.getElementById('loan-start').value;
-  const term=parseInt(document.getElementById('loan-term').value)||0;
+  const maturity=document.getElementById('loan-maturity').value;
   if(!name){showToast('대출명을 입력해주세요','warning');return;}
   if(!principal){showToast('원금을 입력해주세요','warning');return;}
+  // 시작일+만기일로 개월수 자동 계산
+  let term=0;
+  if(start&&maturity){
+    const s=new Date(start),e=new Date(maturity);
+    term=(e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth());
+  }
   try{
-    await setDoc(doc(db,up('loans'),uid()),{name,rate,principal,start,term,createdAt:Date.now()});
+    await setDoc(doc(db,up('loans'),uid()),{name,rate,principal,start,maturity,term,createdAt:Date.now()});
     document.getElementById('loan-name').value='';
     document.getElementById('loan-principal').value='';
-    document.getElementById('loan-term').value='';
+    document.getElementById('loan-maturity').value='';
     showToast('대출이 등록됐어요 ✓','success');
   }catch(e){showToast('저장 실패','error');}
 };
@@ -2847,7 +2867,7 @@ window.openLoanEdit=function(id){
   document.getElementById('le-rate').value=l.rate||'';
   document.getElementById('le-principal').value=l.principal||'';
   document.getElementById('le-start').value=l.start||'';
-  document.getElementById('le-term').value=l.term||'';
+  document.getElementById('le-maturity').value=l.maturity||'';
   document.getElementById('loan-edit-modal').classList.add('open');
 };
 window.saveLoanEdit=async function(){
@@ -2856,10 +2876,16 @@ window.saveLoanEdit=async function(){
   const rate=parseFloat(document.getElementById('le-rate').value)||0;
   const principal=parseInt(document.getElementById('le-principal').value)||0;
   const start=document.getElementById('le-start').value;
-  const term=parseInt(document.getElementById('le-term').value)||0;
+  const maturity=document.getElementById('le-maturity').value;
   if(!name){showToast('대출명을 입력해주세요','warning');return;}
+  // 만기일로 개월수 자동 계산
+  let term=0;
+  if(start&&maturity){
+    const s=new Date(start),e=new Date(maturity);
+    term=(e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth());
+  }
   try{
-    await updateDoc(doc(db,up('loans'),editLoanId),{name,rate,principal,start,term});
+    await updateDoc(doc(db,up('loans'),editLoanId),{name,rate,principal,start,maturity,term});
     closeModal('loan-edit-modal');editLoanId=null;showToast('수정됐어요 ✓','success');
   }catch(e){showToast('수정 실패','error');}
 };
