@@ -591,6 +591,47 @@ body {
 .cal-detail .cd-close { font-size:18px; color:var(--text3); cursor:pointer; line-height:1; }
 .cal-cell.selected { border-color:var(--accent) !important; background:rgba(200,240,74,.1) !important; }
 
+/* ── 기록 추가 접기/펼치기 ── */
+.add-form-toggle {
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 18px;
+  cursor:pointer; margin-bottom:12px; transition:var(--tr);
+  user-select:none;
+}
+.add-form-toggle:hover { border-color:var(--accent); }
+.add-form-toggle.open { border-radius:var(--radius) var(--radius) 0 0; border-bottom-color:transparent; margin-bottom:0; }
+.add-form-toggle .aft-left { display:flex; align-items:center; gap:10px; }
+.add-form-toggle .aft-icon { font-size:20px; }
+.add-form-toggle .aft-title { font-size:14px; font-weight:700; }
+.add-form-toggle .aft-sub { font-size:11px; color:var(--text3); margin-top:2px; }
+.add-form-toggle .aft-arrow { font-size:12px; color:var(--text3); transition:transform .2s; }
+.add-form-toggle.open .aft-arrow { transform:rotate(180deg); }
+.add-form-body {
+  display:none; background:var(--surface);
+  border:1px solid var(--border); border-top:none;
+  border-radius:0 0 var(--radius) var(--radius);
+  padding:16px 18px 18px; margin-bottom:16px;
+}
+.add-form-body.open { display:block; }
+
+/* ── 홈 상단 요약 개선 ── */
+.home-summary {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:10px; margin-bottom:14px;
+}
+.home-summary-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:14px;
+}
+.home-summary-card.main { border-color:var(--accent); background:rgba(200,240,74,.05); grid-column:1/-1; }
+.home-summary-card .hs-label { font-size:10px; color:var(--text2); margin-bottom:4px; letter-spacing:.5px; }
+.home-summary-card .hs-value { font-family:'Gmarket Sans',sans-serif; font-size:20px; font-weight:700; color:var(--accent); }
+.home-summary-card.main .hs-value { font-size:28px; }
+.home-summary-card .hs-value.blue { color:var(--accent3); }
+.home-summary-card .hs-value.orange { color:var(--accent4); }
+.home-summary-card .hs-sub { font-size:10px; color:var(--text3); margin-top:3px; }
+
 /* ── 탭 ── */
 .tabs {
   position:fixed; bottom:0; left:0; right:0;
@@ -697,43 +738,48 @@ body {
       <div class="ws-days" id="wsDays"></div>
     </div>
 
-    <div class="summary-grid">
-      <div class="summary-card accent">
-        <div class="label">이번 달 총 급여</div>
-        <div class="value" id="totalPay">₩0</div>
-        <div class="sub" id="totalPaySub">0일 근무</div>
+    <div class="home-summary">
+      <div class="home-summary-card main">
+        <div class="hs-label">이번 달 총 급여</div>
+        <div class="hs-value" id="totalPay">₩0</div>
+        <div class="hs-sub" id="totalPaySub">0일 근무</div>
       </div>
-      <div class="summary-card">
-        <div class="label">총 근무시간</div>
-        <div class="value blue" id="totalHours">0시간</div>
-        <div class="sub">휴식 제외</div>
+      <div class="home-summary-card">
+        <div class="hs-label">총 근무시간</div>
+        <div class="hs-value blue" id="totalHours">0시간</div>
+        <div class="hs-sub">휴식 제외</div>
       </div>
-      <div class="summary-card">
-        <div class="label">평균 근무시간</div>
-        <div class="value orange" id="avgHours">0시간</div>
-        <div class="sub">하루 평균</div>
-      </div>
-      <div class="summary-card">
-        <div class="label">총 휴식시간</div>
-        <div class="value" style="color:var(--text2)" id="totalBreak">0분</div>
-        <div class="sub">합산</div>
+      <div class="home-summary-card">
+        <div class="hs-label">평균 근무시간</div>
+        <div class="hs-value orange" id="avgHours">0시간</div>
+        <div class="hs-sub">하루 평균</div>
       </div>
     </div>
 
-    <div class="wage-banner" id="wageBanner">
-      <div class="left">
-        <div class="icon">💰</div>
-        <div class="info">
-          <div class="title">현재 시급</div>
-          <div class="amount" id="wageDisplay">₩0</div>
+    <!-- 기록 추가 토글 -->
+    <div class="add-form-toggle" id="addFormToggle">
+      <div class="aft-left">
+        <div class="aft-icon">✏️</div>
+        <div>
+          <div class="aft-title">근무 기록 추가</div>
+          <div class="aft-sub" id="addFormSub">탭해서 기록 추가</div>
         </div>
       </div>
-      <div class="edit-btn" id="wageEditBtn">변경</div>
+      <div class="aft-arrow">▼</div>
     </div>
-
-    <div class="today-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div class="title" style="margin-bottom:0">근무 기록 추가</div>
+    <div class="add-form-body" id="addFormBody">
+      <!-- 시급 배너 -->
+      <div class="wage-banner" id="wageBanner" style="margin-bottom:14px">
+        <div class="left">
+          <div class="icon">💰</div>
+          <div class="info">
+            <div class="title">현재 시급</div>
+            <div class="amount" id="wageDisplay">₩0</div>
+          </div>
+        </div>
+        <div class="edit-btn" id="wageEditBtn">변경</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:14px">
         <div style="display:flex;align-items:center;gap:8px;cursor:pointer" id="dayoffToggleWrap">
           <span style="font-size:12px;color:var(--text2)">휴무</span>
           <div class="toggle" id="dayoffToggle"></div>
@@ -768,7 +814,7 @@ body {
         <div class="right" id="previewDetail">-</div>
       </div></div>
       <button class="btn-add" id="addRecordBtn">기록 추가하기</button>
-    </div>
+    </div><!-- /add-form-body -->
 
     <div class="records-header">
       <h2>📋 근무 기록</h2>
@@ -1718,24 +1764,23 @@ renderExtras();
 
 // ── 추가 폼 토글 (관리자 전체보기 시 숨김) ──
 function toggleAddForm() {
-  const form = document.querySelector('.today-card');
-  if (!form) return;
+  const toggle = document.getElementById('addFormToggle');
+  const notice = document.getElementById('addFormNotice');
   if (isAdmin && selectedStaffUid === null) {
-    form.style.display = 'none';
-    // 안내 메시지 표시
-    let notice = document.getElementById('addFormNotice');
-    if (!notice) {
-      notice = document.createElement('div');
-      notice.id = 'addFormNotice';
-      notice.style.cssText = 'text-align:center;padding:16px;background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);margin-bottom:20px;font-size:13px;color:var(--text3)';
-      notice.textContent = '직원을 선택하면 근무를 추가할 수 있어요';
-      form.parentNode.insertBefore(notice, form);
+    if (toggle) toggle.style.display = 'none';
+    if (!document.getElementById('addFormNotice')) {
+      const el = document.createElement('div');
+      el.id = 'addFormNotice';
+      el.style.cssText = 'text-align:center;padding:16px;background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);margin-bottom:16px;font-size:13px;color:var(--text3)';
+      el.textContent = '직원을 선택하면 근무를 추가할 수 있어요';
+      toggle?.parentNode.insertBefore(el, toggle);
     }
-    notice.style.display = 'block';
+    document.getElementById('addFormNotice').style.display = 'block';
+    setAddFormOpen(false);
   } else {
-    form.style.display = 'block';
-    const notice = document.getElementById('addFormNotice');
-    if (notice) notice.style.display = 'none';
+    if (toggle) toggle.style.display = 'flex';
+    const n = document.getElementById('addFormNotice');
+    if (n) n.style.display = 'none';
   }
 }
 
@@ -1788,6 +1833,26 @@ document.getElementById('dayoffCancel').addEventListener('click', () => document
 document.getElementById('dayoffConfirm').addEventListener('click', async () => {
   alert('휴무 모달은 토글 방식으로 변경됐어요. 폼에서 휴무 토글을 사용해주세요.');
   document.getElementById('dayoffModal').classList.remove('show');
+});
+
+// ── 기록 추가 폼 토글 ──
+let addFormOpen = false;
+function setAddFormOpen(open) {
+  addFormOpen = open;
+  const toggle = document.getElementById('addFormToggle');
+  const body = document.getElementById('addFormBody');
+  toggle.classList.toggle('open', open);
+  body.classList.toggle('open', open);
+  if (!open) {
+    document.getElementById('addFormSub').textContent = '탭해서 기록 추가';
+  } else {
+    const d = new Date();
+    document.getElementById('addFormSub').textContent =
+      `${d.getMonth()+1}/${d.getDate()} · 17:00 → 00:30`;
+  }
+}
+document.getElementById('addFormToggle').addEventListener('click', () => {
+  setAddFormOpen(!addFormOpen);
 });
 
 // ── 휴무 토글 ──
@@ -1865,6 +1930,7 @@ document.getElementById('addRecordBtn').addEventListener('click', async () => {
     document.getElementById('workMemo').value = '';
     breaks = []; renderBreaks();
     extras = []; renderExtras();
+    setAddFormOpen(false);
     renderRecords(); renderStats(); renderWeekSummary();
   } catch(e) { alert('저장 실패: ' + e.message); }
 });
@@ -2037,7 +2103,8 @@ function renderRecords() {
   document.getElementById('totalPaySub').textContent = `${days}일 근무`;
   document.getElementById('totalHours').textContent = `${h}시간${m?' '+m+'분':''}`;
   document.getElementById('avgHours').textContent = `${ah}시간${am?' '+am+'분':''}`;
-  document.getElementById('totalBreak').textContent = `${totalBreakMin}분`;
+  const tbEl = document.getElementById('totalBreak');
+  if (tbEl) tbEl.textContent = `${totalBreakMin}분`;
   document.getElementById('recordCount').textContent = `${days}건`;
 
   renderGoalCard();
