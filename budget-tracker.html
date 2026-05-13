@@ -946,7 +946,11 @@ function initApp(){
 
   unsubCats=onSnapshot(doc(db,up('settings'),'categories'),snap=>{
     CATS=snap.exists()&&snap.data().list?.length?snap.data().list:[...DEF_CATS];
-    rebuildCatSelects();renderCatManage();renderAll();
+    rebuildCatSelects();
+    // 카테고리 탭이 열려있고 편집 중이면 renderCatManage 건너뜀
+    const catPanelActive=document.getElementById('panel-cats').classList.contains('active');
+    if(!catPanelActive)renderAll();
+    else{renderList();renderBudget();}
   });
   // budgetMeta 구독 (고정항목 + 메모)
   onSnapshot(doc(db,up('settings'),'budgetMeta'),snap=>{
@@ -2105,15 +2109,28 @@ function renderCatManage(){
     le.appendChild(div);
   });
 }
-window.addCategory=function(){CATS.push({id:uid(),name:'새 카테고리',emoji:'📦',color:'#94a3b8'});renderCatManage();rebuildCatSelects();scheduleCatSave();};
+window.addCategory=function(){
+  CATS.push({id:uid(),name:'새 카테고리',emoji:'📦',color:'#94a3b8'});
+  renderCatManage();
+  rebuildCatSelects();
+  scheduleCatSave();
+};
 window.deleteCat=function(i){if(CATS.length<=1){showToast('최소 1개 필요해요','warning');return;}CATS.splice(i,1);renderCatManage();rebuildCatSelects();renderAll();scheduleCatSave();};
 function scheduleCatSave(){
   clearTimeout(catTimer);
   catTimer=setTimeout(async()=>{
     setSyncStatus('syncing');
-    try{await setDoc(doc(db,up('settings'),'categories'),{list:CATS});setSyncStatus('online');rebuildCatSelects();renderAll();}
+    try{
+      await setDoc(doc(db,up('settings'),'categories'),{list:CATS});
+      setSyncStatus('online');
+      rebuildCatSelects();
+      // renderAll은 하되 카테고리 탭이 열려있으면 renderCatManage는 건너뜀
+      renderList();renderBudget();
+      if(document.getElementById('panel-chart').classList.contains('active'))renderChart();
+      if(document.getElementById('panel-home').classList.contains('active'))renderHome();
+    }
     catch(e){setSyncStatus('offline');}
-  },800);
+  },1000);
 }
 window.openEmojiPicker=function(i){
   const p=document.getElementById('emoji-picker');p.innerHTML='';
