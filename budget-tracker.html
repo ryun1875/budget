@@ -2127,6 +2127,8 @@ window.saveCats=async function(){
     await setDoc(doc(db,up('settings'),'categories'),{list:CATS});
     setSyncStatus('online');
     rebuildCatSelects();
+    renderBudget();
+    renderList();
     showToast('카테고리가 저장됐어요 ✓','success');
   }catch(e){setSyncStatus('offline');showToast('저장 실패: '+e.message,'error');}
   finally{setTimeout(()=>{catSaving=false;},1000);}
