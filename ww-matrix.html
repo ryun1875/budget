@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>명조 매트릭스 파티 편성</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+:root {
+  --bg: #0f1117;
+  --bg2: #171a23;
+  --bg3: #1e2130;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e8eaf0;
+  --text2: #8b90a0;
+  --text3: #555a6a;
+  --accent: #6c8ef5;
+  --accent2: #4f6fe0;
+  --gold: #f0b429;
+  --red: #e24b4a;
+  --radius: 10px;
+  --radius2: 16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── 로그인 화면 ── */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:20px}
+.login-box{background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius2);padding:40px;text-align:center;max-width:340px;width:90%}
+.login-box h1{font-size:22px;font-weight:700;margin-bottom:6px}
+.login-box p{font-size:13px;color:var(--text2);margin-bottom:28px;line-height:1.6}
+.google-btn{display:inline-flex;align-items:center;gap:10px;padding:12px 24px;background:#fff;color:#333;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.google-btn:hover{opacity:.9}
+.google-btn img{width:20px;height:20px}
+
+/* ── 메인 레이아웃 ── */
+#app{display:none;max-width:900px;margin:0 auto;padding:20px 16px 60px}
+.top-bar{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.top-bar h1{font-size:18px;font-weight:700;flex:1}
+.user-info{display:flex;align-items:center;gap:8px}
+.user-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.user-name{font-size:12px;color:var(--text2)}
+.btn{padding:7px 13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:inherit;transition:background .15s}
+.btn:hover{background:var(--bg3)}
+.btn-accent{background:var(--accent2);border-color:var(--accent);color:#fff}
+.btn-accent:hover{background:var(--accent)}
+
+/* ── 티어 레이블 ── */
+.tier-label{font-size:12px;font-weight:500;color:var(--text2);margin:0 0 8px;display:flex;align-items:center;gap:6px}
+.tier-label::after{content:'';flex:1;height:0.5px;background:var(--border)}
+
+/* ── 캐릭터 그리드 ── */
+.char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:7px;margin-bottom:16px}
+.char-card{border:0.5px solid var(--border);border-radius:var(--radius);text-align:center;cursor:pointer;background:var(--bg2);user-select:none;position:relative;overflow:hidden;transition:border-color .15s}
+.char-card:hover{border-color:var(--border2)}
+.char-card.star5{border-color:rgba(240,180,41,0.35)}
+.char-card.star5:hover{border-color:var(--gold)}
+.char-card.exhausted{opacity:0.3}
+.portrait-wrap{width:100%;aspect-ratio:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.attr-badge{position:absolute;bottom:2px;right:2px;font-size:9px;font-weight:500;padding:1px 4px;border-radius:3px;line-height:14px;z-index:2}
+.memo-dot{position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:var(--accent);z-index:3}
+.dupe-tag{position:absolute;top:2px;left:2px;font-size:9px;background:var(--accent2);color:#fff;border-radius:3px;padding:0 3px;line-height:15px;z-index:3}
+.star5-corner{position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 13px 13px 0;border-color:transparent var(--gold) transparent transparent;z-index:2}
+.char-name{font-size:11px;color:var(--text);padding:4px 3px;line-height:1.2;word-break:keep-all}
+
+/* ── 파티 ── */
+.parties-area{display:flex;flex-direction:column;gap:10px;margin-top:1rem}
+.party-row{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius2);padding:13px 14px}
+.party-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.party-name-input{border:0.5px solid var(--border);border-radius:7px;padding:4px 9px;font-size:13px;background:var(--bg3);color:var(--text);width:140px;font-family:inherit}
+.party-name-input:focus{outline:none;border-color:var(--border2)}
+.remove-party{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text3);padding:2px 5px;font-size:15px}
+.remove-party:hover{color:var(--red)}
+.slots{display:flex;gap:8px;flex-wrap:wrap}
+.slot{width:74px;min-height:98px;border:1.5px dashed rgba(255,255,255,0.12);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--bg3);position:relative;overflow:hidden;transition:border-color .15s}
+.slot:hover{border-color:var(--border2)}
+.slot.filled{border-style:solid;border-color:var(--border);background:var(--bg2)}
+.slot.filled.is5{border-color:rgba(240,180,41,0.4)}
+.slot-portrait{width:100%;height:68px;overflow:hidden;position:relative}
+.slot-name{font-size:10px;color:var(--text);text-align:center;padding:2px 2px 1px;line-height:1.2;width:100%}
+.slot-memo{font-size:9px;color:var(--text3);text-align:center;padding:0 3px 3px;line-height:1.3;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .rm{position:absolute;top:1px;right:2px;background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.4);font-size:12px;z-index:4;padding:1px 3px}
+.slot .rm:hover{color:var(--red)}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:1rem}
+
+/* ── 모달 ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border-radius:var(--radius2);border:0.5px solid var(--border2);padding:1.25rem;width:400px;max-height:88vh;overflow-y:auto}
+.modal-sm{background:var(--bg2);border-radius:var(--radius2);border:0.5px solid var(--border2);padding:1.25rem;width:320px;max-height:88vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:600;color:var(--text)}
+.mcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:7px;margin-top:8px}
+.mc{border:0.5px solid var(--border);border-radius:var(--radius);text-align:center;cursor:pointer;background:var(--bg3);position:relative;overflow:hidden;transition:border-color .15s}
+.mc:hover{border-color:var(--border2)}
+.mc.out{opacity:0.22;pointer-events:none}
+.mc.s5{border-color:rgba(240,180,41,0.3)}
+.tab-bar{display:flex;border-bottom:0.5px solid var(--border);margin-bottom:1rem}
+.tab{padding:6px 11px;font-size:13px;cursor:pointer;border:none;border-bottom:2px solid transparent;color:var(--text2);background:none;font-family:inherit}
+.tab.active{border-bottom-color:var(--accent);color:var(--text);font-weight:500}
+.pane{display:none}.pane.active{display:block}
+.erow{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:0.5px solid var(--border)}
+.erow:last-child{border-bottom:none}
+.erow.unowned{opacity:0.4}
+.own-cb{width:15px;height:15px;cursor:pointer;flex-shrink:0;accent-color:var(--accent)}
+.mfb{width:28px;height:28px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500}
+.mimg{width:28px;height:28px;border-radius:6px;object-fit:cover;object-position:top;flex-shrink:0}
+.dtog{padding:2px 6px;border:0.5px solid var(--border2);border-radius:6px;font-size:11px;cursor:pointer;background:var(--bg3);color:var(--text2);flex-shrink:0;font-family:inherit}
+.dtog.on{background:var(--accent2);color:#fff;border-color:var(--accent)}
+.filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.filter-btn{padding:3px 10px;border:0.5px solid var(--border2);border-radius:20px;font-size:12px;cursor:pointer;background:var(--bg3);color:var(--text2);font-family:inherit}
+.filter-btn.on{background:var(--bg2);border-color:var(--accent);color:var(--text);font-weight:500}
+.field{border:0.5px solid var(--border2);border-radius:7px;padding:6px 10px;font-size:13px;background:var(--bg3);color:var(--text);width:100%;font-family:inherit}
+.field:focus{outline:none;border-color:var(--accent)}
+.textarea{border:0.5px solid var(--border2);border-radius:7px;padding:8px 10px;font-size:13px;background:var(--bg3);color:var(--text);width:100%;resize:vertical;min-height:90px;font-family:inherit;line-height:1.6}
+.textarea:focus{outline:none;border-color:var(--accent)}
+.swatches{display:flex;gap:5px;flex-wrap:wrap}
+.sw{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+.sw.on{border-color:var(--text)}
+.apills{display:flex;gap:5px;flex-wrap:wrap}
+.ap{padding:3px 9px;border-radius:20px;font-size:12px;cursor:pointer;border:1.5px solid transparent;opacity:0.45;font-weight:500;font-family:inherit}
+.ap.on{opacity:1;border-color:rgba(255,255,255,0.25)}
+.saves-list{display:flex;flex-direction:column;gap:6px}
+.si{display:flex;align-items:center;gap:8px;padding:8px 11px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg3)}
+.memo-modal{background:var(--bg2);border-radius:var(--radius2);border:0.5px solid var(--border2);padding:1.25rem;width:320px}
+.memo-portrait{width:44px;height:44px;border-radius:10px;overflow:hidden;flex-shrink:0}
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1a1d2a;color:var(--text);border:0.5px solid var(--border2);padding:8px 18px;border-radius:var(--radius);font-size:13px;z-index:300;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.loading{display:flex;align-items:center;justify-content:center;height:200px;color:var(--text2);font-size:14px;gap:8px}
+
+/* 스크롤바 */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- 로그인 -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h1>⚔️ 매트릭스 파티 편성</h1>
+    <p>명조 워더링 웨이브<br>매트릭스 공략용 파티 편성 도구</p>
+    <button class="google-btn" onclick="signInGoogle()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+      Google로 로그인
+    </button>
+  </div>
+</div>
+
+<!-- 메인 앱 -->
+<div id="app">
+  <div class="top-bar">
+    <h1>매트릭스 파티 편성</h1>
+    <div class="user-info">
+      <img class="user-avatar" id="userAvatar" src="" alt="">
+      <span class="user-name" id="userName"></span>
+    </div>
+    <button class="btn" onclick="openSettings()"><i class="ti ti-settings"></i> 캐릭터 관리</button>
+    <button class="btn" onclick="openSaves()"><i class="ti ti-folder"></i> 파티 저장</button>
+    <button class="btn" style="padding:7px 8px" onclick="signOut()" title="로그아웃"><i class="ti ti-logout"></i></button>
+  </div>
+  <div id="pool"></div>
+  <div class="controls">
+    <button class="btn btn-accent" onclick="addParty()"><i class="ti ti-plus"></i> 파티 추가</button>
+    <span id="info" style="font-size:13px;color:var(--text2)"></span>
+  </div>
+  <div class="parties-area" id="parties"></div>
+</div>
+
+<!-- 슬롯 선택 -->
+<div class="modal-bg" id="slotModal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;margin-bottom:6px">
+      <span class="modal-title" id="slotTitle">캐릭터 선택</span>
+      <button class="btn" style="margin-left:auto;padding:4px 10px" onclick="closeSlot()">닫기</button>
+    </div>
+    <p style="font-size:11px;color:var(--text3);margin-bottom:2px">흐린 캐릭터는 이미 최대 배치됨</p>
+    <div id="slotTiers"></div>
+  </div>
+</div>
+
+<!-- 캐릭터 관리 -->
+<div class="modal-bg" id="settingsModal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;margin-bottom:12px">
+      <span class="modal-title">캐릭터 관리</span>
+      <button class="btn" style="margin-left:auto;padding:4px 10px" onclick="closeSettings()">닫기</button>
+    </div>
+    <div class="tab-bar">
+      <button class="tab active" onclick="sTab('list')">목록</button>
+      <button class="tab" onclick="sTab('add')">추가</button>
+      <button class="tab" onclick="sTab('ai')">AI 업데이트</button>
+    </div>
+    <div class="pane active" id="pane-list">
+      <div class="filter-row">
+        <span style="font-size:12px;color:var(--text2)">보기:</span>
+        <button class="filter-btn on" id="f-all" onclick="setFilter('all')">전체</button>
+        <button class="filter-btn" id="f-owned" onclick="setFilter('owned')">보유만</button>
+        <button class="filter-btn" id="f-unowned" onclick="setFilter('unowned')">미보유만</button>
+        <button class="btn" style="margin-left:auto;padding:3px 8px;font-size:11px" onclick="setAllOwned(true)">전체 보유</button>
+        <button class="btn" style="padding:3px 8px;font-size:11px" onclick="setAllOwned(false)">전체 해제</button>
+      </div>
+      <div id="editList"></div>
+    </div>
+    <div class="pane" id="pane-add">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input class="field" id="nName" placeholder="캐릭터 이름">
+        <input class="field" id="nUrl" placeholder="이미지 URL (선택)">
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">파일 업로드 (선택)</label>
+          <input type="file" id="nFile" accept="image/*" style="font-size:12px;color:var(--text2)" onchange="prevUp('n')">
+          <img id="nPrev" style="display:none;width:52px;height:52px;object-fit:cover;border-radius:8px;border:0.5px solid var(--border2);margin-top:6px">
+        </div>
+        <div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:6px">카드 색상 (이미지 없을 때)</p>
+          <div class="swatches" id="nSwatches"></div>
+        </div>
+        <div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:6px">속성</p>
+          <div class="apills" id="nAttrs"></div>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;color:var(--text)"><input type="checkbox" id="nOwned" checked style="width:15px;height:15px;accent-color:var(--accent)"> 보유</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;color:var(--text)"><input type="checkbox" id="nDupe" style="width:15px;height:15px;accent-color:var(--accent)"> 2회 사용</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;color:var(--text)"><input type="checkbox" id="nStar5" style="width:15px;height:15px;accent-color:var(--accent)"> 5성</label>
+        </div>
+        <button class="btn btn-accent" style="justify-content:center" onclick="addChar()"><i class="ti ti-plus"></i> 추가</button>
+      </div>
+    </div>
+    <div class="pane" id="pane-ai">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Claude에게 최신 캐릭터 목록을 물어보고, 추가 탭에서 직접 추가하세요.</p>
+      <p style="font-size:12px;color:var(--text3);line-height:1.6">명조 워더링 웨이브는 지속적으로 업데이트되므로, 새 캐릭터가 출시되면 "추가" 탭에서 이름·속성·성급을 입력해 추가할 수 있습니다.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 개별 편집 -->
+<div class="modal-bg" id="editModal">
+  <div class="modal-sm">
+    <div style="display:flex;align-items:center;margin-bottom:14px">
+      <span class="modal-title" id="editTitle">편집</span>
+      <button class="btn" style="margin-left:auto;padding:4px 10px" onclick="closeEdit()">닫기</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><p style="font-size:12px;color:var(--text2);margin-bottom:4px">이미지 URL</p><input class="field" id="eUrl" placeholder="https://..."></div>
+      <div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:4px">파일 업로드</p>
+        <input type="file" id="eFile" accept="image/*" style="font-size:12px;color:var(--text2)" onchange="prevUp('e')">
+        <img id="ePrev" style="display:none;width:52px;height:52px;object-fit:cover;border-radius:8px;border:0.5px solid var(--border2);margin-top:6px">
+      </div>
+      <div><p style="font-size:12px;color:var(--text2);margin-bottom:6px">카드 색상</p><div class="swatches" id="eSwatches"></div></div>
+      <div><p style="font-size:12px;color:var(--text2);margin-bottom:6px">속성</p><div class="apills" id="eAttrs"></div></div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;color:var(--text)"><input type="checkbox" id="eDupe" style="width:15px;height:15px;accent-color:var(--accent)"> 2회 사용</label>
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;color:var(--text)"><input type="checkbox" id="eStar5" style="width:15px;height:15px;accent-color:var(--accent)"> 5성</label>
+      </div>
+      <button class="btn btn-accent" style="justify-content:center" onclick="saveEdit()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 메모 -->
+<div class="modal-bg" id="memoModal">
+  <div class="memo-modal">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div class="memo-portrait" id="memoPortrait"></div>
+      <div>
+        <div style="font-size:15px;font-weight:600" id="memoCharName"></div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px" id="memoCharAttr"></div>
+      </div>
+      <button class="btn" style="margin-left:auto;padding:4px 10px" onclick="closeMemo()">닫기</button>
+    </div>
+    <textarea class="textarea" id="memoText" placeholder="빌드, 공명 체인, 운영 메모 등..."></textarea>
+    <button class="btn btn-accent" style="width:100%;justify-content:center;margin-top:10px" onclick="saveMemo()"><i class="ti ti-device-floppy"></i> 저장</button>
+  </div>
+</div>
+
+<!-- 파티 저장 -->
+<div class="modal-bg" id="savesModal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;margin-bottom:12px">
+      <span class="modal-title">파티 저장 / 불러오기</span>
+      <button class="btn" style="margin-left:auto;padding:4px 10px" onclick="closeSaves()">닫기</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:1rem">
+      <input class="field" id="saveName" placeholder="편성 이름">
+      <button class="btn btn-accent" onclick="doSave()"><i class="ti ti-download"></i> 저장</button>
+    </div>
+    <p style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:8px">저장된 편성</p>
+    <div class="saves-list" id="savesList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut }
+  from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, addDoc, serverTimestamp, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB0hxBZ4X-CB_x6DXwj73qEuJlBWp6trtw",
+  authDomain: "personal-apps-hty.firebaseapp.com",
+  projectId: "personal-apps-hty",
+  storageBucket: "personal-apps-hty.firebasestorage.app",
+  messagingSenderId: "1094404789428",
+  appId: "1:1094404789428:web:87efdfbbb9bc08a00433e1",
+  measurementId: "G-48CFC1W4ZR"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+let uid = null;
+
+// ── 로그인 ──
+window.signInGoogle = async () => {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch(e){ showToast('로그인 실패: ' + e.message); }
+};
+window.signOut = async () => {
+  await fbSignOut(auth);
+  uid = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+};
+
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    uid = user.uid;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('userAvatar').src = user.photoURL || '';
+    document.getElementById('userName').textContent = user.displayName || '';
+    await loadData();
+  } else {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
+
+// ── Firestore 헬퍼 ──
+const userDoc  = (path) => doc(db, 'users', uid, ...path.split('/'));
+const userColl = (path) => collection(db, 'users', uid, ...path.split('/'));
+
+async function loadData() {
+  // 캐릭터
+  const cdoc = await getDoc(userDoc('ww/chars'));
+  if (cdoc.exists()) {
+    chars = cdoc.data().list.map(c => ({attr:'회절',owned:true,memo:'',...c}));
+  } else {
+    chars = DC.map(c => ({...c}));
+    await saveChars();
+  }
+  // 파티
+  const pdoc = await getDoc(userDoc('ww/parties'));
+  parties = pdoc.exists()
+    ? pdoc.data().list
+    : [{name:'파티 1', slots:[null,null,null]}];
+  renderAll();
+}
+
+async function saveChars() {
+  await setDoc(userDoc('ww/chars'), { list: chars });
+}
+async function saveParties() {
+  await setDoc(userDoc('ww/parties'), { list: parties });
+}
+async function persist() {
+  await saveChars();
+  await saveParties();
+}
+
+// ── 파티 저장/불러오기 (Firestore 컬렉션) ──
+window.doSave = async () => {
+  const name = document.getElementById('saveName').value.trim() || `편성 ${new Date().toLocaleDateString('ko')}`;
+  await addDoc(userColl('ww/saves/items'), {
+    name, parties: JSON.parse(JSON.stringify(parties)),
+    date: new Date().toLocaleString('ko'), ts: serverTimestamp()
+  });
+  document.getElementById('saveName').value = '';
+  renderSavesList();
+  showToast(`"${name}" 저장됨`);
+};
+window.loadSave = async (id) => {
+  const d = await getDoc(doc(db,'users',uid,'ww','saves','items',id));
+  if(d.exists()){ parties = d.data().parties; closeSaves(); renderAll(); await saveParties(); showToast('불러옴'); }
+};
+window.delSave = async (id) => {
+  await deleteDoc(doc(db,'users',uid,'ww','saves','items',id));
+  renderSavesList();
+};
+window.renderSavesList = async () => {
+  const q = query(userColl('ww/saves/items'), orderBy('ts','desc'));
+  const snap = await getDocs(q);
+  const list = document.getElementById('savesList');
+  if(snap.empty){ list.innerHTML='<p style="font-size:13px;color:var(--text3)">저장된 편성 없음</p>'; return; }
+  list.innerHTML = snap.docs.map(d => {
+    const s = d.data();
+    return `<div class="si">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;color:var(--text)">${s.name}</div>
+        <div style="font-size:11px;color:var(--text3)">${s.date} · ${s.parties.length}파티</div>
+      </div>
+      <button class="btn" style="padding:4px 9px;font-size:12px" onclick="loadSave('${d.id}')"><i class="ti ti-upload"></i></button>
+      <button class="btn" style="padding:4px 8px;font-size:12px" onclick="delSave('${d.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }).join('');
+};
+
+// ── 나머지 기능들은 전역 함수로 연결 ──
+window._persist = persist;
+window._saveChars = saveChars;
+window._saveParties = saveParties;
+</script>
+
+<script>
+// ══════════════════════════════════════
+//  앱 로직 (Firebase 로드 후 실행)
+// ══════════════════════════════════════
+const ATTRS = {
+  '응결':{bg:'#1a3a52',text:'#7ecdf5'},
+  '용융':{bg:'#3d2010',text:'#f5a35a'},
+  '전도':{bg:'#2a1f45',text:'#c4a8f5'},
+  '기류':{bg:'#0f3020',text:'#6de0a8'},
+  '회절':{bg:'#352d10',text:'#f5e06a'},
+  '인멸':{bg:'#3a1020',text:'#f58ab0'},
+};
+const AK = Object.keys(ATTRS);
+const COLS = [
+  {bg:'#1a2840',text:'#7eb8f5'},{bg:'#251a40',text:'#b07ef5'},
+  {bg:'#0f3020',text:'#6de0a8'},{bg:'#3d2a10',text:'#f5b86a'},
+  {bg:'#3d1515',text:'#f07070'},{bg:'#3a1530',text:'#f07ac0'},
+  {bg:'#182d10',text:'#8fd96a'},{bg:'#3d2015',text:'#f09060'},
+  {bg:'#252525',text:'#a0a0b0'},
+];
+
+const DC = [
+  {name:'방랑자',color:0,dupe:false,star5:true,attr:'회절',img:null,owned:true,memo:''},
+  {name:'모니에',color:5,dupe:false,star5:true,attr:'인멸',img:null,owned:true,memo:''},
+  {name:'린네',color:3,dupe:false,star5:true,attr:'회절',img:null,owned:true,memo:''},
+  {name:'복링',color:8,dupe:false,star5:true,attr:'전도',img:null,owned:true,memo:''},
+  {name:'치사',color:4,dupe:false,star5:true,attr:'인멸',img:null,owned:true,memo:''},
+  {name:'구원',color:2,dupe:false,star5:true,attr:'기류',img:null,owned:true,memo:''},
+  {name:'갈브레나',color:7,dupe:false,star5:true,attr:'용융',img:null,owned:true,memo:''},
+  {name:'유노',color:2,dupe:false,star5:true,attr:'기류',img:null,owned:true,memo:''},
+  {name:'아우구스타',color:0,dupe:false,star5:true,attr:'응결',img:null,owned:true,memo:''},
+  {name:'플로로',color:4,dupe:false,star5:true,attr:'인멸',img:null,owned:true,memo:''},
+  {name:'루파',color:3,dupe:false,star5:true,attr:'용융',img:null,owned:true,memo:''},
+  {name:'카르티시아',color:2,dupe:false,star5:true,attr:'기류',img:null,owned:true,memo:''},
+  {name:'샤콘',color:7,dupe:false,star5:true,attr:'기류',img:null,owned:true,memo:''},
+  {name:'젠니',color:0,dupe:false,star5:true,attr:'회절',img:null,owned:true,memo:''},
+  {name:'칸타렐라',color:4,dupe:false,star5:true,attr:'인멸',img:null,owned:true,memo:''},
+  {name:'브렌트',color:3,dupe:false,star5:true,attr:'용융',img:null,owned:true,memo:''},
+  {name:'페비',color:0,dupe:false,star5:true,attr:'회절',img:null,owned:true,memo:''},
+  {name:'로코코',color:5,dupe:false,star5:true,attr:'인멸',img:null,owned:true,memo:''},
+  {name:'카를로타',color:0,dupe:false,star5:true,attr:'응결',img:null,owned:true,memo:''},
+  {name:'루미',color:0,dupe:false,star5:true,attr:'응결',img:null,owned:true,memo:''},
+  {name:'카멜리아',color:4,dupe:false,star5:true,attr:'인멸',img:null,owned:true,memo:''},
+  {name:'유호',color:0,dupe:false,star5:true,attr:'응결',img:null,owned:true,memo:''},
+  {name:'파수인',color:8,dupe:false,star5:true,attr:'기류',img:null,owned:true,memo:''},
+  {name:'상리요',color:5,dupe:false,star5:true,attr:'전도',img:null,owned:true,memo:''},
+  {name:'절지',color:0,dupe:false,star5:true,attr:'회절',img:null,owned:true,memo:''},
+  {name:'장리',color:7,dupe:false,star5:true,attr:'용융',img:null,owned:true,memo:''},
+  {name:'금희',color:0,dupe:false,star5:true,attr:'회절',img:null,owned:true,memo:''},
+  {name:'음림',color:4,dupe:false,star5:true,attr:'전도',img:null,owned:true,memo:''},
+  {name:'기염',color:2,dupe:false,star5:true,attr:'기류',img:null,owned:true,memo:''},
+  {name:'벨리나',color:6,dupe:false,star5:false,attr:'응결',img:null,owned:true,memo:''},
+  {name:'앙코',color:7,dupe:false,star5:false,attr:'용융',img:null,owned:true,memo:''},
+  {name:'감심',color:8,dupe:false,star5:false,attr:'응결',img:null,owned:true,memo:''},
+  {name:'카카루',color:3,dupe:false,star5:false,attr:'전도',img:null,owned:true,memo:''},
+  {name:'능양',color:2,dupe:false,star5:false,attr:'응결',img:null,owned:true,memo:''},
+  {name:'단근',color:4,dupe:false,star5:false,attr:'인멸',img:null,owned:true,memo:''},
+  {name:'도기',color:8,dupe:false,star5:false,attr:'응결',img:null,owned:true,memo:''},
+  {name:'알토',color:2,dupe:false,star5:false,attr:'기류',img:null,owned:true,memo:''},
+  {name:'연무',color:0,dupe:false,star5:false,attr:'전도',img:null,owned:true,memo:''},
+  {name:'모르테피',color:5,dupe:false,star5:false,attr:'용융',img:null,owned:true,memo:''},
+  {name:'산화',color:7,dupe:false,star5:false,attr:'용융',img:null,owned:true,memo:''},
+  {name:'설지',color:0,dupe:false,star5:false,attr:'응결',img:null,owned:true,memo:''},
+  {name:'치샤',color:7,dupe:false,star5:false,attr:'용융',img:null,owned:true,memo:''},
+  {name:'양양',color:6,dupe:false,star5:false,attr:'기류',img:null,owned:true,memo:''},
+];
+
+let chars=[], parties=[], editIdx=null, memoIdx=null, curFilter='all';
+let nC=COLS[0], nA='회절', eC=COLS[0], eA='회절', nUp=null, eUp=null;
+
+function cc(c){ return (c.attr && ATTRS[c.attr]) ? ATTRS[c.attr] : COLS[c.color % COLS.length]; }
+
+function mkBg(c,w,h){
+  const col = cc(c);
+  const badge = c.attr && ATTRS[c.attr]
+    ? `<span class="attr-badge" style="background:${ATTRS[c.attr].bg};color:${ATTRS[c.attr].text}">${c.attr}</span>` : '';
+  const fb = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:${Math.floor(w*.27)}px;font-weight:500;background:${col.bg};color:${col.text}">${c.name.slice(0,2)}</div>`;
+  if(c.img){
+    return `<div style="width:${w}px;height:${h}px;position:relative;overflow:hidden;background:${col.bg}">
+      ${fb}<img src="${c.img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;z-index:1" onerror="this.style.display='none'">
+      <div style="position:absolute;inset:0;z-index:2;pointer-events:none">${badge}</div></div>`;
+  }
+  return `<div style="width:${w}px;height:${h}px;position:relative;overflow:hidden;background:${col.bg};display:flex;align-items:center;justify-content:center;font-size:${Math.floor(w*.27)}px;font-weight:500;color:${col.text}">${c.name.slice(0,2)}${badge}</div>`;
+}
+
+function getUsed(){
+  const u={};
+  parties.forEach(p=>p.slots.forEach(s=>{if(s!=null)u[s]=(u[s]||0)+1;}));
+  return u;
+}
+
+function renderAll(){ renderPool(); renderParties(); renderInfo(); }
+
+function renderPool(){
+  const used = getUsed(); let html = '';
+  const rT = (fn,lbl,lc) => {
+    if(!chars.some(c=>fn(c)&&c.owned)) return;
+    html += `<p class="tier-label"><span style="color:${lc}">${lbl}</span></p><div class="char-grid">`;
+    chars.forEach((c,i) => {
+      if(!fn(c)||!c.owned) return;
+      const ex = (used[i]||0) >= (c.dupe?2:1);
+      html += `<div class="char-card${c.star5?' star5':''}${ex?' exhausted':''}" onclick="tip(${i})">
+        ${c.star5?'<div class="star5-corner"></div>':''}${c.dupe?'<span class="dupe-tag">×2</span>':''}
+        ${c.memo?'<div class="memo-dot"></div>':''}
+        <div class="portrait-wrap">${mkBg(c,68,68)}</div>
+        <div class="char-name">${c.name}</div>
+      </div>`;
+    });
+    html += '</div>';
+  };
+  rT(c=>c.star5,'★5','var(--gold)');
+  rT(c=>!c.star5,'★4','var(--text2)');
+  document.getElementById('pool').innerHTML = html ||
+    '<p style="font-size:13px;color:var(--text3);padding:8px 0">보유한 캐릭터가 없습니다. 캐릭터 관리에서 체크해주세요.</p>';
+}
+
+function tip(i){ showToast(`${chars[i].name} — 파티 슬롯을 클릭해 배치하세요`); }
+
+function renderParties(){
+  const used = getUsed();
+  document.getElementById('parties').innerHTML = parties.map((p,pi) => {
+    const slots = p.slots.map((s,si) => {
+      if(s!==null && chars[s]){
+        const c = chars[s];
+        const mp = c.memo ? c.memo.split('\n')[0] : '';
+        return `<div class="slot filled${c.star5?' is5':''}" onclick="openSlot(${pi},${si})">
+          <div class="slot-portrait">${mkBg(c,74,68)}</div>
+          <div class="slot-name">${c.name}</div>
+          ${mp?`<div class="slot-memo" title="${c.memo.replace(/"/g,"'")}">${mp}</div>`:''}
+          <button class="rm" onclick="event.stopPropagation();rmSlot(${pi},${si})">×</button>
+        </div>`;
+      }
+      return `<div class="slot" onclick="openSlot(${pi},${si})">
+        <i class="ti ti-user-plus" style="font-size:20px;color:var(--text3)"></i>
+        <span style="font-size:10px;color:var(--text3);margin-top:4px">배치</span>
+      </div>`;
+    }).join('');
+    return `<div class="party-row">
+      <div class="party-header">
+        <span style="font-size:12px;color:var(--text3);font-weight:500">#${pi+1}</span>
+        <input class="party-name-input" value="${p.name}" oninput="renameParty(${pi},this.value)">
+        ${parties.length>1?`<button class="remove-party" onclick="rmParty(${pi})"><i class="ti ti-trash"></i></button>`:''}
+      </div>
+      <div class="slots">${slots}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderInfo(){
+  const t = Object.values(getUsed()).reduce((a,b)=>a+b,0);
+  const owned = chars.filter(c=>c.owned).length;
+  document.getElementById('info').textContent = `보유 ${owned}명${t?' · '+t+'명 배치':''}`;
+}
+
+async function addParty(){ parties.push({name:`파티 ${parties.length+1}`,slots:[null,null,null]}); renderAll(); await window._saveParties(); }
+async function rmParty(pi){ parties.splice(pi,1); renderAll(); await window._saveParties(); }
+async function renameParty(pi,v){ parties[pi].name=v; await window._saveParties(); }
+async function rmSlot(pi,si){ parties[pi].slots[si]=null; renderAll(); await window._saveParties(); }
+
+function openSlot(pi,si){
+  const used=getUsed(), cur=parties[pi].slots[si];
+  document.getElementById('slotTitle').textContent = `${parties[pi].name} · 슬롯 ${si+1}`;
+  const mk=(fn,lbl,lc)=>{
+    let g='';
+    chars.forEach((c,i)=>{
+      if(!fn(c)||!c.owned) return;
+      const out=(used[i]||0)>=(c.dupe?2:1)&&i!==cur;
+      g+=`<div class="mc${out?' out':''}${c.star5?' s5':''}" onclick="pickChar(${pi},${si},${i})">
+        ${c.dupe?'<span class="dupe-tag">×2</span>':''}${c.star5?'<div class="star5-corner"></div>':''}
+        <div style="height:56px;overflow:hidden">${mkBg(c,64,56)}</div>
+        <div style="font-size:11px;color:var(--text);padding:3px 2px;text-align:center;line-height:1.2">${c.name}</div>
+      </div>`;
+    });
+    return g?`<p class="tier-label" style="margin-top:10px"><span style="color:${lc}">${lbl}</span></p><div class="mcgrid">${g}</div>`:'';
+  };
+  document.getElementById('slotTiers').innerHTML = mk(c=>c.star5,'★5','var(--gold)') + mk(c=>!c.star5,'★4','var(--text2)');
+  document.getElementById('slotModal').classList.add('open');
+}
+async function pickChar(pi,si,i){ parties[pi].slots[si]=i; closeSlot(); renderAll(); await window._saveParties(); }
+function closeSlot(){ document.getElementById('slotModal').classList.remove('open'); }
+
+function openSettings(){ renderEditList(); renderPills('n'); document.getElementById('settingsModal').classList.add('open'); }
+function closeSettings(){ document.getElementById('settingsModal').classList.remove('open'); renderAll(); }
+
+function setFilter(f){
+  curFilter=f;
+  ['all','owned','unowned'].forEach(k=>document.getElementById('f-'+k).classList.toggle('on',k===f));
+  renderEditList();
+}
+async function setAllOwned(v){
+  chars.forEach(c=>c.owned=v); renderEditList(); renderAll(); await window._saveChars();
+  showToast(v?'전체 보유로 설정됨':'전체 미보유로 설정됨');
+}
+
+function renderEditList(){
+  const filtered = chars.map((c,i)=>({c,i})).filter(({c})=>{
+    if(curFilter==='owned') return c.owned;
+    if(curFilter==='unowned') return !c.owned;
+    return true;
+  });
+  document.getElementById('editList').innerHTML = filtered.length
+    ? filtered.map(({c,i})=>{
+        const col=cc(c); const a=c.attr&&ATTRS[c.attr];
+        const imgH = c.img
+          ? `<img class="mimg" src="${c.img}" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="mfb" style="background:${col.bg};color:${col.text};display:none">${c.name.slice(0,2)}</div>`
+          : `<div class="mfb" style="background:${col.bg};color:${col.text}">${c.name.slice(0,2)}</div>`;
+        return `<div class="erow${c.owned?'':' unowned'}">
+          <input type="checkbox" class="own-cb" ${c.owned?'checked':''} onchange="togOwned(${i},this.checked)">
+          ${imgH}
+          <span style="flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}${c.star5?` <span style="color:var(--gold);font-size:10px">★5</span>`:''}</span>
+          ${a?`<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:${a.bg};color:${a.text};flex-shrink:0">${c.attr}</span>`:''}
+          <button class="dtog${c.dupe?' on':''}" onclick="togDupe(${i})">${c.dupe?'×2':'×1'}</button>
+          <button class="btn" style="padding:3px 6px;font-size:11px;position:relative" onclick="openMemo(${i})">
+            <i class="ti ti-note"></i>
+            ${c.memo?`<span style="position:absolute;top:-2px;right:-2px;width:5px;height:5px;border-radius:50%;background:var(--accent)"></span>`:''}
+          </button>
+          <button class="btn" style="padding:3px 6px;font-size:11px" onclick="openEdit(${i})"><i class="ti ti-edit"></i></button>
+          <button style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:2px 3px" onclick="delChar(${i})"><i class="ti ti-trash"></i></button>
+        </div>`;
+      }).join('')
+    : '<p style="font-size:13px;color:var(--text3);padding:8px 0">해당하는 캐릭터가 없습니다.</p>';
+}
+
+async function togOwned(i,v){ chars[i].owned=v; renderEditList(); renderAll(); await window._saveChars(); }
+async function togDupe(i){ chars[i].dupe=!chars[i].dupe; renderEditList(); renderPool(); await window._saveChars(); }
+async function delChar(i){
+  chars.splice(i,1);
+  parties.forEach(p=>p.slots=p.slots.map(s=>s===i?null:s>i?s-1:s));
+  renderEditList(); renderAll(); await window._persist();
+}
+
+function openEdit(i){
+  editIdx=i; eUp=null;
+  const c=chars[i];
+  document.getElementById('editTitle').textContent = `편집: ${c.name}`;
+  document.getElementById('eUrl').value = c.img&&!c.img.startsWith('data:')?c.img:'';
+  document.getElementById('eFile').value = '';
+  const p=document.getElementById('ePrev');
+  if(c.img){p.src=c.img;p.style.display='block';}else p.style.display='none';
+  document.getElementById('eDupe').checked=c.dupe;
+  document.getElementById('eStar5').checked=c.star5;
+  eC=COLS[c.color%COLS.length]; eA=c.attr||'회절';
+  renderPills('e');
+  document.getElementById('editModal').classList.add('open');
+}
+async function saveEdit(){
+  if(editIdx===null) return;
+  const c=chars[editIdx];
+  const url=document.getElementById('eUrl').value.trim();
+  c.img=eUp||url||null; c.color=COLS.indexOf(eC); c.attr=eA;
+  c.dupe=document.getElementById('eDupe').checked; c.star5=document.getElementById('eStar5').checked;
+  closeEdit(); renderEditList(); renderAll(); await window._saveChars(); showToast(`${c.name} 저장됨`);
+}
+function closeEdit(){ document.getElementById('editModal').classList.remove('open'); editIdx=null; eUp=null; }
+
+function openMemo(i){
+  memoIdx=i; const c=chars[i]; const col=cc(c);
+  document.getElementById('memoCharName').textContent = c.name;
+  const ae = document.getElementById('memoCharAttr');
+  if(c.attr&&ATTRS[c.attr]){
+    ae.innerHTML=`<span style="padding:1px 7px;border-radius:3px;background:${ATTRS[c.attr].bg};color:${ATTRS[c.attr].text};font-size:11px">${c.attr}</span>${c.star5?' · ★5':''}`;
+  } else ae.textContent = c.star5?'★5':'';
+  document.getElementById('memoPortrait').innerHTML = mkBg(c,44,44);
+  document.getElementById('memoText').value = c.memo||'';
+  document.getElementById('memoModal').classList.add('open');
+  setTimeout(()=>document.getElementById('memoText').focus(),100);
+}
+async function saveMemo(){
+  if(memoIdx===null) return;
+  chars[memoIdx].memo = document.getElementById('memoText').value.trim();
+  closeMemo(); renderAll(); await window._saveChars(); showToast('메모 저장됨');
+}
+function closeMemo(){ document.getElementById('memoModal').classList.remove('open'); memoIdx=null; }
+
+function prevUp(m){
+  const f=document.getElementById(m==='n'?'nFile':'eFile').files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    if(m==='n'){nUp=e.target.result;const el=document.getElementById('nPrev');el.src=nUp;el.style.display='block';document.getElementById('nUrl').value='';}
+    else{eUp=e.target.result;const el=document.getElementById('ePrev');el.src=eUp;el.style.display='block';document.getElementById('eUrl').value='';}
+  }; r.readAsDataURL(f);
+}
+
+async function addChar(){
+  const name=document.getElementById('nName').value.trim();
+  if(!name){showToast('이름을 입력하세요');return;}
+  const url=document.getElementById('nUrl').value.trim();
+  chars.push({name,img:nUp||url||null,color:COLS.indexOf(nC),attr:nA,memo:'',
+    owned:document.getElementById('nOwned').checked,
+    dupe:document.getElementById('nDupe').checked,
+    star5:document.getElementById('nStar5').checked});
+  document.getElementById('nName').value=''; document.getElementById('nUrl').value='';
+  document.getElementById('nFile').value=''; document.getElementById('nPrev').style.display='none';
+  document.getElementById('nOwned').checked=true; document.getElementById('nDupe').checked=false; document.getElementById('nStar5').checked=false;
+  nUp=null; nA='회절'; renderPills('n');
+  renderEditList(); renderAll(); await window._saveChars(); showToast(`${name} 추가됨`);
+}
+
+function renderPills(m){
+  const isN=m==='n'; const selC=isN?nC:eC, selA=isN?nA:eA;
+  const cId=isN?'nSwatches':'eSwatches', aId=isN?'nAttrs':'eAttrs';
+  document.getElementById(cId).innerHTML = COLS.map((c,i)=>
+    `<div class="sw${selC===c?' on':''}" style="background:${c.bg};border-color:${c.text}" onclick="${isN?'nC':'eC'}=COLS[${i}];renderPills('${m}')"></div>`
+  ).join('');
+  document.getElementById(aId).innerHTML = AK.map(k=>{
+    const a=ATTRS[k];
+    return `<div class="ap${selA===k?' on':''}" style="background:${a.bg};color:${a.text}" onclick="${isN?'nA':'eA'}='${k}';renderPills('${m}')">${k}</div>`;
+  }).join('');
+}
+
+function sTab(t){
+  const L={list:'목록',add:'추가',ai:'AI 업데이트'};
+  document.querySelectorAll('#settingsModal .tab').forEach(el=>el.classList.toggle('active',el.textContent.trim()===L[t]));
+  document.querySelectorAll('#settingsModal .pane').forEach(el=>el.classList.remove('active'));
+  document.getElementById('pane-'+t).classList.add('active');
+  if(t==='list') renderEditList();
+  if(t==='add') renderPills('n');
+}
+
+function openSaves(){ window.renderSavesList(); document.getElementById('savesModal').classList.add('open'); }
+function closeSaves(){ document.getElementById('savesModal').classList.remove('open'); }
+
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{
+  if(e.target!==m) return;
+  const fn={slotModal:closeSlot,settingsModal:closeSettings,savesModal:closeSaves,editModal:closeEdit,memoModal:closeMemo};
+  (fn[m.id]||closeSlot)();
+}));
+</script>
+</body>
+</html>
