@@ -587,9 +587,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
               oninput="instMonths=parseInt(this.value)||3;updateInstPreview()">
             <span style="font-size:12px;color:var(--text2)">개월</span>
           </div>
-          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
-            ${[2,3,4,5,6,9,10,12,18,24,36].map(n=>`<button type="button" class="mo-chip" onclick="setInstMonths(${n})">${n}개월</button>`).join('')}
-          </div>
+          <div id="inst-chips" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px"></div>
           <div style="font-size:11px;color:var(--text3)" id="inst-preview"></div>
         </div>
         <button class="btn-primary" id="btn-add" onclick="addExpense()">+ 지출 추가</button>
@@ -1233,6 +1231,18 @@ window.toggleInstallment=function(){
   document.getElementById('inst-opts').classList.toggle('show',instOn);
   document.getElementById('inst-label').textContent=instOn?'할부 결제 ON':'할부 결제';
   if(instOn){
+    // 칩 동적 생성
+    const chipsEl=document.getElementById('inst-chips');
+    if(chipsEl&&!chipsEl.children.length){
+      [2,3,4,5,6,9,10,12,18,24,36].forEach(n=>{
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='mo-chip'+(n===instMonths?' active':'');
+        btn.textContent=n+'개월';
+        btn.onclick=()=>setInstMonths(n);
+        chipsEl.appendChild(btn);
+      });
+    }
     const inp=document.getElementById('inst-months-input');
     if(inp)inp.value=instMonths;
     setInstMonths(instMonths);
