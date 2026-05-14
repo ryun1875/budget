@@ -615,6 +615,13 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div id="inp-panel-loan" style="display:none">
       <div class="form-card">
         <h3>대출 상환 입력</h3>
+        <!-- 납입 유형 -->
+        <div style="display:flex;gap:6px;margin-bottom:12px">
+          <button id="loan-type-both" onclick="setLoanPayType('both')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--accent);background:var(--accent)22;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">원금+이자</button>
+          <button id="loan-type-interest" onclick="setLoanPayType('interest')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">이자만</button>
+          <button id="loan-type-principal" onclick="setLoanPayType('principal')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">원금만</button>
+        </div>
+        <div id="loan-pay-type-desc" style="font-size:11px;color:var(--text3);margin-bottom:10px;padding:6px 10px;background:var(--surface2);border-radius:7px">원금+이자: 대출 잔액이 줄어요</div>
         <div class="form-row">
           <div class="form-group"><label>날짜</label><input type="date" id="loan-pay-date-inp"></div>
           <div class="form-group"><label>대출 선택</label><select id="loan-pay-loan-inp"><option value="">대출을 먼저 등록해주세요</option></select></div>
@@ -933,6 +940,8 @@ function initApp(){
   document.getElementById('inp-date').value=now.toISOString().split('T')[0];
   document.getElementById('inv-date-inp').value=now.toISOString().split('T')[0];
   document.getElementById('loan-pay-date-inp').value=now.toISOString().split('T')[0];
+  // 할부 미리보기 이벤트
+  document.getElementById('inp-amount').addEventListener('input',()=>{if(instOn)updateInstPreview();});
   // 홈을 기본 탭으로 설정
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-home').classList.add('active');
@@ -1031,6 +1040,28 @@ function rebuildCatSelects(){
 }
 
 // ── 할부 ──────────────────────────────────────────────────
+let loanPayType='both';
+window.setLoanPayType=function(type){
+  loanPayType=type;
+  const styles={
+    both:{border:'var(--accent)',bg:'var(--accent)22',color:'var(--accent)'},
+    interest:{border:'#ffb347',bg:'rgba(255,179,71,.15)',color:'#ffb347'},
+    principal:{border:'var(--accent3)',bg:'rgba(107,181,255,.15)',color:'var(--accent3)'},
+  };
+  const descs={
+    both:'원금+이자: 대출 잔액이 줄어요',
+    interest:'이자만: 잔액은 그대로, 이자 지출로만 기록돼요',
+    principal:'원금만: 이자 없이 원금이 줄어요',
+  };
+  ['both','interest','principal'].forEach(t=>{
+    const btn=document.getElementById(`loan-type-${t}`);
+    const s=styles[t];
+    const active=t===type;
+    btn.style.cssText=`flex:1;padding:7px;border-radius:9px;border:1px solid ${active?s.border:'var(--border)'};background:${active?s.bg:'transparent'};color:${active?s.color:'var(--text2)'};font-size:12px;font-weight:${active?'700':'400'};cursor:pointer;font-family:'Noto Sans KR',sans-serif`;
+  });
+  document.getElementById('loan-pay-type-desc').textContent=descs[type];
+};
+
 window.switchInputTab=function(type,btn){
   document.querySelectorAll('#panel-input .range-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
@@ -1101,24 +1132,35 @@ window.addLoanPaymentFromInput=async function(){
   const desc=document.getElementById('loan-pay-desc-inp').value.trim();
   const amount=parseInt(document.getElementById('loan-pay-amount-inp').value)||0;
   const broker=document.getElementById('loan-pay-broker-inp').value.trim();
+  const payType=loanPayType||'both';
   if(!loanId){showToast('대출을 선택해주세요','warning');return;}
   if(!amount){showToast('납입금액을 입력해주세요','warning');return;}
   const loan=loans.find(l=>l.id===loanId);
+  const typeLabel={both:'원금+이자',interest:'이자',principal:'원금'}[payType];
   const btn=document.getElementById('btn-add-loan-pay');
   btn.disabled=true;btn.textContent='저장 중...';
   try{
-    const pid=uid();
-    await setDoc(doc(db,up('loanPayments'),pid),{loanId,amount,date,desc,broker,createdAt:Date.now()});
+    // loanPayments에 저장 (isInterestOnly 플래그)
+    await setDoc(doc(db,up('loanPayments'),uid()),{
+      loanId,amount,date,desc,broker,payType,
+      isInterestOnly:payType==='interest',
+      createdAt:Date.now()
+    });
+    // expenses에도 저장
     await setDoc(doc(db,up('expenses'),uid()),{
-      date,cat:'etc',desc:desc||(loan?.name||'대출상환'),
+      date,cat:'etc',
+      desc:desc||(loan?.name||'대출상환')+' '+typeLabel,
       amount,month:(date||curMonth).slice(0,7),
-      loanId,broker,isLoanPayment:true
+      loanId,broker,
+      isLoanPayment:true,
+      isInterestOnly:payType==='interest',
+      payType
     });
     document.getElementById('loan-pay-desc-inp').value='';
     document.getElementById('loan-pay-amount-inp').value='';
     document.getElementById('loan-pay-broker-inp').value='';
     updateLoanPayInfo();
-    showToast(`🏦 ${loan?.name||'대출'} 상환이 입력됐어요 ✓`,'success');
+    showToast(`🏦 ${loan?.name||'대출'} ${typeLabel} 납입됐어요 ✓`,'success');
     if(document.getElementById('panel-home').classList.contains('active'))renderHome();
   }catch(e){showToast('저장 실패','error');}
   finally{btn.disabled=false;btn.textContent='+ 상환 입력';}
@@ -1185,7 +1227,7 @@ window.toggleInstallment=function(){
   document.getElementById('inst-label').textContent=instOn?'할부 결제 ON':'할부 결제';
   if(instOn){buildMonths();updateInstPreview();}
 };
-document.getElementById('inp-amount').addEventListener('input',()=>{if(instOn)updateInstPreview();});
+// addEventListener는 initApp 안에서 실행되도록 이동됨
 
 // ── 렌더 ──────────────────────────────────────────────────
 function updateSummary(){
@@ -2597,8 +2639,8 @@ async function renderAsset(){
     loanList.innerHTML=`<div style="text-align:center;color:var(--text3);font-size:12px;padding:12px">등록된 대출이 없어요<br><span style="font-size:11px">+ 대출 등록 버튼을 눌러보세요</span></div>`;
   } else {
     loans.forEach(loan=>{
-      const paidFromExpenses=expenses.filter(e=>e.loanId===loan.id).reduce((s,e)=>s+(Number(e.amount)||0),0);
-      const paidFromRecords=loanPayments.filter(p=>p.loanId===loan.id).reduce((s,p)=>s+(Number(p.amount)||0),0);
+      const paidFromExpenses=expenses.filter(e=>e.loanId===loan.id&&!e.isInterestOnly).reduce((s,e)=>s+(Number(e.amount)||0),0);
+      const paidFromRecords=loanPayments.filter(p=>p.loanId===loan.id&&!p.isInterestOnly).reduce((s,p)=>s+(Number(p.amount)||0),0);
       const paid=paidFromExpenses+paidFromRecords;
       const remaining=Math.max(0,(Number(loan.principal)||0)-paid);
       const pct=loan.principal>0?Math.min(Math.round(paid/loan.principal*100),100):0;
@@ -2688,6 +2730,7 @@ async function renderAsset(){
           ${recentPays.map(p=>`
             <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);padding:3px 0;border-bottom:1px solid var(--border)">
               <span>${p.date||''}${p.broker?` · ${p.broker}`:''}</span>
+              <span style="color:${p.isInterestOnly?'#ffb347':'var(--text3)'};">${p.isInterestOnly?'이자':p.payType==='principal'?'원금':'원금+이자'}</span>
               <span style="color:var(--accent);font-family:'Gmarket Sans',sans-serif">-${fmt(p.amount)}</span>
               <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px" onclick="deleteLoanPayment('${p.id}')">✕</button>
             </div>`).join('')}
