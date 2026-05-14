@@ -754,6 +754,11 @@ body {
         <div class="hs-value orange" id="avgHours">0시간</div>
         <div class="hs-sub">하루 평균</div>
       </div>
+      <div class="home-summary-card">
+        <div class="hs-label">이번 달 휴무</div>
+        <div class="hs-value" style="color:var(--accent2)" id="totalDayoffs">0일</div>
+        <div class="hs-sub" id="totalDayoffSub">휴무 없음</div>
+      </div>
     </div>
 
     <!-- 기록 추가 토글 -->
@@ -2150,6 +2155,15 @@ function renderRecords() {
   const tbEl = document.getElementById('totalBreak');
   if (tbEl) tbEl.textContent = `${totalBreakMin}분`;
   document.getElementById('recordCount').textContent = `${days}건`;
+
+  // 휴무 카운트
+  const dayoffCount = list.filter(r => r.isDayoff).length;
+  const dayoffEl = document.getElementById('totalDayoffs');
+  const dayoffSubEl = document.getElementById('totalDayoffSub');
+  if (dayoffEl) {
+    dayoffEl.textContent = `${dayoffCount}일`;
+    if (dayoffSubEl) dayoffSubEl.textContent = `이번 달 휴무`;
+  }
 
   renderGoalCard();
 
