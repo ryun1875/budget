@@ -580,9 +580,17 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
           <div class="sw"></div><span id="inst-label">할부 결제</span>
         </div>
         <div class="install-opts" id="inst-opts">
-          <label>할부 개월 수</label>
-          <div class="months-grid" id="months-grid"></div>
-          <div style="margin-top:8px;font-size:11px;color:var(--text3)" id="inst-preview"></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <label style="white-space:nowrap;font-size:12px;color:var(--text2)">할부 개월 수</label>
+            <input type="number" id="inst-months-input" min="2" max="60" value="3" placeholder="3"
+              style="width:80px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:'Gmarket Sans',sans-serif;font-size:14px;text-align:center;outline:none;"
+              oninput="instMonths=parseInt(this.value)||3;updateInstPreview()">
+            <span style="font-size:12px;color:var(--text2)">개월</span>
+          </div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+            ${[2,3,4,5,6,9,10,12,18,24,36].map(n=>`<button type="button" class="mo-chip" onclick="setInstMonths(${n})">${n}개월</button>`).join('')}
+          </div>
+          <div style="font-size:11px;color:var(--text3)" id="inst-preview"></div>
         </div>
         <button class="btn-primary" id="btn-add" onclick="addExpense()">+ 지출 추가</button>
       </div>
@@ -617,11 +625,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <h3>대출 상환 입력</h3>
         <!-- 납입 유형 -->
         <div style="display:flex;gap:6px;margin-bottom:12px">
-          <button id="loan-type-both" onclick="setLoanPayType('both')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--accent);background:var(--accent)22;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">원금+이자</button>
-          <button id="loan-type-interest" onclick="setLoanPayType('interest')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">이자만</button>
-          <button id="loan-type-principal" onclick="setLoanPayType('principal')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">원금만</button>
+          <button id="loan-type-principal" onclick="setLoanPayType('principal')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--accent3);background:rgba(107,181,255,.15);color:var(--accent3);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">🏦 원금</button>
+          <button id="loan-type-interest" onclick="setLoanPayType('interest')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">💸 이자</button>
         </div>
-        <div id="loan-pay-type-desc" style="font-size:11px;color:var(--text3);margin-bottom:10px;padding:6px 10px;background:var(--surface2);border-radius:7px">원금+이자: 대출 잔액이 줄어요</div>
+        <div id="loan-pay-type-desc" style="font-size:11px;color:var(--text3);margin-bottom:10px;padding:6px 10px;background:var(--surface2);border-radius:7px">원금: 납입금액만큼 대출 잔액이 줄어요</div>
         <div class="form-row">
           <div class="form-group"><label>날짜</label><input type="date" id="loan-pay-date-inp"></div>
           <div class="form-group"><label>대출 선택</label><select id="loan-pay-loan-inp"><option value="">대출을 먼저 등록해주세요</option></select></div>
@@ -1040,26 +1047,17 @@ function rebuildCatSelects(){
 }
 
 // ── 할부 ──────────────────────────────────────────────────
-let loanPayType='both';
+let loanPayType='principal';
 window.setLoanPayType=function(type){
   loanPayType=type;
-  const styles={
-    both:{border:'var(--accent)',bg:'var(--accent)22',color:'var(--accent)'},
-    interest:{border:'#ffb347',bg:'rgba(255,179,71,.15)',color:'#ffb347'},
-    principal:{border:'var(--accent3)',bg:'rgba(107,181,255,.15)',color:'var(--accent3)'},
-  };
-  const descs={
-    both:'원금+이자: 대출 잔액이 줄어요',
-    interest:'이자만: 잔액은 그대로, 이자 지출로만 기록돼요',
-    principal:'원금만: 이자 없이 원금이 줄어요',
-  };
-  ['both','interest','principal'].forEach(t=>{
-    const btn=document.getElementById(`loan-type-${t}`);
-    const s=styles[t];
-    const active=t===type;
-    btn.style.cssText=`flex:1;padding:7px;border-radius:9px;border:1px solid ${active?s.border:'var(--border)'};background:${active?s.bg:'transparent'};color:${active?s.color:'var(--text2)'};font-size:12px;font-weight:${active?'700':'400'};cursor:pointer;font-family:'Noto Sans KR',sans-serif`;
-  });
-  document.getElementById('loan-pay-type-desc').textContent=descs[type];
+  const isPrincipal=type==='principal';
+  const pb=document.getElementById('loan-type-principal');
+  const ib=document.getElementById('loan-type-interest');
+  if(pb)pb.style.cssText=`flex:1;padding:7px;border-radius:9px;border:1px solid ${isPrincipal?'var(--accent3)':'var(--border)'};background:${isPrincipal?'rgba(107,181,255,.15)':'transparent'};color:${isPrincipal?'var(--accent3)':'var(--text2)'};font-size:12px;font-weight:${isPrincipal?'700':'400'};cursor:pointer;font-family:'Noto Sans KR',sans-serif`;
+  if(ib)ib.style.cssText=`flex:1;padding:7px;border-radius:9px;border:1px solid ${!isPrincipal?'#ffb347':'var(--border)'};background:${!isPrincipal?'rgba(255,179,71,.15)':'transparent'};color:${!isPrincipal?'#ffb347':'var(--text2)'};font-size:12px;font-weight:${!isPrincipal?'700':'400'};cursor:pointer;font-family:'Noto Sans KR',sans-serif`;
+  const desc=isPrincipal?'원금: 납입금액만큼 대출 잔액이 줄어요':'이자: 잔액 그대로, 이자 지출로만 기록돼요';
+  const el=document.getElementById('loan-pay-type-desc');
+  if(el)el.textContent=desc;
 };
 
 window.switchInputTab=function(type,btn){
@@ -1132,11 +1130,12 @@ window.addLoanPaymentFromInput=async function(){
   const desc=document.getElementById('loan-pay-desc-inp').value.trim();
   const amount=parseInt(document.getElementById('loan-pay-amount-inp').value)||0;
   const broker=document.getElementById('loan-pay-broker-inp').value.trim();
-  const payType=loanPayType||'both';
+  const payType=loanPayType||'principal';
+  const typeLabel=payType==='principal'?'원금':'이자';
+  const isInterestOnly=payType==='interest';
   if(!loanId){showToast('대출을 선택해주세요','warning');return;}
   if(!amount){showToast('납입금액을 입력해주세요','warning');return;}
   const loan=loans.find(l=>l.id===loanId);
-  const typeLabel={both:'원금+이자',interest:'이자',principal:'원금'}[payType];
   const btn=document.getElementById('btn-add-loan-pay');
   btn.disabled=true;btn.textContent='저장 중...';
   try{
@@ -1208,24 +1207,37 @@ function rebuildLoanSelects(){
   });
 }
 
-function buildMonths(){
-  [2,3,4,5,6,9,10,12,18,24,36].forEach(n=>{
-    const c=document.createElement('div');c.className='mo-chip'+(n===instMonths?' active':'');
-    c.textContent=n+'개월';
-    c.onclick=()=>{instMonths=n;buildMonths();updateInstPreview();};
-    g.appendChild(c);
+window.setInstMonths=function(n){
+  instMonths=n;
+  const inp=document.getElementById('inst-months-input');
+  if(inp)inp.value=n;
+  document.querySelectorAll('.mo-chip').forEach(c=>{
+    c.classList.toggle('active',parseInt(c.textContent)===n);
   });
-}
+  updateInstPreview();
+};
 function updateInstPreview(){
-  const a=parseInt(document.getElementById('inp-amount').value)||0;
-  document.getElementById('inst-preview').textContent=a>0?`월 ${fmt(Math.round(a/instMonths))} × ${instMonths}개월`:'금액을 입력하면 미리보기가 표시돼요';
+  const a=parseInt(document.getElementById('inp-amount')?.value)||0;
+  const n=instMonths||3;
+  if(!a){document.getElementById('inst-preview').textContent='금액을 입력하면 미리보기가 표시돼요';return;}
+  const base=Math.floor(a/n);
+  const first=a-base*(n-1);
+  const preview=first===base
+    ?`매월 ${fmt(base)} × ${n}개월 = ${fmt(a)}`
+    :`1회차 ${fmt(first)} + 2~${n}회차 ${fmt(base)} × ${n-1}개월 = ${fmt(a)}`;
+  document.getElementById('inst-preview').textContent=preview;
 }
 window.toggleInstallment=function(){
   instOn=!instOn;
   document.getElementById('inst-toggle').classList.toggle('on',instOn);
   document.getElementById('inst-opts').classList.toggle('show',instOn);
   document.getElementById('inst-label').textContent=instOn?'할부 결제 ON':'할부 결제';
-  if(instOn){buildMonths();updateInstPreview();}
+  if(instOn){
+    const inp=document.getElementById('inst-months-input');
+    if(inp)inp.value=instMonths;
+    setInstMonths(instMonths);
+    updateInstPreview();
+  }
 };
 // addEventListener는 initApp 안에서 실행되도록 이동됨
 
@@ -2271,17 +2283,25 @@ window.addExpense=async function(){
   btn.disabled=true;btn.textContent='저장 중...';setSyncStatus('syncing');
   try{
     if(instOn){
-      const ma=Math.round(total/instMonths);
+      const n=instMonths||3;
+      const base=Math.floor(total/n);
+      const first=total-base*(n-1); // 나머지를 첫 달에
       const[sy,sm]=date.split('-').map(Number);
       const batch=writeBatch(db);const gid=uid();
-      for(let i=0;i<instMonths;i++){
+      for(let i=0;i<n;i++){
         const nd=new Date(sy,sm-1+i,1);
         const mo=`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}`;
         const md=new Date(nd.getFullYear(),nd.getMonth()+1,0).getDate();
         const dd=Math.min(parseInt(date.split('-')[2]),md);
-        batch.set(doc(db,up('expenses'),uid()),{date:`${mo}-${String(dd).padStart(2,'0')}`,cat,desc:desc||(CATS.find(c=>c.id===cat)?.name||''),amount:ma,month:mo,payId,loanId,installmentTotal:instMonths,installmentCurrent:i+1,installmentGroupId:gid});
+        const ma=i===0?first:base; // 첫 달은 올림 금액
+        batch.set(doc(db,up('expenses'),uid()),{
+          date:`${mo}-${String(dd).padStart(2,'0')}`,
+          cat,desc:desc||(CATS.find(c=>c.id===cat)?.name||''),
+          amount:ma,month:mo,payId,loanId,tag:expenseTag,
+          installmentTotal:n,installmentCurrent:i+1,installmentGroupId:gid
+        });
       }
-      await batch.commit();showToast(`${instMonths}개월 할부로 추가됐어요 ✓`,'success');
+      await batch.commit();showToast(`${n}개월 할부로 추가됐어요 ✓ (1회차 ${fmt(first)})` ,'success');
       instOn=false;window.toggleInstallment();
     } else {
       await setDoc(doc(db,up('expenses'),uid()),{date,cat,desc,amount:total,month:curMonth,payId,loanId,tag:expenseTag});
