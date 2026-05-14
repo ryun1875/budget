@@ -1861,7 +1861,7 @@ const dayoffToggle = document.getElementById('dayoffToggle');
 const dayoffToggleWrap = document.getElementById('dayoffToggleWrap');
 
 function setDayoffMode(on) {
-  isDayoffMode = on;
+  isDayoffMode = Boolean(on);
   dayoffToggle.classList.toggle('on', on);
   // 시간/휴식/추가근무 숨기기
   const hideEls = ['timeRowWrap', 'breakSectionWrap', 'extraSectionWrap', 'previewWrap'];
@@ -1873,7 +1873,9 @@ function setDayoffMode(on) {
   document.getElementById('addRecordBtn').style.background = on ? 'rgba(255,107,107,.8)' : '';
   document.getElementById('addRecordBtn').style.color = on ? '#fff' : '';
 }
-dayoffToggleWrap.addEventListener('click', () => setDayoffMode(!isDayoffMode));
+dayoffToggleWrap.addEventListener('click', () => {
+  setDayoffMode(!isDayoffMode);
+});
 
 // ── Records 로드 ──
 async function loadRecords() {
@@ -2078,13 +2080,32 @@ function getMonthRecords() {
   return records.filter(r => {
     const d = new Date(r.date);
     return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
-  });
+  }).sort((a, b) => b.date.localeCompare(a.date));
 }
 
 function getWeekNumber(dateStr) {
   const d = new Date(dateStr);
-  const firstDay = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
-  return Math.ceil((d.getDate() + firstDay) / 7);
+  // 월요일 기준 (0=일→6, 1=월→0 으로 변환)
+  const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
+  const firstMon = firstDay.getDay() === 0 ? 1 : (8 - firstDay.getDay()); // 첫 번째 월요일
+  const dayOfMonth = d.getDate();
+  if (dayOfMonth < firstMon) return 1;
+  return Math.ceil((dayOfMonth - firstMon) / 7) + 2;
+}
+
+// 주차의 월~일 범위 구하기
+function getWeekRange(year, month, weekNum) {
+  const firstDay = new Date(year, month, 1);
+  const firstMon = firstDay.getDay() === 0 ? 1 : (8 - firstDay.getDay());
+  let startDate, endDate;
+  if (weekNum === 1) {
+    startDate = 1;
+    endDate = firstMon - 1 || 7;
+  } else {
+    startDate = firstMon + (weekNum - 2) * 7;
+    endDate = Math.min(startDate + 6, new Date(year, month + 1, 0).getDate());
+  }
+  return { startDate, endDate };
 }
 
 function renderRecords() {
@@ -2114,8 +2135,9 @@ function renderRecords() {
     return;
   }
 
-  // 이번 주 자동 열기
-  const todayWeek = getWeekNumber(new Date().toISOString().split('T')[0]);
+  // 이번 주 자동 열기 (월요일 기준)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayWeek = getWeekNumber(todayStr);
   const todayMonth = new Date().getMonth();
   if (currentMonth === todayMonth && openWeekGroups.size === 0) {
     openWeekGroups.add(todayWeek);
@@ -2129,20 +2151,21 @@ function renderRecords() {
     weekGroups[wk].push(r);
   });
 
-  const weekKeys = Object.keys(weekGroups).sort((a,b) => b-a);
+  const weekKeys = Object.keys(weekGroups).sort((a,b) => b-a); // 최신 주차 위
   container.innerHTML = weekKeys.map(wk => {
-    const wkList = weekGroups[wk];
+    const wkList = weekGroups[wk].sort((a,b) => a.date.localeCompare(b.date));
     const wkWork = wkList.filter(r => !r.isDayoff);
     const wkPay = wkWork.reduce((s,r) => s+(taxEnabled?r.net:r.gross), 0);
     const wkMin = wkWork.reduce((s,r) => s+r.workMin, 0);
     const wkH = Math.floor(wkMin/60), wkM = wkMin%60;
     const wkDays = wkWork.length;
     const isOpen = openWeekGroups.has(parseInt(wk));
-    // 날짜 범위
-    const dates = wkList.map(r => r.date).sort();
-    const rangeStart = dates[0]?.slice(5).replace('-','/');
-    const rangeEnd = dates[dates.length-1]?.slice(5).replace('-','/');
-    const range = rangeStart === rangeEnd ? rangeStart : `${rangeStart}~${rangeEnd}`;
+    // 월~일 범위
+    const { startDate, endDate } = getWeekRange(currentYear, currentMonth, parseInt(wk));
+    const pad = n => String(n).padStart(2,'0');
+    const rangeStart = `${pad(currentMonth+1)}/${pad(startDate)}`;
+    const rangeEnd = `${pad(currentMonth+1)}/${pad(endDate)}`;
+    const range = startDate === endDate ? rangeStart : `${rangeStart}~${rangeEnd}`;
 
     const recordsHtml = wkList.map(r => renderRecordItem(r)).join('');
 
