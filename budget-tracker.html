@@ -24,7 +24,7 @@ body.light{
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0;transition:background .3s,color .3s;}
-#app-container{max-width:480px;margin:0 auto;padding:24px 16px 90px;min-height:100vh;position:relative;}
+#app-container{max-width:480px;margin:0 auto;padding:24px 16px 100px;min-height:100vh;position:relative;}
 .bottom-nav{max-width:480px;margin:0 auto;left:0;right:0;}
 
 /* 로그인 */
@@ -817,7 +817,7 @@ let CATS=[...DEF_CATS];
 let donutChart=null,barChart=null,compareChart=null,budgetCompareChart=null,trendChart=null,payTrendChart=null,assetChart=null,loanChart=null;
 let trendCatId=null, trendPayId=null;
 let unsubExp=null,unsubBudget=null,unsubCats=null,unsubRec=null;
-let budgetTimer=null,catTimer=null;
+let budgetTimer=null,catTimer=null,catSaving=false;
 let instOn=false,instMonths=2,expenseTag='personal';
 let curUser=null,isDark=true,editId=null;
 let compareRange=6;
@@ -946,8 +946,8 @@ function initApp(){
   });
 
   unsubCats=onSnapshot(doc(db,up('settings'),'categories'),snap=>{
-    // 카테고리 탭 열려있으면 덮어쓰기 금지 (편집 중 초기화 방지)
-    if(document.getElementById('panel-cats').classList.contains('active'))return;
+    // 카테고리 탭 열려있거나 저장 중이면 덮어쓰기 금지
+    if(document.getElementById('panel-cats').classList.contains('active')||catSaving)return;
     CATS=snap.exists()&&snap.data().list?.length?snap.data().list:[...DEF_CATS];
     rebuildCatSelects();
     renderAll();
@@ -2118,31 +2118,19 @@ window.deleteCat=function(i){
   renderCatManage();
 };
 window.saveCats=async function(){
+  document.querySelectorAll('.cat-name-inp').forEach((inp,i)=>{
+    if(CATS[i])CATS[i].name=inp.value.trim()||CATS[i].name;
+  });
   setSyncStatus('syncing');
+  catSaving=true;
   try{
     await setDoc(doc(db,up('settings'),'categories'),{list:CATS});
     setSyncStatus('online');
     rebuildCatSelects();
-    renderAll();
     showToast('카테고리가 저장됐어요 ✓','success');
-  }catch(e){setSyncStatus('offline');showToast('저장 실패','error');}
+  }catch(e){setSyncStatus('offline');showToast('저장 실패: '+e.message,'error');}
+  finally{setTimeout(()=>{catSaving=false;},1000);}
 };
-function scheduleCatSave(){
-  clearTimeout(catTimer);
-  catTimer=setTimeout(async()=>{
-    setSyncStatus('syncing');
-    try{
-      await setDoc(doc(db,up('settings'),'categories'),{list:CATS});
-      setSyncStatus('online');
-      rebuildCatSelects();
-      // renderAll은 하되 카테고리 탭이 열려있으면 renderCatManage는 건너뜀
-      renderList();renderBudget();
-      if(document.getElementById('panel-chart').classList.contains('active'))renderChart();
-      if(document.getElementById('panel-home').classList.contains('active'))renderHome();
-    }
-    catch(e){setSyncStatus('offline');}
-  },1000);
-}
 window.openEmojiPicker=function(i){
   const p=document.getElementById('emoji-picker');p.innerHTML='';
   EMOJIS.forEach(e=>{const s=document.createElement('span');s.className='emoji-opt';s.textContent=e;s.onclick=()=>{CATS[i].emoji=e;closeModal('emoji-modal');renderCatManage();};p.appendChild(s);});

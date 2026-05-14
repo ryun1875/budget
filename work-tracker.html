@@ -1796,10 +1796,12 @@ function updateMonthDisplay() {
 }
 document.getElementById('prevMonth').addEventListener('click', () => {
   if (currentMonth === 0) { currentYear--; currentMonth = 11; } else currentMonth--;
+  openWeekGroups = new Set();
   updateMonthDisplay(); renderRecords(); renderStats();
 });
 document.getElementById('nextMonth').addEventListener('click', () => {
   if (currentMonth === 11) { currentYear++; currentMonth = 0; } else currentMonth++;
+  openWeekGroups = new Set();
   updateMonthDisplay(); renderRecords(); renderStats();
 });
 updateMonthDisplay();
@@ -2111,29 +2113,34 @@ function getMonthRecords() {
   }).sort((a, b) => b.date.localeCompare(a.date));
 }
 
-function getWeekNumber(dateStr) {
+// 날짜가 속한 주의 월요일 날짜 문자열 반환 (주 키로 사용)
+function getMondayKey(dateStr) {
   const d = new Date(dateStr);
-  // 월요일 기준 (0=일→6, 1=월→0 으로 변환)
-  const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
-  const firstMon = firstDay.getDay() === 0 ? 1 : (8 - firstDay.getDay()); // 첫 번째 월요일
-  const dayOfMonth = d.getDate();
-  if (dayOfMonth < firstMon) return 1;
-  return Math.ceil((dayOfMonth - firstMon) / 7) + 2;
+  const day = d.getDay(); // 0=일, 1=월, ..., 6=토
+  const diff = day === 0 ? -6 : 1 - day; // 월요일로 이동
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().split('T')[0]; // YYYY-MM-DD
 }
 
-// 주차의 월~일 범위 구하기
-function getWeekRange(year, month, weekNum) {
+// 월요일 키로부터 표시용 범위 문자열 반환
+function getWeekLabel(mondayKey, year, month) {
+  const mon = new Date(mondayKey);
+  const sun = new Date(mondayKey);
+  sun.setDate(mon.getDate() + 6);
+  const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+  return `${fmt(mon)}~${fmt(sun)}`;
+}
+
+// 월요일 키로부터 주차 번호 계산 (표시용)
+function getWeekNumFromMonday(mondayKey, year, month) {
   const firstDay = new Date(year, month, 1);
-  const firstMon = firstDay.getDay() === 0 ? 1 : (8 - firstDay.getDay());
-  let startDate, endDate;
-  if (weekNum === 1) {
-    startDate = 1;
-    endDate = firstMon - 1 || 7;
-  } else {
-    startDate = firstMon + (weekNum - 2) * 7;
-    endDate = Math.min(startDate + 6, new Date(year, month + 1, 0).getDate());
-  }
-  return { startDate, endDate };
+  const firstDow = firstDay.getDay();
+  const firstMonDiff = firstDow === 0 ? -6 : 1 - firstDow;
+  const firstMon = new Date(firstDay);
+  firstMon.setDate(firstDay.getDate() + firstMonDiff);
+  const mon = new Date(mondayKey);
+  const diff = Math.round((mon - firstMon) / (7 * 24 * 60 * 60 * 1000));
+  return diff + 1;
 }
 
 function renderRecords() {
@@ -2174,40 +2181,36 @@ function renderRecords() {
 
   // 이번 주 자동 열기 (월요일 기준)
   const todayStr = new Date().toISOString().split('T')[0];
-  const todayWeek = getWeekNumber(todayStr);
+  const todayMonKey = getMondayKey(todayStr);
   const todayMonth = new Date().getMonth();
   if (currentMonth === todayMonth && openWeekGroups.size === 0) {
-    openWeekGroups.add(todayWeek);
+    openWeekGroups.add(todayMonKey);
   }
 
-  // 주별로 그룹화
+  // 주별로 그룹화 (월요일 키 기준)
   const weekGroups = {};
   list.forEach(r => {
-    const wk = getWeekNumber(r.date);
-    if (!weekGroups[wk]) weekGroups[wk] = [];
-    weekGroups[wk].push(r);
+    const monKey = getMondayKey(r.date);
+    if (!weekGroups[monKey]) weekGroups[monKey] = [];
+    weekGroups[monKey].push(r);
   });
 
-  const weekKeys = Object.keys(weekGroups).sort((a,b) => b-a); // 최신 주차 위
-  container.innerHTML = weekKeys.map(wk => {
-    const wkList = weekGroups[wk].sort((a,b) => a.date.localeCompare(b.date));
+  const weekKeys = Object.keys(weekGroups).sort((a,b) => b.localeCompare(a)); // 최신 주 위
+  container.innerHTML = weekKeys.map(monKey => {
+    const wk = getWeekNumFromMonday(monKey, currentYear, currentMonth);
+    const wkList = weekGroups[monKey].sort((a,b) => a.date.localeCompare(b.date));
     const wkWork = wkList.filter(r => !r.isDayoff);
     const wkPay = wkWork.reduce((s,r) => s+(taxEnabled?r.net:r.gross), 0);
     const wkMin = wkWork.reduce((s,r) => s+r.workMin, 0);
     const wkH = Math.floor(wkMin/60), wkM = wkMin%60;
     const wkDays = wkWork.length;
-    const isOpen = openWeekGroups.has(parseInt(wk));
-    // 월~일 범위
-    const { startDate, endDate } = getWeekRange(currentYear, currentMonth, parseInt(wk));
-    const pad = n => String(n).padStart(2,'0');
-    const rangeStart = `${pad(currentMonth+1)}/${pad(startDate)}`;
-    const rangeEnd = `${pad(currentMonth+1)}/${pad(endDate)}`;
-    const range = startDate === endDate ? rangeStart : `${rangeStart}~${rangeEnd}`;
+    const isOpen = openWeekGroups.has(monKey);
+    const range = getWeekLabel(monKey, currentYear, currentMonth);
 
     const recordsHtml = wkList.map(r => renderRecordItem(r)).join('');
 
     return `<div class="week-group">
-      <div class="week-group-header ${isOpen?'open':''}" onclick="toggleWeekGroup(${wk})">
+      <div class="week-group-header ${isOpen?'open':''}" onclick="toggleWeekGroup('${monKey}')">
         <div class="wg-left">
           <div class="wg-title">${wk}주차</div>
           <div class="wg-sub">${range} · ${wkDays}일 근무 · ${wkH}시간${wkM?wkM+'분':''}</div>
@@ -2217,16 +2220,16 @@ function renderRecords() {
           <div class="wg-arrow">▼</div>
         </div>
       </div>
-      <div class="week-group-body ${isOpen?'open':''}" id="wg-body-${wk}">
+      <div class="week-group-body ${isOpen?'open':''}" id="wg-body-${monKey}">
         ${recordsHtml}
       </div>
     </div>`;
   }).join('');
 }
 
-window.toggleWeekGroup = (wk) => {
-  if (openWeekGroups.has(wk)) openWeekGroups.delete(wk);
-  else openWeekGroups.add(wk);
+window.toggleWeekGroup = (monKey) => {
+  if (openWeekGroups.has(monKey)) openWeekGroups.delete(monKey);
+  else openWeekGroups.add(monKey);
   renderRecords();
 };
 
