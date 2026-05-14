@@ -234,6 +234,26 @@ body {
 /* ── 휴식시간 직접입력 ── */
 .break-section { margin-bottom:14px; }
 .break-label { font-size:11px; color:var(--text3); margin-bottom:8px; display:block; }
+.break-mode-tabs {
+  display:flex; gap:6px; margin-bottom:8px;
+}
+.break-mode-tab {
+  padding:4px 12px; border-radius:20px; font-size:11px;
+  border:1px solid var(--border); background:var(--surface2);
+  color:var(--text2); cursor:pointer; transition:var(--tr);
+}
+.break-mode-tab.active { border-color:var(--accent4); background:rgba(255,179,71,.12); color:var(--accent4); }
+.break-duration-row {
+  display:flex; align-items:center; gap:6px; margin-bottom:6px;
+}
+.break-duration-row input[type="number"] {
+  width:80px; background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; color:var(--text); padding:7px 10px; font-size:14px;
+  font-family:'Gmarket Sans',sans-serif; outline:none; transition:var(--tr);
+  text-align:center;
+}
+.break-duration-row input[type="number"]:focus { border-color:var(--accent4); }
+.break-duration-row .dur-unit { font-size:13px; color:var(--text2); }
 .break-list { display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
 .break-row {
   display:grid; grid-template-columns:1fr 1fr auto;
@@ -632,6 +652,21 @@ body {
 .home-summary-card .hs-value.orange { color:var(--accent4); }
 .home-summary-card .hs-sub { font-size:10px; color:var(--text3); margin-top:3px; }
 
+/* ── 달력 직원 요약 ── */
+.stats-staff-card {
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:10px 14px; margin-bottom:8px;
+  cursor:pointer; transition:var(--tr);
+}
+.stats-staff-card:hover { border-color:var(--accent3); }
+.stats-staff-card.active { border-color:var(--accent3); background:rgba(107,181,255,.06); }
+.stats-staff-card .ssc-left { display:flex; align-items:center; gap:10px; }
+.stats-staff-card img { width:28px; height:28px; border-radius:50%; }
+.stats-staff-card .ssc-name { font-size:13px; font-weight:700; }
+.stats-staff-card .ssc-days { font-size:11px; color:var(--text3); margin-top:2px; }
+.stats-staff-card .ssc-pay { font-family:'Gmarket Sans',sans-serif; font-size:15px; font-weight:700; color:var(--accent); }
+
 /* ── 탭 ── */
 .tabs {
   position:fixed; bottom:0; left:0; right:0;
@@ -799,9 +834,23 @@ body {
         <div class="time-input-group"><label>퇴근</label><input type="time" id="endTime"></div>
       </div></div>
       <div id="breakSectionWrap"><div class="break-section">
-        <span class="break-label">휴식시간 (여러 번 추가 가능)</span>
-        <div class="break-list" id="breakList"></div>
-        <button class="btn-add-break" id="addBreakBtn">+ 휴식 추가</button>
+        <span class="break-label">휴식시간</span>
+        <div class="break-mode-tabs">
+          <div class="break-mode-tab active" id="breakModeTime" onclick="setBreakMode('time')">시간대 입력</div>
+          <div class="break-mode-tab" id="breakModeDur" onclick="setBreakMode('duration')">분 입력</div>
+        </div>
+        <!-- 시간대 입력 모드 -->
+        <div id="breakTimeModeWrap">
+          <div class="break-list" id="breakList"></div>
+          <button class="btn-add-break" id="addBreakBtn">+ 휴식 추가</button>
+        </div>
+        <!-- 분 입력 모드 -->
+        <div id="breakDurModeWrap" style="display:none">
+          <div class="break-duration-row">
+            <input type="number" id="breakDurInput" min="0" step="5" placeholder="0">
+            <span class="dur-unit">분</span>
+          </div>
+        </div>
         <div class="break-total" id="breakTotal"></div>
       </div></div>
       <div id="extraSectionWrap"><div class="extra-section">
@@ -828,12 +877,21 @@ body {
     <div id="recordList"></div>
   </div>
 
-  <!-- 탭 페이지: 분석 (달력) -->
+  <!-- 탭 페이지: 달력 -->
   <div class="tab-page" id="page-stats">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <h2 style="font-size:18px;font-weight:700">📅 월별 달력</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h2 style="font-size:18px;font-weight:700">📅 달력</h2>
       <p style="font-size:12px;color:var(--text2)" id="statsMonthLabel"></p>
     </div>
+
+    <!-- 직원 필터 (관리자만 표시) -->
+    <div id="statsStaffFilter" style="display:none;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">직원 필터</div>
+      <div class="staff-tabs" id="statsStaffTabs"></div>
+    </div>
+
+    <!-- 직원별 이달 요약 (관리자 전체보기 시) -->
+    <div id="statsStaffSummary" style="display:none;margin-bottom:14px"></div>
 
     <!-- 월 요약 -->
     <div class="summary-grid" style="margin-bottom:16px">
@@ -898,7 +956,7 @@ body {
 <!-- 탭 바 -->
 <div class="tabs" id="tabBar" style="display:none">
   <button class="tab active" data-page="home"><div class="icon">🏠</div><div class="label">홈</div></button>
-  <button class="tab" data-page="stats"><div class="icon">📊</div><div class="label">분석</div></button>
+  <button class="tab" data-page="stats"><div class="icon">📅</div><div class="label">달력</div></button>
   <button class="tab staff-only" data-page="mydisputes" style="display:none"><div class="icon">📝</div><div class="label">이의제기</div></button>
   <button class="tab admin-only" data-page="manage" style="display:none"><div class="icon">👥</div><div class="label">직원관리</div><div id="disputeBadge" style="display:none;background:var(--accent2);color:#fff;font-size:9px;border-radius:10px;padding:1px 5px;margin-top:-2px"></div></button>
 </div>
@@ -960,8 +1018,20 @@ body {
     <!-- 휴식시간 -->
     <div class="break-section">
       <span class="break-label">휴식시간</span>
-      <div class="break-list" id="editBreakList"></div>
-      <button class="btn-add-break" id="editAddBreakBtn">+ 휴식 추가</button>
+      <div class="break-mode-tabs">
+        <div class="break-mode-tab active" id="editBreakModeTime" onclick="setEditBreakMode('time')">시간대 입력</div>
+        <div class="break-mode-tab" id="editBreakModeDur" onclick="setEditBreakMode('duration')">분 입력</div>
+      </div>
+      <div id="editBreakTimeModeWrap">
+        <div class="break-list" id="editBreakList"></div>
+        <button class="btn-add-break" id="editAddBreakBtn">+ 휴식 추가</button>
+      </div>
+      <div id="editBreakDurModeWrap" style="display:none">
+        <div class="break-duration-row">
+          <input type="number" id="editBreakDurInput" min="0" step="5" placeholder="0">
+          <span class="dur-unit">분</span>
+        </div>
+      </div>
       <div class="break-total" id="editBreakTotal"></div>
     </div>
 
@@ -1105,7 +1175,8 @@ let editBreaks = [];
 let editExtras = [];
 let dayoffs = [];
 let monthlyGoal = 0;
-let openWeekGroups = new Set(); // 펼쳐진 주차
+let openWeekGroups = new Set();
+let statsFilterUid = null; // 달력 탭 직원 필터 // 펼쳐진 주차
 let myDisputes = []; // 직원 본인의 이의제기 목록
 let allDisputes = []; // 관리자용 전체 이의제기
 let disputingRecord = null; // 현재 이의제기 대상 기록
@@ -1664,7 +1735,7 @@ document.querySelectorAll('.tab').forEach(btn => {
     document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`page-${btn.dataset.page}`).classList.add('active');
-    if (btn.dataset.page === 'stats') renderStats();
+    if (btn.dataset.page === 'stats') { statsFilterUid = null; renderStats(); }
     if (btn.dataset.page === 'manage') { renderStaffManage(); if(isAdmin) loadAllDisputes(); }
     if (btn.dataset.page === 'mydisputes') { loadMyDisputes(); }
   });
@@ -1677,7 +1748,27 @@ document.getElementById('startTime').value = '17:00';
 document.getElementById('endTime').value = '00:30';
 
 // ── 휴식 추가 ──
-let breaks = []; // [{start:'19:00', end:'19:30'}]
+let breaks = [];
+let breakMode = 'time'; // 'time' | 'duration'
+let editBreakMode2 = 'time';
+
+window.setBreakMode = (mode) => {
+  breakMode = mode;
+  document.getElementById('breakModeTime').classList.toggle('active', mode==='time');
+  document.getElementById('breakModeDur').classList.toggle('active', mode==='duration');
+  document.getElementById('breakTimeModeWrap').style.display = mode==='time' ? '' : 'none';
+  document.getElementById('breakDurModeWrap').style.display = mode==='duration' ? '' : 'none';
+  updateBreakTotal(); updatePreview();
+};
+
+window.setEditBreakMode = (mode) => {
+  editBreakMode2 = mode;
+  document.getElementById('editBreakModeTime').classList.toggle('active', mode==='time');
+  document.getElementById('editBreakModeDur').classList.toggle('active', mode==='duration');
+  document.getElementById('editBreakTimeModeWrap').style.display = mode==='time' ? '' : 'none';
+  document.getElementById('editBreakDurModeWrap').style.display = mode==='duration' ? '' : 'none';
+  updateEditBreakTotal(); updateEditPreview();
+};
 
 function renderBreaks() {
   const list = document.getElementById('breakList');
@@ -1697,6 +1788,9 @@ window.updateBreak = (i, key, val) => { breaks[i][key] = val; updateBreakTotal()
 window.removeBreak = (i) => { if (!confirm('이 휴식 기록을 삭제할까요?')) return; breaks.splice(i, 1); renderBreaks(); };
 
 function calcBreakTotal() {
+  if (breakMode === 'duration') {
+    return parseInt(document.getElementById('breakDurInput')?.value) || 0;
+  }
   return breaks.reduce((sum, b) => {
     if (!b.start || !b.end) return sum;
     const [sh,sm] = b.start.split(':').map(Number);
@@ -1719,6 +1813,9 @@ function updateBreakTotal() {
 document.getElementById('addBreakBtn').addEventListener('click', () => {
   breaks.push({ start:'', end:'' });
   renderBreaks();
+});
+document.getElementById('breakDurInput').addEventListener('input', () => {
+  updateBreakTotal(); updatePreview();
 });
 
 // ── 추가근무 ──
@@ -1949,10 +2046,11 @@ document.getElementById('addRecordBtn').addEventListener('click', async () => {
   const breakMin = calcBreakTotal();
   const extraMin = calcExtraTotal();
   const r = calcPay(start, end, breakMin, extraMin);
+  const savingBreaks = breakMode === 'duration' ? [] : JSON.parse(JSON.stringify(breaks));
 
   const record = {
     date, start, end,
-    breakMin, breaks: JSON.parse(JSON.stringify(breaks)),
+    breakMin, breaks: savingBreaks,
     extraMin, extras: JSON.parse(JSON.stringify(extras)),
     memo, workMin: r.workMin, gross: r.gross, net: r.net
   };
@@ -1999,6 +2097,9 @@ window.updateEditBreak = (i,k,v) => { editBreaks[i][k]=v; updateEditBreakTotal()
 window.removeEditBreak = (i) => { if(!confirm('이 휴식 기록을 삭제할까요?')) return; editBreaks.splice(i,1); renderEditBreaks(); };
 
 function calcEditBreakTotal() {
+  if (editBreakMode2 === 'duration') {
+    return parseInt(document.getElementById('editBreakDurInput')?.value) || 0;
+  }
   return editBreaks.reduce((sum,b) => {
     if (!b.start||!b.end) return sum;
     const [sh,sm]=b.start.split(':').map(Number);
@@ -2061,6 +2162,9 @@ function updateEditPreview() {
 document.getElementById('editAddBreakBtn').addEventListener('click', () => {
   editBreaks.push({start:'',end:''}); renderEditBreaks();
 });
+document.getElementById('editBreakDurInput').addEventListener('input', () => {
+  updateEditBreakTotal(); updateEditPreview();
+});
 document.getElementById('editAddExtraBtn').addEventListener('click', () => {
   editExtras.push({start:'',end:'',reason:''}); renderEditExtras();
 });
@@ -2076,6 +2180,13 @@ function openEditModal(record) {
   // 기존 휴식/추가근무 불러오기
   editBreaks = JSON.parse(JSON.stringify(record.breaks || []));
   editExtras = JSON.parse(JSON.stringify(record.extras || []));
+  // 기존 기록에 시간대 정보 없으면 분 모드로
+  if (editBreaks.length === 0 && record.breakMin > 0) {
+    setEditBreakMode('duration');
+    document.getElementById('editBreakDurInput').value = record.breakMin;
+  } else {
+    setEditBreakMode('time');
+  }
   renderEditBreaks();
   renderEditExtras();
   updateEditPreview();
@@ -2295,7 +2406,30 @@ window.editById = (id, ownerUid) => {
 window.delRecord = (id, ownerUid) => deleteRecord(id, ownerUid);
 
 function renderStats() {
-  const list = getMonthRecords();
+  // 관리자 필터 렌더
+  const filterEl = document.getElementById('statsStaffFilter');
+  const summaryEl = document.getElementById('statsStaffSummary');
+  if (isAdmin) {
+    filterEl.style.display = 'block';
+    renderStatsFilter();
+  } else {
+    filterEl.style.display = 'none';
+  }
+
+  // 필터된 기록
+  let list = getMonthRecords();
+  if (isAdmin && statsFilterUid) {
+    list = list.filter(r => r.ownerUid === statsFilterUid);
+  }
+
+  // 전체보기 시 직원별 요약
+  if (isAdmin && !statsFilterUid) {
+    summaryEl.style.display = 'block';
+    renderStatsStaffSummary();
+  } else {
+    summaryEl.style.display = 'none';
+  }
+
   const workOnly = list.filter(r => !r.isDayoff);
   const totalGross = workOnly.reduce((s,r) => s+r.gross, 0);
   const totalNet = workOnly.reduce((s,r) => s+r.net, 0);
@@ -2306,6 +2440,55 @@ function renderStats() {
   document.getElementById('statsNet').textContent = `₩${(taxEnabled?totalNet:totalGross).toLocaleString()}`;
   document.getElementById('taxRow').style.display = taxEnabled ? 'flex' : 'none';
   renderCalendar(list);
+}
+
+function renderStatsFilter() {
+  const tabs = document.getElementById('statsStaffTabs');
+  const approved = allStaff.filter(s => s.status === 'approved' && !s.preRegistered);
+  tabs.innerHTML = `
+    <div class="staff-tab ${!statsFilterUid ? 'active' : ''}" onclick="setStatsFilter(null)">전체 보기</div>
+    ${approved.map(s => `
+      <div class="staff-tab ${statsFilterUid === s.uid ? 'active' : ''}" onclick="setStatsFilter('${s.uid}')">
+        ${s.photo ? `<img src="${s.photo}" style="width:18px;height:18px;border-radius:50%">` : ''}
+        ${s.name}
+      </div>
+    `).join('')}
+    ${allStaff.filter(s => s.preRegistered && s.status === 'approved').map(s => `
+      <div class="staff-tab ${statsFilterUid === s.uid ? 'active' : ''}" onclick="setStatsFilter('${s.uid}')">
+        ${s.name} ⏳
+      </div>
+    `).join('')}
+  `;
+}
+
+window.setStatsFilter = (uid) => {
+  statsFilterUid = uid;
+  renderStats();
+};
+
+function renderStatsStaffSummary() {
+  const el = document.getElementById('statsStaffSummary');
+  const allRecords = getMonthRecords();
+  const approved = allStaff.filter(s => s.status === 'approved');
+  if (!approved.length) { el.innerHTML = ''; return; }
+
+  el.innerHTML = approved.map(s => {
+    const sRecs = allRecords.filter(r => r.ownerUid === s.uid && !r.isDayoff);
+    const pay = sRecs.reduce((sum,r) => sum + (taxEnabled ? r.net : r.gross), 0);
+    const days = sRecs.length;
+    const mins = sRecs.reduce((sum,r) => sum + r.workMin, 0);
+    const h = Math.floor(mins/60), m = mins%60;
+    return `<div class="stats-staff-card ${statsFilterUid === s.uid ? 'active' : ''}" onclick="setStatsFilter('${s.uid}')">
+      <div class="ssc-left">
+        ${s.photo ? `<img src="${s.photo}">` : `<div style="width:28px;height:28px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:12px">👤</div>`}
+        <div>
+          <div class="ssc-name">${s.name}${s.preRegistered ? ' ⏳' : ''}</div>
+          <div class="ssc-days">${days}일 · ${h}시간${m?m+'분':''}</div>
+        </div>
+      </div>
+      <div class="ssc-pay">${pay > 0 ? '₩'+pay.toLocaleString() : '-'}</div>
+    </div>`;
+  }).join('');
 }
 
 function renderCalendar(list) {
