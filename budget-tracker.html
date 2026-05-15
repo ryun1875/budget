@@ -363,10 +363,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 <div class="modal-bg" id="edit-modal">
   <div class="modal">
     <div class="modal-title">✏️ 지출 수정 <button class="modal-close" onclick="closeModal('edit-modal')">×</button></div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <button id="edit-tag-personal" onclick="setEditTag('personal')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--accent);background:var(--accent)22;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">👤 개인</button>
-      <button id="edit-tag-store" onclick="setEditTag('store')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">🏪 매장</button>
-    </div>
     <div class="form-row">
       <div class="form-group"><label>날짜</label><input type="date" id="edit-date"></div>
       <div class="form-group"><label>카테고리</label><select id="edit-cat" onchange="rebuildSubCatSelect('edit-subcat',this.value)"></select></div>
@@ -583,11 +579,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div id="inp-panel-expense">
       <div class="form-card">
         <h3>지출 추가</h3>
-        <!-- 지출 구분 -->
-        <div style="display:flex;gap:6px;margin-bottom:12px">
-          <button id="tag-personal" onclick="setExpenseTag('personal')" style="flex:1;padding:8px;border-radius:9px;border:1px solid var(--accent);background:var(--accent)22;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">👤 개인</button>
-          <button id="tag-store" onclick="setExpenseTag('store')" style="flex:1;padding:8px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">🏪 매장</button>
-        </div>
         <div class="form-row">
           <div class="form-group"><label>날짜</label><input type="date" id="inp-date"></div>
           <div class="form-group"><label>카테고리</label><select id="inp-cat" onchange="rebuildSubCatSelect('inp-subcat',this.value)"></select></div>
@@ -738,12 +729,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
   <!-- 분석 -->
   <div class="panel" id="panel-chart">
-    <!-- 개인/매장 필터 -->
-    <div style="display:flex;gap:4px;margin-bottom:8px" id="store-filter-tabs">
-      <button class="range-tab active" onclick="setChartStoreFilter('all',this)">전체</button>
-      <button class="range-tab" onclick="setChartStoreFilter('personal',this)">👤 개인</button>
-      <button class="range-tab" onclick="setChartStoreFilter('store',this)">🏪 매장</button>
-    </div>
     <!-- 지출 필터 제거 - 지출만 표시 -->
     <div class="stat-grid">
       <div class="stat-item"><div class="s-lbl">가장 많이 쓴 카테고리</div><div class="s-val" id="top-cat">—</div></div>
@@ -758,6 +743,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
           <button id="cat-level-main" class="range-tab active" onclick="setCatLevel('main',this)">상위</button>
           <button id="cat-level-sub" class="range-tab" onclick="setCatLevel('sub',this)">세부</button>
         </div>
+      </div>
+      <!-- 세부 탭 상위 카테고리 필터 -->
+      <div id="sub-cat-filter" style="display:none;gap:5px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="range-tab active" onclick="setSubCatFilter('all',this)">전체</button>
       </div>
       <div class="chart-container"><canvas id="donut-chart"></canvas></div>
     </div>
@@ -886,6 +875,13 @@ const DEF_CATS=[
     {id:'living_supply',name:'소모품'},
     {id:'living_utility',name:'공과금'},
     {id:'living_etc',name:'기타 생활'},
+  ]},
+  {id:'store',name:'매장 지출',emoji:'🏪',color:'#fb923c',subs:[
+    {id:'store_food',name:'식재료/식비'},
+    {id:'store_supply',name:'소모품'},
+    {id:'store_equipment',name:'기물/장비'},
+    {id:'store_fee',name:'각종 요금'},
+    {id:'store_etc',name:'기타 매장비용'},
   ]},
   {id:'etc',name:'기타',emoji:'📦',color:'#94a3b8',subs:[]},
 ];
@@ -1764,12 +1760,10 @@ function renderList(){
     const pb=pay?`<span style="font-size:9px;background:${pay.color||'#6bb5ff'}22;color:${pay.color||'#6bb5ff'};padding:2px 5px;border-radius:99px;border:1px solid ${pay.color||'#6bb5ff'}44">${pay.emoji||'💳'} ${pay.name}</span>`:'';
     const subCatObj=e.subCat?findSubCat(e.cat,e.subCat):null;
     const subCatBadge=subCatObj?`<span style="font-size:9px;color:var(--text3);background:var(--surface2);padding:1px 5px;border-radius:99px">${subCatObj.name}</span>`:'';
-    const lb=loan?`<span style="font-size:9px;background:rgba(255,107,107,.15);color:#ff6b6b;padding:2px 5px;border-radius:99px;border:1px solid rgba(255,107,107,.3)">🏦 ${loan.name}</span>`:'';
-    const sb=e.tag==='store'?`<span style="font-size:9px;background:rgba(255,179,71,.15);color:#ffb347;padding:2px 5px;border-radius:99px;border:1px solid rgba(255,179,71,.3)">🏪 매장</span>`:'';
     div.innerHTML=`
       <div class="cat-dot" style="background:${cat.color}22">${cat.emoji}</div>
       <div class="exp-info">
-        <div class="exp-desc">${e.desc||cat.name} ${ib}${rb}${pb}${lb}${sb}${subCatBadge}</div>
+        <div class="exp-desc">${e.desc||cat.name} ${ib}${rb}${pb}${lb}${subCatBadge}</div>
         <div class="exp-meta">${e.date} · ${cat.name}${subCatObj?' > '+subCatObj.name:''}</div>
       </div>
       <div class="exp-amt">-${fmt(e.amount)}</div>
@@ -2029,9 +2023,22 @@ async function renderChart(){
   // 도넛 - 상위/하위 전환
   let ct;
   if(catLevel==='sub'){
-    // 하위 카테고리별 집계
+    // 세부 필터 칩 빌드
+    const filterEl=document.getElementById('sub-cat-filter');
+    if(filterEl){
+      filterEl.innerHTML='<button class="range-tab'+(subCatFilter==='all'?' active':'') +'" onclick="setSubCatFilter(\'all\',this)">전체</button>';
+      CATS.filter(c=>c.subs?.length&&fe.some(e=>e.cat===c.id)).forEach(c=>{
+        const btn=document.createElement('button');
+        btn.className='range-tab'+(subCatFilter===c.id?' active':'');
+        btn.textContent=c.emoji+' '+c.name;
+        btn.onclick=()=>setSubCatFilter(c.id,btn);
+        filterEl.appendChild(btn);
+      });
+    }
+    // 선택된 상위 카테고리의 세부만 집계
+    const targetFe=subCatFilter==='all'?fe:fe.filter(e=>e.cat===subCatFilter);
     const subMap={};
-    fe.forEach(e=>{
+    targetFe.forEach(e=>{
       if(e.subCat){
         const sub=findSubCat(e.cat,e.subCat);
         const cat=CATS.find(c=>c.id===e.cat);
@@ -2122,11 +2129,22 @@ window.setRange=function(n,btn){
   renderCompareChart();
 };
 
-let chartStoreFilter='all',catLevel='main';
+let catLevel='main',subCatFilter='all';
 
 window.setCatLevel=function(level,btn){
   catLevel=level;
   document.querySelectorAll('#cat-level-main,#cat-level-sub').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // 세부 탭 선택 시 필터 칩 표시
+  const filterEl=document.getElementById('sub-cat-filter');
+  if(filterEl)filterEl.style.display=level==='sub'?'flex':'none';
+  subCatFilter='all';
+  renderChart();
+};
+
+window.setSubCatFilter=function(catId,btn){
+  subCatFilter=catId;
+  document.querySelectorAll('#sub-cat-filter button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderChart();
 }; // all / personal / store
@@ -2161,10 +2179,7 @@ window.setChartFilter=function(filter,btn){
 
 // 필터 적용된 지출 반환
 function filteredExpenses(){
-  let fe=expenses.filter(e=>!e.isLoanPayment&&!e.loanId&&!e.isInvestment);
-  if(chartStoreFilter==='personal')fe=fe.filter(e=>!e.tag||e.tag==='personal');
-  if(chartStoreFilter==='store')fe=fe.filter(e=>e.tag==='store');
-  return fe;
+  return expenses.filter(e=>!e.isLoanPayment&&!e.loanId&&!e.isInvestment);
 }
 
 // ── 예산 대비 실제 지출 ───────────────────────────────────
