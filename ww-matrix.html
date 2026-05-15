@@ -408,10 +408,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <button class="btn btn-sm" style="margin-left:auto" onclick="closeM('savesModal')">닫기</button>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:1rem">
-      <input class="field" id="saveName" placeholder="편성 이름">
-      <button class="btn btn-accent btn-sm" onclick="doSave()"><i class="ti ti-download"></i> 저장</button>
+      <input class="field" id="saveName" placeholder="백업 이름">
+      <button class="btn btn-accent btn-sm" onclick="doSave()"><i class="ti ti-device-floppy"></i> 전체 백업</button>
     </div>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:8px">저장된 편성</p>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:8px">저장된 백업 <span style="font-size:11px;color:var(--text3)">(캐릭터 설정 + 모든 시즌 데이터)</span></p>
     <div class="saves-list" id="savesList"></div>
   </div>
 </div>
@@ -488,6 +488,29 @@ window.FB = {
     await addDoc(uColl('saves'),{...data, ts:serverTimestamp()});
   },
   async deleteSave(id){ await deleteDoc(doc(db,'users',_uid,'ww_saves',id)); },
+  async loadAllSeasonData(sids){
+    const results = {};
+    for(const sid of sids){
+      const d = await getDoc(doc(db,'users',_uid,'ww_seasons',sid));
+      if(d.exists()) results[sid] = d.data().seasonData || null;
+    }
+    return results;
+  },
+  async saveFullBackup(name, backupData){
+    await addDoc(uColl('saves'),{
+      name, type:'full',
+      chars: backupData.chars,
+      seasons: backupData.seasons,
+      allSeasonData: backupData.allSeasonData,
+      date: new Date().toLocaleString('ko'),
+      ts: serverTimestamp()
+    });
+  },
+  async restoreFullBackup(saveId){
+    const d = await getDoc(doc(db,'users',_uid,'ww_saves',saveId));
+    if(!d.exists()) return null;
+    return d.data();
+  },
 };
 
 window.signInGoogle = async () => {
@@ -966,6 +989,7 @@ function renderCharEditList(){
         ${imgH}
         <span style="flex:1;min-width:0;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}${c.star5?` <span style="color:var(--gold);font-size:10px">★5</span>`:''}</span>
         ${a?`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:${a.bg};color:${a.text};flex-shrink:0">${c.attr}</span>`:''}
+        <button class="dtog${c.star5?' on':''}" style="${c.star5?'background:#7a5500;color:#f5e06a;border-color:#f5e06a':''}" onclick="togStar5(${i})" title="5성 토글">${c.star5?'★5':'☆4'}</button>
         <button class="dtog${c.dupe?' on':''}" onclick="togDupe(${i})">${c.dupe?'×2':'×1'}</button>
         <button class="btn btn-sm btn-icon" style="position:relative" onclick="openMemo(${i})"><i class="ti ti-note"></i>${c.memo?`<span style="position:absolute;top:-2px;right:-2px;width:5px;height:5px;border-radius:50%;background:var(--accent)"></span>`:''}</button>
         <button class="btn btn-sm btn-icon" onclick="openEditChar(${i})"><i class="ti ti-edit"></i></button>
@@ -975,6 +999,11 @@ function renderCharEditList(){
     :'<p style="font-size:13px;color:var(--text3);padding:8px 0">해당하는 공명자 없음</p>';
 }
 async function togOwned(i,v){ chars[i].owned=v;renderCharEditList();renderPool();await saveChars(); }
+async function togStar5(i){
+  chars[i].star5=!chars[i].star5;
+  // move to correct tier section - just re-render
+  renderCharEditList();renderPool();await saveChars();
+}
 async function togDupe(i){ chars[i].dupe=!chars[i].dupe;renderCharEditList();renderPool();await saveChars(); }
 async function delChar(i){ chars.splice(i,1);parties.forEach(p=>p.slots=p.slots.map(s=>s===i?null:s>i?s-1:s));renderCharEditList();renderAll();await saveChars();await saveSeason(); }
 function openEditChar(i){
@@ -1043,26 +1072,67 @@ function cTab(t){
 // ── 파티 저장 ──
 function openSaves(){ renderSavesList(); document.getElementById('savesModal').classList.add('open'); }
 async function doSave(){
-  const name=document.getElementById('saveName').value.trim()||`편성 ${new Date().toLocaleDateString('ko')}`;
-  await window.FB.addSave({name, parties:JSON.parse(JSON.stringify(parties)), seasonId:curSid, date:new Date().toLocaleString('ko')});
-  document.getElementById('saveName').value='';renderSavesList();showToast(`"${name}" 저장됨`);
+  const name=document.getElementById('saveName').value.trim()||`백업 ${new Date().toLocaleDateString('ko')}`;
+  const btn=document.querySelector('#savesModal .btn-accent');
+  if(btn){btn.disabled=true;btn.textContent='저장 중...';}
+  try{
+    // 현재 시즌 데이터 먼저 저장
+    await saveSeason();
+    // 모든 시즌 데이터 로드
+    const allSeasonData = await window.FB.loadAllSeasonData(seasons.map(s=>s.id));
+    await window.FB.saveFullBackup(name, {
+      chars: JSON.parse(JSON.stringify(chars)),
+      seasons: JSON.parse(JSON.stringify(seasons)),
+      allSeasonData
+    });
+    document.getElementById('saveName').value='';
+    await renderSavesList();
+    showToast(`"${name}" 전체 백업 완료`);
+  }catch(e){
+    showToast('저장 오류: '+(e.code||e.message));
+  }finally{
+    if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-download"></i> 저장';}
+  }
 }
 async function renderSavesList(){
   const saves=await window.FB.loadSaves();
   const list=document.getElementById('savesList');
-  if(!saves.length){list.innerHTML='<p style="font-size:13px;color:var(--text3)">저장된 편성 없음</p>';return;}
+  if(!saves.length){list.innerHTML='<p style="font-size:13px;color:var(--text3)">저장된 백업 없음</p>';return;}
   list.innerHTML=saves.map(s=>{
-    const sn=seasons.find(x=>x.id===s.seasonId);
+    const isFull=s.type==='full';
+    const tag=isFull?'<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:var(--accent2);color:#fff;margin-left:5px">전체</span>':'';
+    const seCount=isFull&&s.seasons?` · ${s.seasons.length}시즌`:'';
     return `<div class="si">
-      <div style="flex:1;min-width:0"><div style="font-size:13px">${s.name}</div><div style="font-size:11px;color:var(--text3)">${s.date}${sn?' · '+sn.name:''}</div></div>
-      <button class="btn btn-sm btn-icon" onclick="loadSave('${s.id}')"><i class="ti ti-upload"></i></button>
-      <button class="btn btn-sm btn-icon" onclick="delSave('${s.id}')"><i class="ti ti-trash"></i></button>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px">${s.name}${tag}</div>
+        <div style="font-size:11px;color:var(--text3)">${s.date}${seCount}</div>
+      </div>
+      <button class="btn btn-sm btn-icon" onclick="loadSave('${s.id}')" title="복원"><i class="ti ti-upload"></i></button>
+      <button class="btn btn-sm btn-icon" onclick="delSave('${s.id}')" title="삭제"><i class="ti ti-trash"></i></button>
     </div>`;
   }).join('');
 }
 async function loadSave(id){
-  const saves=await window.FB.loadSaves();const s=saves.find(x=>x.id===id);
-  if(s){parties=s.parties;closeM('savesModal');await saveSeason();renderAll();showToast('불러옴');}
+  const d=await window.FB.restoreFullBackup(id);
+  if(!d){showToast('불러오기 실패');return;}
+  if(!confirm(`"${d.name}" 백업을 복원할까요?
+현재 캐릭터 설정과 모든 시즌 데이터가 교체됩니다.`)) return;
+  try{
+    if(d.type==='full'){
+      // 전체 백업 복원
+      chars=d.chars.map(c=>({attr:'회절',owned:true,memo:'',...c}));
+      await window.FB.saveChars(chars);
+      // 시즌 데이터 복원 (현재 시즌만 — 전체 복원은 복잡하므로 현재 시즌에 매핑)
+      if(d.allSeasonData&&curSid&&d.allSeasonData[Object.keys(d.allSeasonData)[0]]){
+        const firstSeasonData=d.allSeasonData[Object.keys(d.allSeasonData)[0]];
+        parties=firstSeasonData.parties||[{name:'파티 1',slots:[null,null,null],buffIdx:null}];
+        buffs=firstSeasonData.buffs||[null,null,null,null];
+        bosses=firstSeasonData.bosses||[];
+        await saveSeason();
+      }
+    }
+    closeM('savesModal');renderAll();showToast('복원 완료');
+  }catch(e){showToast('복원 오류: '+(e.code||e.message));}
 }
 async function delSave(id){ await window.FB.deleteSave(id);renderSavesList(); }
 
