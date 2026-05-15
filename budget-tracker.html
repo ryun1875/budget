@@ -2455,8 +2455,6 @@ window.openEdit=function(id){
   document.getElementById('edit-subcat').value=e.subCat||'';
   document.getElementById('edit-pay').value=e.payId||'';
   document.getElementById('edit-loan').value=e.loanId||'';
-  editExpenseTag=e.tag||'personal';
-  setEditTag(editExpenseTag);
   document.getElementById('edit-modal').classList.add('open');
 };
 window.saveEdit=async function(){
