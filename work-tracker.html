@@ -667,6 +667,14 @@ body {
 .stats-staff-card .ssc-days { font-size:11px; color:var(--text3); margin-top:2px; }
 .stats-staff-card .ssc-pay { font-family:'Gmarket Sans',sans-serif; font-size:15px; font-weight:700; color:var(--accent); }
 
+/* ── 수동 연결 ── */
+.btn-link-staff {
+  padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600;
+  border:1px solid var(--accent3); background:rgba(107,181,255,.1);
+  color:var(--accent3); cursor:pointer; transition:var(--tr);
+}
+.btn-link-staff:hover { background:rgba(107,181,255,.2); }
+
 /* ── 탭 ── */
 .tabs {
   position:fixed; bottom:0; left:0; right:0;
@@ -920,6 +928,14 @@ body {
         <div style="height:1px;background:var(--border)"></div>
         <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700"><span>실수령액</span><span style="font-family:Gmarket Sans;color:var(--accent)" id="statsNet">₩0</span></div>
       </div>
+      <!-- 휴식 통계 -->
+      <div style="height:1px;background:var(--border);margin:14px 0"></div>
+      <h2 style="font-size:14px;font-weight:700;margin-bottom:12px">휴식 통계</h2>
+      <div style="display:grid;gap:8px">
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--text2)">총 휴식시간</span><span style="font-family:Gmarket Sans;font-weight:600" id="statsTotalBreak">0분</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--text2)">하루 평균 휴식</span><span style="font-family:Gmarket Sans;font-weight:600" id="statsAvgBreak">0분</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--text2)">총 추가근무시간</span><span style="font-family:Gmarket Sans;font-weight:600;color:var(--accent3)" id="statsTotalExtra">0분</span></div>
+      </div>
     </div>
   </div>
 
@@ -1087,6 +1103,24 @@ body {
     <div class="modal-btns">
       <button class="btn-cancel" id="editStaffCancel">취소</button>
       <button class="btn-confirm" id="editStaffConfirm">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 직원 수동 연결 모달 -->
+<div class="modal-overlay" id="linkStaffModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>🔗 직원 계정 연결</h3>
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.7">
+      Firebase → Authentication 탭에서<br>직원 이메일 옆의 <b>UID</b>를 복사해서 입력해주세요.<br>
+      임시 기록이 실제 계정으로 이전돼요.
+    </div>
+    <div class="form-group"><label>사전등록 직원</label><input type="text" id="linkStaffName" readonly style="opacity:.6"></div>
+    <div class="form-group"><label>직원 실제 UID</label><input type="text" id="linkStaffUid" placeholder="Firebase Authentication의 UID"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="linkStaffCancel">취소</button>
+      <button class="btn-confirm" id="linkStaffConfirm">연결하기</button>
     </div>
   </div>
 </div>
@@ -1586,6 +1620,71 @@ document.getElementById('editStaffConfirm').addEventListener('click', async () =
     document.getElementById('editStaffModal').classList.remove('show');
     await loadAllStaff();
   } catch(e) { alert('수정 실패: ' + e.message); }
+});
+
+// ── 수동 계정 연결 ──
+let linkingStaff = null;
+window.openLinkStaffModal = (preUid, name) => {
+  linkingStaff = { preUid, name };
+  document.getElementById('linkStaffName').value = name;
+  document.getElementById('linkStaffUid').value = '';
+  document.getElementById('linkStaffModal').classList.add('show');
+};
+document.getElementById('linkStaffCancel').addEventListener('click', () =>
+  document.getElementById('linkStaffModal').classList.remove('show'));
+
+document.getElementById('linkStaffConfirm').addEventListener('click', async () => {
+  const realUid = document.getElementById('linkStaffUid').value.trim();
+  if (!realUid) return alert('UID를 입력해주세요');
+  if (!confirm(`${linkingStaff.name}의 기록을 실제 계정으로 이전할까요?
+이 작업은 되돌릴 수 없어요.`)) return;
+
+  try {
+    // 1. 임시 uid의 workRecords 전체 읽기
+    const oldSnap = await getDocs(collection(db, `users/${linkingStaff.preUid}/workRecords`));
+    if (oldSnap.empty) {
+      alert('이전할 기록이 없어요.');
+      document.getElementById('linkStaffModal').classList.remove('show');
+      return;
+    }
+
+    // 2. 실제 uid로 복사
+    let count = 0;
+    for (const d of oldSnap.docs) {
+      await setDoc(doc(db, `users/${realUid}/workRecords`, d.id), d.data());
+      count++;
+    }
+
+    // 3. 원본 삭제
+    for (const d of oldSnap.docs) {
+      await deleteDoc(doc(db, `users/${linkingStaff.preUid}/workRecords`, d.id));
+    }
+
+    // 4. staff 문서 업데이트 (preRegistered 해제, 실제 uid로 교체)
+    const oldStaff = allStaff.find(s => s.uid === linkingStaff.preUid);
+    await setDoc(doc(db, 'staff', realUid), {
+      uid: realUid,
+      email: oldStaff?.email || '',
+      name: linkingStaff.name,
+      photo: '',
+      status: 'approved',
+      linkedAt: new Date().toISOString()
+    });
+    await deleteDoc(doc(db, 'staff', linkingStaff.preUid));
+
+    // 5. preregistered 문서도 linkedUid 업데이트
+    try {
+      const emailKey = (oldStaff?.email || '').replace(/\./g,'_').replace(/@/g,'__at__');
+      await setDoc(doc(db, 'preregistered', emailKey), { linkedUid: realUid }, { merge: true });
+    } catch(e) {}
+
+    document.getElementById('linkStaffModal').classList.remove('show');
+    alert(`✅ 완료! ${count}개 기록이 이전됐어요.`);
+    await loadAllStaff();
+    await loadRecords();
+  } catch(e) {
+    alert('연결 실패: ' + e.message);
+  }
 });
 
 window.approveStaff = async (uid) => {
@@ -2272,6 +2371,16 @@ function renderRecords() {
   document.getElementById('avgHours').textContent = `${ah}시간${am?' '+am+'분':''}`;
   const tbEl = document.getElementById('totalBreak');
   if (tbEl) tbEl.textContent = `${totalBreakMin}분`;
+  // 홈 요약 카드 휴식시간
+  const bh = document.getElementById('totalBreakHome');
+  const bhs = document.getElementById('totalBreakHomeSub');
+  if (bh) {
+    const bHour = Math.floor(totalBreakMin/60), bMin = totalBreakMin%60;
+    bh.textContent = totalBreakMin >= 60
+      ? `${bHour}시간${bMin ? ' '+bMin+'분' : ''}`
+      : `${totalBreakMin}분`;
+    if (bhs) bhs.textContent = `하루 평균 ${days ? Math.round(totalBreakMin/days) : 0}분`;
+  }
   document.getElementById('recordCount').textContent = `${days}건`;
 
   // 휴무 카운트
@@ -2315,6 +2424,11 @@ function renderRecords() {
     const wkMin = wkWork.reduce((s,r) => s+r.workMin, 0);
     const wkH = Math.floor(wkMin/60), wkM = wkMin%60;
     const wkDays = wkWork.length;
+    const wkBreakMin = wkWork.reduce((s,r) => s+r.breakMin, 0);
+    const wkBreakH = Math.floor(wkBreakMin/60), wkBreakM = wkBreakMin%60;
+    const wkBreakStr = wkBreakMin > 0
+      ? ` · 휴식 ${wkBreakH ? wkBreakH+'시간' : ''}${wkBreakM ? wkBreakM+'분' : ''}`
+      : '';
     const isOpen = openWeekGroups.has(monKey);
     const range = getWeekLabel(monKey, currentYear, currentMonth);
 
@@ -2324,7 +2438,7 @@ function renderRecords() {
       <div class="week-group-header ${isOpen?'open':''}" onclick="toggleWeekGroup('${monKey}')">
         <div class="wg-left">
           <div class="wg-title">${wk}주차</div>
-          <div class="wg-sub">${range} · ${wkDays}일 근무 · ${wkH}시간${wkM?wkM+'분':''}</div>
+          <div class="wg-sub">${range} · ${wkDays}일 근무 · ${wkH}시간${wkM?wkM+'분':''}${wkBreakStr}</div>
         </div>
         <div class="wg-right">
           <div class="wg-pay">${wkPay>0?'₩'+wkPay.toLocaleString():''}</div>
@@ -2439,6 +2553,16 @@ function renderStats() {
   document.getElementById('statsTax').textContent = `-₩${(totalGross-totalNet).toLocaleString()}`;
   document.getElementById('statsNet').textContent = `₩${(taxEnabled?totalNet:totalGross).toLocaleString()}`;
   document.getElementById('taxRow').style.display = taxEnabled ? 'flex' : 'none';
+
+  // 휴식 통계
+  const totalBreakMin = workOnly.reduce((s,r) => s+(r.breakMin||0), 0);
+  const totalExtraMin = workOnly.reduce((s,r) => s+(r.extraMin||0), 0);
+  const avgBreakMin = workOnly.length ? Math.round(totalBreakMin / workOnly.length) : 0;
+  const fmtMin = m => m >= 60 ? `${Math.floor(m/60)}시간${m%60?` ${m%60}분`:''}` : `${m}분`;
+  document.getElementById('statsTotalBreak').textContent = fmtMin(totalBreakMin);
+  document.getElementById('statsAvgBreak').textContent = fmtMin(avgBreakMin);
+  document.getElementById('statsTotalExtra').textContent = totalExtraMin > 0 ? `+${fmtMin(totalExtraMin)}` : '없음';
+
   renderCalendar(list);
 }
 
