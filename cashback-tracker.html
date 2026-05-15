@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f0f13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>캐시백 트래커</title>
+<link href="https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;500;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f13;--surface:#1a1a22;--surface2:#22222e;--border:#2e2e3e;
+  --accent:#c8f04a;--accent2:#ff6b6b;--accent3:#6bb5ff;--accent4:#ffb347;
+  --text:#f0f0f5;--text2:#9090aa;--text3:#5a5a70;
+  --radius:16px;--tr:0.2s cubic-bezier(0.4,0,0.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+#app{max-width:480px;margin:0 auto;padding:24px 16px 100px;min-height:100vh;}
+
+/* 헤더 */
+.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;}
+.header-left h1{font-family:'Gmarket Sans',sans-serif;font-size:26px;font-weight:700;color:var(--accent);letter-spacing:-1px;}
+.header-left p{font-size:12px;color:var(--text2);margin-top:3px;}
+.header-right{display:flex;align-items:center;gap:8px;}
+.icon-btn{background:none;border:1px solid var(--border);border-radius:99px;padding:6px 12px;color:var(--text2);font-size:11px;cursor:pointer;transition:var(--tr);display:flex;align-items:center;gap:4px;}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent);}
+.notif-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:var(--tr);position:relative;}
+.notif-btn:hover{border-color:var(--accent);color:var(--accent);}
+.notif-btn .badge{position:absolute;top:-3px;right:-3px;width:10px;height:10px;background:var(--accent2);border-radius:50%;border:2px solid var(--bg);display:none;}
+.notif-btn .badge.show{display:block;}
+
+/* 요약 카드 */
+.summary-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;}
+.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+.summary-card .lbl{font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;}
+.summary-card .val{font-family:'Gmarket Sans',sans-serif;font-size:17px;font-weight:700;}
+.s-total .val{color:var(--accent3);}
+.s-active .val{color:var(--accent);}
+.s-done .val{color:var(--accent4);}
+
+/* 필터 탭 */
+.filter-tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;}
+.filter-tabs::-webkit-scrollbar{display:none;}
+.filter-tab{flex-shrink:0;padding:6px 14px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:var(--tr);white-space:nowrap;}
+.filter-tab.active{background:var(--accent);border-color:var(--accent);color:#0f0f13;font-weight:700;}
+
+/* 이벤트 카드 */
+.event-list{display:flex;flex-direction:column;gap:12px;}
+.event-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:var(--tr);position:relative;overflow:hidden;}
+.event-card:hover{border-color:var(--border);transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,.3);}
+.event-card.done{opacity:.65;}
+.event-card.urgent{border-color:rgba(255,107,107,.4);}
+.event-card.soon{border-color:rgba(255,179,71,.35);}
+.event-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--border);border-radius:3px 0 0 3px;}
+.event-card.active-card::before{background:var(--accent);}
+.event-card.done::before{background:var(--accent4);}
+.event-card.urgent::before{background:var(--accent2);}
+.event-card.soon::before{background:var(--accent4);}
+
+.event-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px;}
+.event-left{flex:1;min-width:0;}
+.event-card-name{font-family:'Gmarket Sans',sans-serif;font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.event-card-bank{font-size:11px;color:var(--text2);}
+.event-badges{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;}
+.badge-dday{background:rgba(200,240,74,.12);color:var(--accent);border:1px solid rgba(200,240,74,.3);}
+.badge-dday.urgent{background:rgba(255,107,107,.12);color:var(--accent2);border-color:rgba(255,107,107,.3);}
+.badge-dday.soon{background:rgba(255,179,71,.12);color:var(--accent4);border-color:rgba(255,179,71,.3);}
+.badge-dday.done-badge{background:rgba(107,181,255,.1);color:var(--accent3);border-color:rgba(107,181,255,.25);}
+.badge-status{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;}
+.badge-status.achieved{background:rgba(200,240,74,.12);color:var(--accent);}
+.badge-status.pending{background:rgba(255,107,107,.1);color:var(--accent2);}
+.badge-status.not-started{background:rgba(90,90,112,.15);color:var(--text3);}
+
+/* 진행 게이지 */
+.gauge-wrap{margin-bottom:10px;}
+.gauge-hd{display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;}
+.gauge-hd .g-label{color:var(--text2);}
+.gauge-hd .g-val{font-family:'Gmarket Sans',sans-serif;font-weight:700;color:var(--text);}
+.gauge-hd .g-val span{color:var(--text3);font-size:10px;font-weight:400;}
+.gauge-bg{height:7px;background:var(--surface2);border-radius:99px;overflow:hidden;}
+.gauge-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1);background:var(--accent);}
+.gauge-fill.warn{background:var(--accent4);}
+.gauge-fill.danger{background:var(--accent2);}
+.gauge-fill.full{background:var(--accent);}
+
+.event-meta{display:flex;gap:10px;flex-wrap:wrap;}
+.event-meta-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);}
+.event-meta-item .dot{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.5;}
+
+/* 메모/이미지 미리보기 */
+.event-memo-preview{margin-top:8px;padding:8px 10px;background:var(--surface2);border-radius:9px;font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.event-thumb{margin-top:8px;display:flex;gap:6px;}
+.event-thumb img{width:44px;height:44px;border-radius:8px;object-fit:cover;border:1px solid var(--border);}
+.event-thumb .more-img{width:44px;height:44px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3);font-weight:700;}
+
+/* FAB */
+.fab{position:fixed;bottom:80px;right:max(16px,calc(50% - 224px));width:52px;height:52px;border-radius:50%;background:var(--accent);border:none;color:#0f0f13;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(200,240,74,.4);transition:var(--tr);display:flex;align-items:center;justify-content:center;z-index:100;}
+.fab:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 8px 28px rgba(200,240,74,.5);}
+.fab:active{transform:scale(.96);}
+
+/* 바텀 네비 */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:200;padding:6px 0 calc(6px + env(safe-area-inset-bottom));backdrop-filter:blur(12px);box-shadow:0 -2px 12px rgba(0,0,0,.3);}
+.bottom-nav-inner{max-width:480px;margin:0 auto;width:100%;display:flex;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 4px;border:none;background:transparent;color:var(--text3);cursor:pointer;transition:var(--tr);font-family:'Noto Sans KR',sans-serif;}
+.nav-btn .nav-icon{font-size:20px;transition:var(--tr);}
+.nav-btn .nav-label{font-size:9px;font-weight:500;}
+.nav-btn.active{color:var(--accent);}
+.nav-btn.active .nav-icon{transform:translateY(-2px);}
+
+/* 모달 배경 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;}
+.modal-bg.open{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;transform:translateY(30px);transition:transform .28s cubic-bezier(.4,0,.2,1);max-height:92vh;overflow-y:auto;}
+.modal-bg.open .modal{transform:translateY(0);}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 20px;}
+.modal-title{font-family:'Gmarket Sans',sans-serif;font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;line-height:1;padding:2px;}
+.modal-close:hover{color:var(--text);}
+
+/* 폼 */
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:11px;color:var(--text3);letter-spacing:.5px;margin-bottom:6px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;outline:none;transition:var(--tr);}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
+.form-group textarea{resize:vertical;min-height:70px;line-height:1.6;}
+.form-group select option{background:var(--surface2);}
+.form-row{display:flex;gap:10px;}
+.form-row .form-group{flex:1;}
+.form-hint{font-size:10px;color:var(--text3);margin-top:4px;}
+
+/* 금액 입력 강조 */
+.amount-input-wrap{position:relative;}
+.amount-input-wrap input{padding-right:28px;}
+.amount-unit{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);}
+
+/* 이미지 업로드 */
+.img-upload-area{border:1px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:var(--tr);background:var(--surface2);}
+.img-upload-area:hover{border-color:var(--accent);background:rgba(200,240,74,.04);}
+.img-upload-area input{display:none;}
+.img-upload-icon{font-size:24px;margin-bottom:6px;}
+.img-upload-text{font-size:12px;color:var(--text3);}
+.img-preview-list{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.img-preview-item{position:relative;width:64px;height:64px;}
+.img-preview-item img{width:64px;height:64px;border-radius:10px;object-fit:cover;border:1px solid var(--border);}
+.img-preview-remove{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--accent2);border:2px solid var(--bg);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700;}
+
+/* 알림 설정 섹션 */
+.notif-section{background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:14px;}
+.notif-section-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;}
+.toggle-row:not(:last-child){border-bottom:1px solid var(--border);}
+.toggle-label{font-size:12px;color:var(--text);}
+.toggle-sub{font-size:10px;color:var(--text3);margin-top:1px;}
+.toggle{width:38px;height:22px;border-radius:99px;background:var(--border);border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;}
+.toggle.on{background:var(--accent);}
+.toggle.on::after{transform:translateX(16px);}
+
+/* 저장 버튼 */
+.btn-save{width:100%;padding:14px;background:var(--accent);border:none;border-radius:12px;color:#0f0f13;font-family:'Gmarket Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:var(--tr);margin-top:6px;}
+.btn-save:hover{opacity:.9;transform:translateY(-1px);}
+.btn-save:active{transform:scale(.98);}
+.btn-delete{width:100%;padding:11px;background:transparent;border:1px solid rgba(255,107,107,.3);border-radius:12px;color:var(--accent2);font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:var(--tr);margin-top:8px;}
+.btn-delete:hover{background:rgba(255,107,107,.08);}
+
+/* 상세 모달 */
+.detail-card-name{font-family:'Gmarket Sans',sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.detail-card-bank{font-size:13px;color:var(--text2);margin-bottom:16px;}
+.detail-section{margin-bottom:16px;}
+.detail-section-title{font-size:11px;color:var(--text3);letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase;}
+.detail-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.detail-info-item{background:var(--surface2);border-radius:10px;padding:10px 12px;}
+.detail-info-label{font-size:10px;color:var(--text3);margin-bottom:3px;}
+.detail-info-val{font-family:'Gmarket Sans',sans-serif;font-size:14px;font-weight:700;color:var(--text);}
+.detail-memo{background:var(--surface2);border-radius:10px;padding:12px;font-size:13px;color:var(--text2);line-height:1.7;}
+.detail-images{display:flex;gap:8px;flex-wrap:wrap;}
+.detail-images img{width:80px;height:80px;border-radius:10px;object-fit:cover;border:1px solid var(--border);cursor:pointer;}
+
+/* 이미지 라이트박스 */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.lightbox.open{opacity:1;pointer-events:all;}
+.lightbox img{max-width:92%;max-height:88vh;border-radius:12px;object-fit:contain;}
+.lightbox-close{position:absolute;top:20px;right:20px;background:rgba(255,255,255,.1);border:none;color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;}
+
+/* 토스트 */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 18px;font-size:13px;color:var(--text);z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:90vw;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.success{border-color:rgba(200,240,74,.4);color:var(--accent);}
+.toast.error{border-color:rgba(255,107,107,.4);color:var(--accent2);}
+.toast.info{border-color:rgba(107,181,255,.3);color:var(--accent3);}
+
+/* 빈 상태 */
+.empty-state{text-align:center;padding:48px 20px;color:var(--text3);}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:.5;}
+.empty-text{font-size:14px;line-height:1.6;}
+
+/* 알림 히스토리 패널 */
+.notif-history{display:flex;flex-direction:column;gap:8px;}
+.notif-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;}
+.notif-item.unread{border-color:rgba(200,240,74,.25);background:rgba(200,240,74,.03);}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:4px;}
+.notif-dot.read{background:var(--border);}
+.notif-content{flex:1;min-width:0;}
+.notif-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.notif-time{font-size:10px;color:var(--text3);}
+
+/* 구분선 */
+.divider{height:1px;background:var(--border);margin:16px 0;}
+
+/* 스크롤바 */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+
+/* 참여가능 알림 배너 */
+.start-banner{background:rgba(107,181,255,.08);border:1px solid rgba(107,181,255,.25);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:var(--tr);}
+.start-banner:hover{background:rgba(107,181,255,.12);}
+.start-banner-icon{font-size:20px;flex-shrink:0;}
+.start-banner-text{font-size:12px;color:var(--accent3);line-height:1.5;}
+.start-banner-text strong{display:block;font-size:13px;margin-bottom:1px;}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="header">
+    <div class="header-left">
+      <h1>💳 캐시백</h1>
+      <p id="header-sub">이벤트 트래커</p>
+    </div>
+    <div class="header-right">
+      <button class="notif-btn" id="notif-btn" onclick="openNotifPanel()" title="알림">
+        🔔
+        <span class="badge" id="notif-badge"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card s-total">
+      <div class="lbl">전체</div>
+      <div class="val" id="sum-total">0</div>
+    </div>
+    <div class="summary-card s-active">
+      <div class="lbl">진행중</div>
+      <div class="val" id="sum-active">0</div>
+    </div>
+    <div class="summary-card s-done">
+      <div class="lbl">달성</div>
+      <div class="val" id="sum-done">0</div>
+    </div>
+  </div>
+
+  <div id="start-banners"></div>
+
+  <div class="filter-tabs" id="filter-tabs">
+    <button class="filter-tab active" onclick="setFilter('all',this)">전체</button>
+    <button class="filter-tab" onclick="setFilter('active',this)">진행중</button>
+    <button class="filter-tab" onclick="setFilter('upcoming',this)">예정</button>
+    <button class="filter-tab" onclick="setFilter('done',this)">달성완료</button>
+    <button class="filter-tab" onclick="setFilter('ended',this)">종료</button>
+  </div>
+
+  <div class="event-list" id="event-list"></div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openAddModal()" title="이벤트 추가">＋</button>
+
+<!-- 바텀 네비 -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="nav-btn active" onclick="switchNav('home',this)">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">홈</span>
+    </button>
+    <button class="nav-btn" onclick="switchNav('notif',this)">
+      <span class="nav-icon">🔔</span>
+      <span class="nav-label">알림</span>
+    </button>
+    <button class="nav-btn" onclick="switchNav('settings',this)">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">설정</span>
+    </button>
+  </div>
+</nav>
+
+<!-- 추가/수정 모달 -->
+<div class="modal-bg" id="edit-modal-bg" onclick="handleModalBgClick(event,'edit-modal-bg')">
+  <div class="modal" id="edit-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">
+      <span id="edit-modal-title">이벤트 추가</span>
+      <button class="modal-close" onclick="closeModal('edit-modal-bg')">✕</button>
+    </div>
+
+    <div class="form-group">
+      <label>카드사 / 카드명</label>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <select id="f-bank">
+            <option value="">카드사 선택</option>
+            <option>신한카드</option><option>삼성카드</option><option>현대카드</option>
+            <option>KB국민카드</option><option>롯데카드</option><option>우리카드</option>
+            <option>하나카드</option><option>NH농협카드</option><option>BC카드</option>
+            <option>카카오뱅크</option><option>토스뱅크</option><option>기타</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <input id="f-cardname" type="text" placeholder="카드명 (예: 신한 딥드림)">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>이벤트명</label>
+      <input id="f-name" type="text" placeholder="예: 7월 첫 결제 캐시백">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>시작일</label>
+        <input id="f-start" type="date">
+      </div>
+      <div class="form-group">
+        <label>종료일</label>
+        <input id="f-end" type="date">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>최소 사용 금액</label>
+        <div class="amount-input-wrap">
+          <input id="f-min" type="number" placeholder="0">
+          <span class="amount-unit">원</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>캐시백 금액</label>
+        <div class="amount-input-wrap">
+          <input id="f-cashback" type="number" placeholder="0">
+          <span class="amount-unit">원</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>현재 달성 금액</label>
+      <div class="amount-input-wrap">
+        <input id="f-current" type="number" placeholder="현재까지 사용한 금액">
+        <span class="amount-unit">원</span>
+      </div>
+      <div class="form-hint">입력하면 진행 게이지가 표시돼요</div>
+    </div>
+
+    <div class="notif-section">
+      <div class="notif-section-title">🔔 알림 설정</div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">마감 임박 알림</div>
+          <div class="toggle-sub">미달성 시 종료 3일 전 알림</div>
+        </div>
+        <button class="toggle on" id="t-deadline" onclick="toggleBtn(this)"></button>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">참여 시작일 알림</div>
+          <div class="toggle-sub">이벤트 시작일 당일 알림</div>
+        </div>
+        <button class="toggle on" id="t-start" onclick="toggleBtn(this)"></button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>이미지 첨부 (스크린샷 등)</label>
+      <div class="img-upload-area" onclick="document.getElementById('f-images').click()">
+        <input type="file" id="f-images" accept="image/*" multiple onchange="handleImageUpload(event)">
+        <div class="img-upload-icon">📎</div>
+        <div class="img-upload-text">탭하여 이미지 첨부</div>
+      </div>
+      <div class="img-preview-list" id="img-preview-list"></div>
+    </div>
+
+    <div class="form-group">
+      <label>메모</label>
+      <textarea id="f-memo" placeholder="조건 세부사항, 주의사항 등 자유롭게 메모..."></textarea>
+    </div>
+
+    <button class="btn-save" id="btn-save" onclick="saveEvent()">저장하기</button>
+    <button class="btn-delete" id="btn-delete" onclick="deleteEvent()" style="display:none">이벤트 삭제</button>
+  </div>
+</div>
+
+<!-- 상세 모달 -->
+<div class="modal-bg" id="detail-modal-bg" onclick="handleModalBgClick(event,'detail-modal-bg')">
+  <div class="modal" id="detail-modal">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('detail-modal-bg')" style="position:absolute;top:20px;right:20px;">✕</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- 알림 패널 모달 -->
+<div class="modal-bg" id="notif-modal-bg" onclick="handleModalBgClick(event,'notif-modal-bg')">
+  <div class="modal" id="notif-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">
+      알림 <button class="modal-close" onclick="closeModal('notif-modal-bg')">✕</button>
+    </div>
+    <div class="notif-history" id="notif-list"></div>
+  </div>
+</div>
+
+<!-- 이미지 라이트박스 -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close">✕</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<!-- 토스트 -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 데이터 ──────────────────────────────────────
+let events = JSON.parse(localStorage.getItem('cbEvents') || '[]');
+let notifications = JSON.parse(localStorage.getItem('cbNotifs') || '[]');
+let editingId = null;
+let uploadedImages = []; // base64 배열
+let currentFilter = 'all';
+
+function save() {
+  localStorage.setItem('cbEvents', JSON.stringify(events));
+  localStorage.setItem('cbNotifs', JSON.stringify(notifications));
+}
+
+// ── 날짜 유틸 ──────────────────────────────────
+function today() { return new Date().toISOString().slice(0, 10); }
+function daysDiff(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const t = new Date(today() + 'T00:00:00');
+  return Math.round((d - t) / 86400000);
+}
+function fmtDate(d) {
+  if (!d) return '-';
+  const [y, m, dd] = d.split('-');
+  return `${m}/${dd}`;
+}
+function fmtAmt(n) {
+  if (!n) return '0';
+  return Number(n).toLocaleString('ko-KR');
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+// ── 상태 계산 ──────────────────────────────────
+function getStatus(ev) {
+  const t = today();
+  if (ev.start > t) return 'upcoming';
+  if (ev.end < t) return 'ended';
+  return 'active';
+}
+function isAchieved(ev) {
+  if (!ev.minAmount) return false;
+  return Number(ev.currentAmount || 0) >= Number(ev.minAmount);
+}
+
+// ── 렌더링 ─────────────────────────────────────
+function render() {
+  renderSummary();
+  renderStartBanners();
+  renderList();
+  renderNotifBadge();
+}
+
+function renderSummary() {
+  const t = today();
+  const active = events.filter(e => e.start <= t && e.end >= t);
+  const done = events.filter(e => isAchieved(e) && e.end >= t);
+  document.getElementById('sum-total').textContent = events.length;
+  document.getElementById('sum-active').textContent = active.length;
+  document.getElementById('sum-done').textContent = done.length;
+}
+
+function renderStartBanners() {
+  const t = today();
+  const starting = events.filter(e => e.start === t && !isAchieved(e));
+  const el = document.getElementById('start-banners');
+  if (!starting.length) { el.innerHTML = ''; return; }
+  el.innerHTML = starting.map(e => `
+    <div class="start-banner" onclick="openDetail('${e.id}')">
+      <div class="start-banner-icon">🎉</div>
+      <div class="start-banner-text">
+        <strong>${e.bank} ${e.cardName} 이벤트 오늘 시작!</strong>
+        ${e.name} — ${fmtAmt(e.cashbackAmount)}원 캐시백
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderList() {
+  const t = today();
+  let list = [...events];
+
+  if (currentFilter === 'active') list = list.filter(e => e.start <= t && e.end >= t);
+  else if (currentFilter === 'upcoming') list = list.filter(e => e.start > t);
+  else if (currentFilter === 'done') list = list.filter(e => isAchieved(e));
+  else if (currentFilter === 'ended') list = list.filter(e => e.end < t);
+
+  // 정렬: 마감임박 > 시작일 순
+  list.sort((a, b) => {
+    const sa = getStatus(a), sb = getStatus(b);
+    const order = { active: 0, upcoming: 1, ended: 2 };
+    if (order[sa] !== order[sb]) return order[sa] - order[sb];
+    return a.end.localeCompare(b.end);
+  });
+
+  const el = document.getElementById('event-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">💳</div>
+      <div class="empty-text">등록된 이벤트가 없어요<br>+ 버튼을 눌러 추가해보세요</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(e => eventCardHTML(e)).join('');
+}
+
+function eventCardHTML(e) {
+  const status = getStatus(e);
+  const achieved = isAchieved(e);
+  const daysToEnd = daysDiff(e.end);
+  const daysToStart = daysDiff(e.start);
+
+  let cardClass = '';
+  let ddayBadge = '';
+  let statusBadge = '';
+
+  if (status === 'active') {
+    cardClass = 'active-card';
+    if (daysToEnd <= 3 && !achieved) {
+      cardClass += ' urgent';
+      ddayBadge = `<span class="badge badge-dday urgent">D-${daysToEnd === 0 ? 'Day' : daysToEnd}</span>`;
+    } else if (daysToEnd <= 7 && !achieved) {
+      cardClass += ' soon';
+      ddayBadge = `<span class="badge badge-dday soon">D-${daysToEnd}</span>`;
+    } else {
+      ddayBadge = `<span class="badge badge-dday">D-${daysToEnd}</span>`;
+    }
+  } else if (status === 'upcoming') {
+    ddayBadge = `<span class="badge badge-dday">D+${Math.abs(daysToStart)}</span>`;
+  } else if (status === 'ended') {
+    cardClass = 'done';
+    ddayBadge = `<span class="badge badge-dday done-badge">종료</span>`;
+  }
+
+  if (achieved) {
+    statusBadge = `<span class="badge badge-status achieved">✓ 달성</span>`;
+  } else if (status === 'active') {
+    statusBadge = `<span class="badge badge-status pending">미달성</span>`;
+  } else if (status === 'upcoming') {
+    statusBadge = `<span class="badge badge-status not-started">참여예정</span>`;
+  } else {
+    statusBadge = `<span class="badge badge-status not-started">${achieved ? '달성' : '미달성'} 종료</span>`;
+  }
+
+  // 게이지
+  let gaugeHTML = '';
+  if (e.minAmount && status !== 'ended') {
+    const pct = Math.min(100, Math.round((Number(e.currentAmount || 0) / Number(e.minAmount)) * 100));
+    const fillClass = pct >= 100 ? 'full' : pct >= 70 ? 'warn' : '';
+    gaugeHTML = `
+      <div class="gauge-wrap">
+        <div class="gauge-hd">
+          <span class="g-label">달성률</span>
+          <span class="g-val">${fmtAmt(e.currentAmount || 0)}<span> / ${fmtAmt(e.minAmount)}원</span></span>
+        </div>
+        <div class="gauge-bg"><div class="gauge-fill ${fillClass}" style="width:${pct}%"></div></div>
+      </div>`;
+  }
+
+  // 메모 미리보기
+  const memoHTML = e.memo ? `<div class="event-memo-preview">📝 ${e.memo}</div>` : '';
+
+  // 이미지 썸네일
+  let thumbHTML = '';
+  if (e.images && e.images.length) {
+    const shown = e.images.slice(0, 3);
+    thumbHTML = `<div class="event-thumb">
+      ${shown.map(src => `<img src="${src}" onclick="event.stopPropagation();openLightbox('${src}')">`).join('')}
+      ${e.images.length > 3 ? `<div class="more-img">+${e.images.length - 3}</div>` : ''}
+    </div>`;
+  }
+
+  return `
+  <div class="event-card ${cardClass}" onclick="openDetail('${e.id}')">
+    <div class="event-top">
+      <div class="event-left">
+        <div class="event-card-name">${e.name}</div>
+        <div class="event-card-bank">${e.bank} ${e.cardName}</div>
+      </div>
+      <div class="event-badges">
+        ${ddayBadge}
+        ${statusBadge}
+      </div>
+    </div>
+    ${gaugeHTML}
+    <div class="event-meta">
+      <div class="event-meta-item"><span class="dot"></span>${fmtDate(e.start)} ~ ${fmtDate(e.end)}</div>
+      ${e.minAmount ? `<div class="event-meta-item"><span class="dot"></span>최소 ${fmtAmt(e.minAmount)}원</div>` : ''}
+      ${e.cashbackAmount ? `<div class="event-meta-item"><span class="dot"></span>캐시백 ${fmtAmt(e.cashbackAmount)}원</div>` : ''}
+    </div>
+    ${memoHTML}
+    ${thumbHTML}
+  </div>`;
+}
+
+// ── 모달 ──────────────────────────────────────
+function openAddModal() {
+  editingId = null;
+  uploadedImages = [];
+  document.getElementById('edit-modal-title').textContent = '이벤트 추가';
+  document.getElementById('btn-delete').style.display = 'none';
+  ['f-bank','f-cardname','f-name','f-start','f-end','f-min','f-cashback','f-current','f-memo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('f-start').value = today();
+  document.getElementById('img-preview-list').innerHTML = '';
+  document.getElementById('t-deadline').className = 'toggle on';
+  document.getElementById('t-start').className = 'toggle on';
+  openModal('edit-modal-bg');
+}
+
+function openEditModal(id) {
+  const ev = events.find(e => e.id === id);
+  if (!ev) return;
+  editingId = id;
+  uploadedImages = ev.images ? [...ev.images] : [];
+  document.getElementById('edit-modal-title').textContent = '이벤트 수정';
+  document.getElementById('btn-delete').style.display = 'block';
+  document.getElementById('f-bank').value = ev.bank || '';
+  document.getElementById('f-cardname').value = ev.cardName || '';
+  document.getElementById('f-name').value = ev.name || '';
+  document.getElementById('f-start').value = ev.start || '';
+  document.getElementById('f-end').value = ev.end || '';
+  document.getElementById('f-min').value = ev.minAmount || '';
+  document.getElementById('f-cashback').value = ev.cashbackAmount || '';
+  document.getElementById('f-current').value = ev.currentAmount || '';
+  document.getElementById('f-memo').value = ev.memo || '';
+  document.getElementById('t-deadline').className = 'toggle ' + (ev.notifDeadline !== false ? 'on' : '');
+  document.getElementById('t-start').className = 'toggle ' + (ev.notifStart !== false ? 'on' : '');
+  renderImagePreviews();
+  closeModal('detail-modal-bg');
+  openModal('edit-modal-bg');
+}
+
+function openDetail(id) {
+  const ev = events.find(e => e.id === id);
+  if (!ev) return;
+  const status = getStatus(ev);
+  const achieved = isAchieved(ev);
+  const daysToEnd = daysDiff(ev.end);
+
+  let statusText = '';
+  if (status === 'active') statusText = achieved ? '✅ 달성완료' : `⏳ 진행중 (D-${daysToEnd})`;
+  else if (status === 'upcoming') statusText = `📅 ${daysDiff(ev.start)}일 후 시작`;
+  else statusText = '🔚 종료됨';
+
+  const pct = ev.minAmount ? Math.min(100, Math.round((Number(ev.currentAmount || 0) / Number(ev.minAmount)) * 100)) : null;
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-card-name">${ev.name}</div>
+    <div class="detail-card-bank">${ev.bank} ${ev.cardName}</div>
+    <div style="margin-bottom:14px">${statusText}</div>
+
+    ${pct !== null ? `
+    <div class="gauge-wrap" style="margin-bottom:16px">
+      <div class="gauge-hd">
+        <span class="g-label">달성률 ${pct}%</span>
+        <span class="g-val">${fmtAmt(ev.currentAmount || 0)}<span> / ${fmtAmt(ev.minAmount)}원</span></span>
+      </div>
+      <div class="gauge-bg"><div class="gauge-fill ${pct>=100?'full':pct>=70?'warn':''}" style="width:${pct}%"></div></div>
+    </div>` : ''}
+
+    <div class="detail-section">
+      <div class="detail-section-title">이벤트 정보</div>
+      <div class="detail-info-grid">
+        <div class="detail-info-item">
+          <div class="detail-info-label">기간</div>
+          <div class="detail-info-val">${fmtDate(ev.start)} ~ ${fmtDate(ev.end)}</div>
+        </div>
+        <div class="detail-info-item">
+          <div class="detail-info-label">캐시백</div>
+          <div class="detail-info-val">${fmtAmt(ev.cashbackAmount)}원</div>
+        </div>
+        <div class="detail-info-item">
+          <div class="detail-info-label">최소 금액</div>
+          <div class="detail-info-val">${fmtAmt(ev.minAmount)}원</div>
+        </div>
+        <div class="detail-info-item">
+          <div class="detail-info-label">현재 달성</div>
+          <div class="detail-info-val">${fmtAmt(ev.currentAmount || 0)}원</div>
+        </div>
+      </div>
+    </div>
+
+    ${ev.memo ? `
+    <div class="detail-section">
+      <div class="detail-section-title">메모</div>
+      <div class="detail-memo">${ev.memo.replace(/\n/g,'<br>')}</div>
+    </div>` : ''}
+
+    ${ev.images && ev.images.length ? `
+    <div class="detail-section">
+      <div class="detail-section-title">첨부 이미지</div>
+      <div class="detail-images">
+        ${ev.images.map(src => `<img src="${src}" onclick="openLightbox('${src}')">`).join('')}
+      </div>
+    </div>` : ''}
+
+    <button class="btn-save" onclick="openEditModal('${ev.id}')" style="background:var(--surface2);color:var(--text);border:1px solid var(--border)">수정하기</button>
+  `;
+  openModal('detail-modal-bg');
+}
+
+function saveEvent() {
+  const bank = document.getElementById('f-bank').value.trim();
+  const cardName = document.getElementById('f-cardname').value.trim();
+  const name = document.getElementById('f-name').value.trim();
+  const start = document.getElementById('f-start').value;
+  const end = document.getElementById('f-end').value;
+  const minAmount = document.getElementById('f-min').value;
+  const cashbackAmount = document.getElementById('f-cashback').value;
+  const currentAmount = document.getElementById('f-current').value;
+  const memo = document.getElementById('f-memo').value.trim();
+  const notifDeadline = document.getElementById('t-deadline').classList.contains('on');
+  const notifStart = document.getElementById('t-start').classList.contains('on');
+
+  if (!name) { showToast('이벤트명을 입력해주세요', 'error'); return; }
+  if (!start || !end) { showToast('기간을 입력해주세요', 'error'); return; }
+  if (end < start) { showToast('종료일이 시작일보다 앞서요', 'error'); return; }
+
+  const ev = { id: editingId || uid(), bank, cardName, name, start, end, minAmount, cashbackAmount, currentAmount, memo, images: [...uploadedImages], notifDeadline, notifStart, createdAt: Date.now() };
+
+  if (editingId) {
+    const idx = events.findIndex(e => e.id === editingId);
+    if (idx !== -1) events[idx] = ev;
+    showToast('수정됐어요 ✓', 'success');
+  } else {
+    events.push(ev);
+    showToast('이벤트가 추가됐어요 ✓', 'success');
+    scheduleNotifications(ev);
+  }
+
+  save();
+  render();
+  closeModal('edit-modal-bg');
+}
+
+function deleteEvent() {
+  if (!editingId) return;
+  events = events.filter(e => e.id !== editingId);
+  save();
+  render();
+  closeModal('edit-modal-bg');
+  showToast('삭제됐어요', '');
+}
+
+// ── 이미지 처리 ──────────────────────────────
+function handleImageUpload(e) {
+  const files = Array.from(e.target.files);
+  const readers = files.map(file => new Promise(res => {
+    const r = new FileReader();
+    r.onload = ev => res(ev.target.result);
+    r.readAsDataURL(file);
+  }));
+  Promise.all(readers).then(results => {
+    uploadedImages.push(...results);
+    renderImagePreviews();
+  });
+  e.target.value = '';
+}
+
+function renderImagePreviews() {
+  const el = document.getElementById('img-preview-list');
+  el.innerHTML = uploadedImages.map((src, i) => `
+    <div class="img-preview-item">
+      <img src="${src}" alt="">
+      <div class="img-preview-remove" onclick="removeImage(${i})">✕</div>
+    </div>
+  `).join('');
+}
+
+function removeImage(i) {
+  uploadedImages.splice(i, 1);
+  renderImagePreviews();
+}
+
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+// ── 알림 ──────────────────────────────────────
+async function requestNotifPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  const perm = await Notification.requestPermission();
+  return perm === 'granted';
+}
+
+function scheduleNotifications(ev) {
+  // 알림 기록 추가 (앱 내)
+  const daysToStart = daysDiff(ev.start);
+  const daysToEnd = daysDiff(ev.end);
+
+  if (ev.notifStart && daysToStart >= 0) {
+    addNotifRecord(ev, 'start', `오늘부터 참여 가능: ${ev.name}`, ev.start);
+  }
+  if (ev.notifDeadline && daysToEnd >= 3) {
+    addNotifRecord(ev, 'deadline', `마감 3일 전: ${ev.name}`, addDays(ev.end, -3));
+  }
+}
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+function addNotifRecord(ev, type, msg, triggerDate) {
+  notifications.push({ id: uid(), evId: ev.id, type, msg, triggerDate, read: false, createdAt: Date.now() });
+  save();
+}
+
+function checkTodayNotifications() {
+  const t = today();
+  const toFire = notifications.filter(n => !n.fired && n.triggerDate === t);
+  if (!toFire.length) return;
+
+  toFire.forEach(n => {
+    n.fired = true;
+    n.read = false;
+    // 브라우저 푸시
+    if (Notification.permission === 'granted') {
+      const ev = events.find(e => e.id === n.evId);
+      new Notification('💳 캐시백 트래커', {
+        body: n.msg + (ev ? `\n${ev.bank} ${ev.cardName}` : ''),
+        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><text y="26" font-size="28">💳</text></svg>'
+      });
+    }
+  });
+  save();
+  renderNotifBadge();
+}
+
+function renderNotifBadge() {
+  const unread = notifications.filter(n => !n.read && n.fired).length;
+  const badge = document.getElementById('notif-badge');
+  badge.classList.toggle('show', unread > 0);
+}
+
+function openNotifPanel() {
+  const el = document.getElementById('notif-list');
+  const fired = notifications.filter(n => n.fired).sort((a, b) => b.createdAt - a.createdAt);
+
+  if (!fired.length) {
+    el.innerHTML = `<div class="empty-state" style="padding:32px 0"><div class="empty-icon">🔕</div><div class="empty-text">아직 알림이 없어요</div></div>`;
+  } else {
+    el.innerHTML = fired.map(n => `
+      <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markRead('${n.id}')">
+        <div class="notif-dot ${n.read ? 'read' : ''}"></div>
+        <div class="notif-content">
+          <div class="notif-title">${n.msg}</div>
+          <div class="notif-time">${n.triggerDate}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // 모두 읽음 처리
+  notifications.forEach(n => { if (n.fired) n.read = true; });
+  save();
+  renderNotifBadge();
+  openModal('notif-modal-bg');
+}
+
+function markRead(id) {
+  const n = notifications.find(x => x.id === id);
+  if (n) { n.read = true; save(); }
+}
+
+// ── 탭 / 네비 ─────────────────────────────────
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+function switchNav(name, btn) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (name === 'notif') openNotifPanel();
+  else if (name === 'settings') openSettingsModal();
+}
+
+function openSettingsModal() {
+  showToast('설정 준비중이에요', 'info');
+  document.querySelectorAll('.nav-btn')[0].classList.add('active');
+  document.querySelectorAll('.nav-btn')[2].classList.remove('active');
+}
+
+// ── 모달 유틸 ─────────────────────────────────
+function openModal(bgId) {
+  document.getElementById(bgId).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(bgId) {
+  document.getElementById(bgId).classList.remove('open');
+  document.body.style.overflow = '';
+}
+function handleModalBgClick(e, bgId) {
+  if (e.target.id === bgId) closeModal(bgId);
+}
+
+// ── 토글 ──────────────────────────────────────
+function toggleBtn(btn) {
+  btn.classList.toggle('on');
+}
+
+// ── 토스트 ────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.classList.remove('show'); }, 2500);
+}
+
+// ── 초기화 ────────────────────────────────────
+async function init() {
+  // 알림 권한 요청
+  if ('Notification' in window && Notification.permission === 'default') {
+    await requestNotifPermission();
+  }
+
+  // 오늘 발생해야 할 알림 체크
+  checkTodayNotifications();
+
+  // 데모 데이터
+  if (!events.length) {
+    const t = today();
+    const addDay = (d, n) => addDays(d, n);
+    events = [
+      { id: uid(), bank: '신한카드', cardName: '딥드림', name: '7월 첫 결제 캐시백', start: t, end: addDay(t, 14), minAmount: 300000, cashbackAmount: 10000, currentAmount: 180000, memo: '월 1회 제공 / 자동납부 제외', images: [], notifDeadline: true, notifStart: true, createdAt: Date.now() },
+      { id: uid(), bank: '현대카드', cardName: 'ZERO', name: '신규회원 웰컴 캐시백', start: addDay(t, 3), end: addDay(t, 33), minAmount: 500000, cashbackAmount: 30000, currentAmount: 0, memo: '가입 후 30일 이내 50만원 이상 사용', images: [], notifDeadline: true, notifStart: true, createdAt: Date.now() },
+      { id: uid(), bank: 'KB국민카드', cardName: '탄탄대로', name: '6월 실적 달성 캐시백', start: addDay(t, -20), end: addDay(t, -5), minAmount: 400000, cashbackAmount: 15000, currentAmount: 420000, memo: '', images: [], notifDeadline: false, notifStart: false, createdAt: Date.now() },
+    ];
+    save();
+  }
+
+  render();
+
+  // 매 시간 알림 체크
+  setInterval(checkTodayNotifications, 3600000);
+}
+
+init();
+</script>
+</body>
+</html>

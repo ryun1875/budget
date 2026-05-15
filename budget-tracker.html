@@ -2348,18 +2348,39 @@ window.deleteSubCat=function(i,j){
   CATS[i].subs.splice(j,1);
   renderCatManage();
 };
+// 현재 카테고리 입력창 값을 CATS에 반영하는 공통 함수
+function syncCatInputs(){
+  document.querySelectorAll('.cat-name-inp').forEach((inp,i)=>{
+    if(CATS[i])CATS[i].name=inp.value.trim()||CATS[i].name;
+  });
+  document.querySelectorAll('#cat-manage-list input[oninput]').forEach(inp=>{
+    const attr=inp.getAttribute('oninput')||'';
+    const m=attr.match(/CATS\[(\d+)\]\.subs\[(\d+)\]\.name=this\.value/);
+    if(m){
+      const i=parseInt(m[1]),j=parseInt(m[2]);
+      if(CATS[i]?.subs?.[j])CATS[i].subs[j].name=inp.value.trim()||CATS[i].subs[j].name;
+    }
+  });
+}
 window.addCategory=function(){
+  syncCatInputs();
+  CATS.push({id:uid(),name:'새 카테고리',emoji:'📦',color:'#94a3b8',subs:[]});
+  renderCatManage();
+};
+window.addSubCat=function(i){
+  syncCatInputs();
+  if(!CATS[i].subs)CATS[i].subs=[];
+  CATS[i].subs.push({id:CATS[i].id+'_'+uid().slice(0,6),name:'새 세부 카테고리'});
   renderCatManage();
 };
 window.deleteCat=function(i){
   if(CATS.length<=1){showToast('최소 1개 필요해요','warning');return;}
+  syncCatInputs();
   CATS.splice(i,1);
   renderCatManage();
 };
 window.saveCats=async function(){
-  document.querySelectorAll('.cat-name-inp').forEach((inp,i)=>{
-    if(CATS[i])CATS[i].name=inp.value.trim()||CATS[i].name;
-  });
+  syncCatInputs();
   setSyncStatus('syncing');
   catSaving=true;
   try{

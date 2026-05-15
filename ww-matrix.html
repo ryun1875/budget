@@ -169,8 +169,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
   <div class="season-bar" id="seasonBar"></div>
 
-  <div id="noSeason" style="text-align:center;padding:60px 0;color:var(--text3);font-size:14px;display:none">
-    상단에서 시즌을 추가해주세요
+  <div id="noSeason" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 0;gap:16px">
+    <p style="color:var(--text3);font-size:14px">아직 등록된 시즌이 없어요</p>
+    <button class="btn btn-accent" onclick="openSeasonMgr()"><i class="ti ti-plus"></i> 첫 시즌 추가하기</button>
   </div>
 
   <div class="main-layout" id="mainLayout" style="display:none">
@@ -581,13 +582,20 @@ let bossC=COLS[0],bossUp=null;
 
 // ── 초기화 ──
 async function appInit(){
-  const saved = await window.FB.loadChars();
-  chars = saved || DC.map(c=>({...c}));
-  if(!saved) await window.FB.saveChars(chars);
-  seasons = await window.FB.loadSeasons();
-  if(seasons.length>0){
-    curSid = seasons[0].id;
-    await loadSeasonData(curSid);
+  try {
+    const saved = await window.FB.loadChars();
+    chars = saved || DC.map(c=>({...c}));
+    if(!saved) await window.FB.saveChars(chars);
+    seasons = await window.FB.loadSeasons();
+    if(seasons.length>0){
+      curSid = seasons[0].id;
+      await loadSeasonData(curSid);
+    }
+  } catch(e) {
+    console.error('appInit error:', e);
+    chars = DC.map(c=>({...c}));
+    seasons = [];
+    showToast('데이터 로딩 중 오류 발생');
   }
   renderSeasonBar();
   renderAll();
@@ -611,7 +619,7 @@ async function saveChars(){ await window.FB.saveChars(chars); }
 // ── 렌더 전체 ──
 function renderAll(){
   const has = !!curSid;
-  document.getElementById('noSeason').style.display  = has?'none':'block';
+  document.getElementById('noSeason').style.display  = has?'none':'flex';
   document.getElementById('mainLayout').style.display= has?'grid':'none';
   if(!has) return;
   renderPool(); renderParties(); renderInfo(); renderBuffGrid(); renderBossList();
@@ -624,7 +632,8 @@ function renderSeasonBar(){
     const period = s.start&&s.end ? ` <span style="font-size:10px;opacity:.65">${s.start.slice(5)}~${s.end.slice(5)}</span>` : '';
     return `<button class="s-tab${s.id===curSid?' active':''}" onclick="switchSeason('${s.id}')">${s.name}${period}</button>`;
   }).join('');
-  bar.innerHTML = tabs + `<button class="s-tab" style="border-style:dashed;color:var(--text3)" onclick="openSeasonMgr()"><i class="ti ti-settings-2"></i> 시즌 관리</button>`;
+  const mgr = `<button class="s-tab" style="border-style:dashed;color:var(--text3)" onclick="openSeasonMgr()"><i class="ti ti-plus"></i> ${seasons.length?'시즌 관리':'시즌 추가'}</button>`;
+  bar.innerHTML = tabs + mgr;
 }
 
 async function switchSeason(sid){
