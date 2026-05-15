@@ -472,10 +472,13 @@ window.FB = {
   async updateSeason(id,data){ await updateDoc(doc(db,'users',_uid,'ww_seasons',id), data); },
   async deleteSeason(id){ await deleteDoc(doc(db,'users',_uid,'ww_seasons',id)); },
   async loadSeasonData(sid){
-    const d = await getDoc(uSubDoc(sid,'main'));
-    return d.exists() ? d.data() : null;
+    const d = await getDoc(doc(db,'users',_uid,'ww_seasons',sid));
+    if(!d.exists()) return null;
+    const sd = d.data();
+    // season_data is stored as a sub-field
+    return sd.seasonData || null;
   },
-  async saveSeasonData(sid,data){ await setDoc(uSubDoc(sid,'main'), data); },
+  async saveSeasonData(sid,data){ await updateDoc(doc(db,'users',_uid,'ww_seasons',sid),{seasonData:data}); },
   async loadSaves(){
     const q = query(uColl('saves'), orderBy('ts','desc'));
     const s = await getDocs(q);
