@@ -1404,7 +1404,10 @@ function renderStaffManage() {
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
         ${s.preRegistered
-          ? `<span style="font-size:11px;color:var(--accent4);padding:3px 8px;border-radius:8px;background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.3)">⏳ 로그인 대기</span>`
+          ? `<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+               <span style="font-size:11px;color:var(--accent4);padding:3px 8px;border-radius:8px;background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.3)">⏳ 로그인 대기</span>
+               <button class="btn-link-staff" onclick="openLinkStaffModal('${s.uid}','${s.name}')">🔗 계정 연결</button>
+             </div>`
           : s.status === 'approved'
             ? `<button class="btn-revoke" onclick="revokeStaff('${s.uid}')">승인 취소</button>`
             : `<button class="btn-approve" onclick="approveStaff('${s.uid}')">승인</button>`
