@@ -443,10 +443,9 @@ const fb = initializeApp(cfg);
 const auth = getAuth(fb);
 const db   = getFirestore(fb);
 
-// uid 전역 노출
 let _uid = null;
-const uDoc  = (...p) => doc(db,'users',_uid,...p);
-const uColl = (...p) => collection(db,'users',_uid,...p);
+const uDoc  = (...p) => { if(!_uid) throw new Error('not-authenticated'); return doc(db,'users',_uid,...p); };
+const uColl = (...p) => { if(!_uid) throw new Error('not-authenticated'); return collection(db,'users',_uid,...p); };
 
 // ── FB API를 window에 노출 (일반 스크립트에서 호출 가능) ──
 window.FB = {
@@ -500,8 +499,11 @@ onAuthStateChanged(auth, async user => {
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('app').style.display='block';
     document.getElementById('userAvatar').src = user.photoURL||'';
+    console.log('uid set:', _uid);
     await appInit();
   } else {
+    _uid = null;
+    window.FB.ready = false;
     document.getElementById('loginScreen').style.display='flex';
     document.getElementById('app').style.display='none';
   }
@@ -1034,7 +1036,7 @@ function cTab(t){
 function openSaves(){ renderSavesList(); document.getElementById('savesModal').classList.add('open'); }
 async function doSave(){
   const name=document.getElementById('saveName').value.trim()||`편성 ${new Date().toLocaleDateString('ko')}`;
-  await window.FB.addSave({name,parties:JSON.parse(JSON.stringify(parties)),seasonId:curSid,date:new Date().toLocaleString('ko')});
+  await window.FB.addSave({name, parties:JSON.parse(JSON.stringify(parties)), seasonId:curSid, date:new Date().toLocaleString('ko')});
   document.getElementById('saveName').value='';renderSavesList();showToast(`"${name}" 저장됨`);
 }
 async function renderSavesList(){
