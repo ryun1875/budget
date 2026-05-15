@@ -671,20 +671,29 @@ async function addSeason(){
   if(!name){ showToast('시즌 이름을 입력하세요'); return; }
   const start = document.getElementById('newSStart').value;
   const end   = document.getElementById('newSEnd').value;
-  const id = await window.FB.addSeason({name, start:start||'', end:end||''});
-  const newS = {id, name, start:start||'', end:end||''};
-  seasons.push(newS);
-  if(!curSid){
-    curSid = id;
-    await loadSeasonData(id);
+  const btn = document.querySelector('#seasonMgrModal .btn-accent');
+  if(btn){ btn.disabled=true; btn.textContent='추가 중...'; }
+  try {
+    const id = await window.FB.addSeason({name, start:start||'', end:end||''});
+    const newS = {id, name, start:start||'', end:end||''};
+    seasons.push(newS);
+    if(!curSid){
+      curSid = id;
+      await loadSeasonData(id);
+    }
+    document.getElementById('newSName').value='';
+    document.getElementById('newSStart').value='';
+    document.getElementById('newSEnd').value='';
+    renderSeasonList();
+    renderSeasonBar();
+    renderAll();
+    showToast(`${name} 추가됨`);
+  } catch(e) {
+    console.error('addSeason error:', e);
+    showToast('오류: ' + (e.code || e.message));
+  } finally {
+    if(btn){ btn.disabled=false; btn.innerHTML='<i class="ti ti-plus"></i> 시즌 추가'; }
   }
-  document.getElementById('newSName').value='';
-  document.getElementById('newSStart').value='';
-  document.getElementById('newSEnd').value='';
-  renderSeasonList();
-  renderSeasonBar();
-  renderAll();
-  showToast(`${name} 추가됨`);
 }
 
 function openSeasonEdit(sid){
