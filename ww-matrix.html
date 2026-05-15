@@ -13,25 +13,19 @@
   --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
   --text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;
   --accent:#6c8ef5;--accent2:#4f6fe0;
-  --gold:#f0b429;--red:#e24b4a;--green:#4caf7d;
+  --gold:#f0b429;--red:#e24b4a;
   --radius:10px;--radius2:16px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-
-/* ── 로그인 ── */
-#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column}
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh}
 .login-box{background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius2);padding:40px;text-align:center;max-width:340px;width:90%}
 .login-box h1{font-size:22px;font-weight:700;margin-bottom:6px}
 .login-box p{font-size:13px;color:var(--text2);margin-bottom:28px;line-height:1.6}
-.google-btn{display:inline-flex;align-items:center;gap:10px;padding:12px 24px;background:#fff;color:#333;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.google-btn{display:inline-flex;align-items:center;gap:10px;padding:12px 24px;background:#fff;color:#333;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}
 .google-btn:hover{opacity:.88}
 .google-btn img{width:20px;height:20px}
-
-/* ── 레이아웃 ── */
 #app{display:none;max-width:980px;margin:0 auto;padding:16px 14px 60px}
-
-/* ── 공통 컴포넌트 ── */
 .btn{padding:7px 13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:inherit;transition:background .15s}
 .btn:hover{background:var(--bg3)}
 .btn-accent{background:var(--accent2);border-color:var(--accent);color:#fff}
@@ -42,14 +36,13 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .field:focus{outline:none;border-color:var(--accent)}
 .textarea{border:0.5px solid var(--border2);border-radius:7px;padding:8px 10px;font-size:13px;background:var(--bg3);color:var(--text);width:100%;resize:vertical;min-height:80px;font-family:inherit;line-height:1.6}
 .textarea:focus{outline:none;border-color:var(--accent)}
-.section-title{font-size:12px;font-weight:500;color:var(--text2);margin:0 0 8px;display:flex;align-items:center;gap:6px}
-.section-title::after{content:'';flex:1;height:0.5px;background:var(--border)}
+.sec-title{font-size:12px;font-weight:500;color:var(--text2);margin:0 0 8px;display:flex;align-items:center;gap:6px}
+.sec-title::after{content:'';flex:1;height:0.5px;background:var(--border)}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center;padding:16px}
 .modal-bg.open{display:flex}
 .modal{background:var(--bg2);border-radius:var(--radius2);border:0.5px solid var(--border2);padding:1.25rem;width:100%;max-width:420px;max-height:90vh;overflow-y:auto}
 .modal-sm{background:var(--bg2);border-radius:var(--radius2);border:0.5px solid var(--border2);padding:1.25rem;width:100%;max-width:340px;max-height:90vh;overflow-y:auto}
-.modal-lg{background:var(--bg2);border-radius:var(--radius2);border:0.5px solid var(--border2);padding:1.25rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
-.modal-title{font-size:16px;font-weight:600;color:var(--text)}
+.modal-title{font-size:16px;font-weight:600}
 .tab-bar{display:flex;border-bottom:0.5px solid var(--border);margin-bottom:1rem}
 .tab{padding:6px 11px;font-size:13px;cursor:pointer;border:none;border-bottom:2px solid transparent;color:var(--text2);background:none;font-family:inherit}
 .tab.active{border-bottom-color:var(--accent);color:var(--text);font-weight:500}
@@ -59,84 +52,70 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-
-/* ── 상단바 ── */
+/* top */
 .top-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .top-bar h1{font-size:17px;font-weight:700;flex:1;min-width:0}
 .user-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover}
-
-/* ── 시즌 탭 ── */
-.season-bar{display:flex;align-items:center;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
-.season-tab{padding:5px 14px;border:0.5px solid var(--border2);border-radius:20px;font-size:13px;cursor:pointer;background:var(--bg3);color:var(--text2);white-space:nowrap;font-family:inherit;flex-shrink:0}
-.season-tab.active{background:var(--accent2);border-color:var(--accent);color:#fff;font-weight:500}
-.season-add-btn{flex-shrink:0;padding:5px 10px;border:0.5px dashed var(--border2);border-radius:20px;font-size:13px;cursor:pointer;background:transparent;color:var(--text3);font-family:inherit}
-.season-add-btn:hover{border-color:var(--border2);color:var(--text2)}
-
-/* ── 메인 2단 레이아웃 ── */
-.main-layout{display:grid;grid-template-columns:1fr 280px;gap:14px}
-@media(max-width:700px){.main-layout{grid-template-columns:1fr}}
+/* season bar */
+.season-bar{display:flex;align-items:center;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;flex-wrap:wrap}
+.s-tab{padding:5px 14px;border:0.5px solid var(--border2);border-radius:20px;font-size:13px;cursor:pointer;background:var(--bg3);color:var(--text2);white-space:nowrap;font-family:inherit;flex-shrink:0;transition:all .15s}
+.s-tab:hover{color:var(--text)}
+.s-tab.active{background:var(--accent2);border-color:var(--accent);color:#fff;font-weight:500}
+/* layout */
+.main-layout{display:grid;grid-template-columns:1fr 270px;gap:14px}
+@media(max-width:680px){.main-layout{grid-template-columns:1fr}}
 .left-col{min-width:0}
 .right-col{display:flex;flex-direction:column;gap:14px}
-
-/* ── 캐릭터 풀 ── */
-.char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;margin-bottom:12px}
+/* char grid */
+.char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(63px,1fr));gap:6px;margin-bottom:12px}
 .char-card{border:0.5px solid var(--border);border-radius:var(--radius);text-align:center;cursor:pointer;background:var(--bg2);user-select:none;position:relative;overflow:hidden;transition:border-color .15s}
 .char-card:hover{border-color:var(--border2)}
 .char-card.star5{border-color:rgba(240,180,41,0.35)}
 .char-card.star5:hover{border-color:var(--gold)}
 .char-card.exhausted{opacity:0.28}
-.portrait-wrap{width:100%;aspect-ratio:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.portrait-wrap{width:100%;aspect-ratio:1;position:relative;overflow:hidden}
 .attr-badge{position:absolute;bottom:2px;right:2px;font-size:9px;font-weight:500;padding:1px 4px;border-radius:3px;line-height:14px;z-index:2}
 .memo-dot{position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:var(--accent);z-index:3}
 .dupe-tag{position:absolute;top:2px;left:2px;font-size:9px;background:var(--accent2);color:#fff;border-radius:3px;padding:0 3px;line-height:15px;z-index:3}
 .star5-corner{position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 13px 13px 0;border-color:transparent var(--gold) transparent transparent;z-index:2}
 .char-name{font-size:10px;color:var(--text);padding:3px 2px;line-height:1.2;word-break:keep-all}
-
-/* ── 파티 ── */
+/* parties */
 .parties-area{display:flex;flex-direction:column;gap:10px}
 .party-row{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius2);padding:11px 13px}
 .party-header{display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap}
-.party-name-input{border:0.5px solid var(--border);border-radius:7px;padding:3px 8px;font-size:13px;background:var(--bg3);color:var(--text);width:120px;font-family:inherit}
+.party-name-input{border:0.5px solid var(--border);border-radius:7px;padding:3px 8px;font-size:13px;background:var(--bg3);color:var(--text);width:110px;font-family:inherit}
 .party-name-input:focus{outline:none;border-color:var(--border2)}
-.buff-select{border:0.5px solid var(--border);border-radius:7px;padding:3px 8px;font-size:12px;background:var(--bg3);color:var(--text2);font-family:inherit;cursor:pointer;max-width:130px}
-.buff-select:focus{outline:none;border-color:var(--accent)}
-.remove-party{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text3);padding:2px 4px;font-size:14px}
-.remove-party:hover{color:var(--red)}
+.buff-sel{border:0.5px solid var(--border);border-radius:7px;padding:3px 7px;font-size:12px;background:var(--bg3);color:var(--text2);font-family:inherit;cursor:pointer;max-width:120px}
+.buff-sel:focus{outline:none;border-color:var(--accent)}
+.rm-party{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text3);padding:2px 4px;font-size:14px}
+.rm-party:hover{color:var(--red)}
 .slots{display:flex;gap:7px;flex-wrap:wrap}
-.slot{width:70px;min-height:92px;border:1.5px dashed rgba(255,255,255,0.1);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--bg3);position:relative;overflow:hidden;transition:border-color .15s}
+.slot{width:70px;min-height:90px;border:1.5px dashed rgba(255,255,255,0.1);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--bg3);position:relative;overflow:hidden;transition:border-color .15s}
 .slot:hover{border-color:var(--border2)}
 .slot.filled{border-style:solid;border-color:var(--border);background:var(--bg2)}
 .slot.filled.is5{border-color:rgba(240,180,41,0.4)}
-.slot-portrait{width:100%;height:64px;overflow:hidden;position:relative}
-.slot-name{font-size:10px;color:var(--text);text-align:center;padding:2px 2px 1px;line-height:1.2;width:100%}
-.slot-memo{font-size:9px;color:var(--text3);text-align:center;padding:0 3px 3px;line-height:1.3;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot-portrait{width:100%;height:62px;overflow:hidden;position:relative}
+.slot-name{font-size:10px;text-align:center;padding:2px 2px 1px;line-height:1.2;width:100%}
+.slot-memo{font-size:9px;color:var(--text3);text-align:center;padding:0 3px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
 .slot .rm{position:absolute;top:1px;right:2px;background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.3);font-size:11px;z-index:4;padding:1px 3px}
 .slot .rm:hover{color:var(--red)}
-.applied-buff{display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:6px;font-size:11px;color:var(--text2);margin-top:6px}
-
-/* ── 버프 카드 ── */
+.applied-buff{display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:6px;background:var(--bg4);margin-top:6px}
+/* buff */
 .buff-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.buff-card{background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius);padding:9px;cursor:pointer;position:relative;transition:border-color .15s}
-.buff-card:hover{border-color:var(--border2)}
-.buff-card.active-buff{border-color:var(--accent);background:rgba(108,142,245,0.08)}
-.buff-card-icon{font-size:20px;margin-bottom:4px}
-.buff-card-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px}
+.buff-card{background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius);padding:9px;position:relative;cursor:default}
+.buff-card-icon{font-size:20px;margin-bottom:3px}
+.buff-card-name{font-size:12px;font-weight:500;margin-bottom:2px}
 .buff-card-desc{font-size:10px;color:var(--text3);line-height:1.4}
-.buff-edit-btn{position:absolute;top:5px;right:5px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:1px 3px}
-.buff-edit-btn:hover{color:var(--text2)}
-.buff-slot-empty{border:1.5px dashed rgba(255,255,255,0.1);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:70px}
-.buff-slot-empty span{font-size:11px;color:var(--text3)}
-
-/* ── 보스 카드 ── */
+.buff-empty{border:1.5px dashed rgba(255,255,255,0.08);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:70px;cursor:pointer}
+.buff-empty:hover{border-color:var(--border2)}
+.buff-empty span{font-size:11px;color:var(--text3)}
+/* boss */
 .boss-list{display:flex;flex-direction:column;gap:6px}
-.boss-card{background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius);padding:9px 10px;position:relative}
-.boss-card-header{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.boss-card{background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius);padding:9px 10px}
+.boss-hd{display:flex;align-items:center;gap:7px;margin-bottom:4px}
 .boss-icon{width:32px;height:32px;border-radius:7px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500}
-.boss-name{font-size:13px;font-weight:500;color:var(--text);flex:1;min-width:0}
-.boss-memo-text{font-size:11px;color:var(--text3);line-height:1.5;white-space:pre-wrap;word-break:keep-all}
-.boss-actions{display:flex;gap:4px;flex-shrink:0}
-
-/* ── 캐릭터 관리 목록 ── */
+.boss-memo{font-size:11px;color:var(--text3);line-height:1.5;white-space:pre-wrap;word-break:keep-all}
+/* char mgr list */
 .erow{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:0.5px solid var(--border)}
 .erow:last-child{border-bottom:none}
 .erow.unowned{opacity:0.38}
@@ -146,8 +125,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .dtog{padding:2px 6px;border:0.5px solid var(--border2);border-radius:6px;font-size:11px;cursor:pointer;background:var(--bg3);color:var(--text2);flex-shrink:0;font-family:inherit}
 .dtog.on{background:var(--accent2);color:#fff;border-color:var(--accent)}
 .filter-row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
-.filter-btn{padding:3px 9px;border:0.5px solid var(--border2);border-radius:20px;font-size:12px;cursor:pointer;background:var(--bg3);color:var(--text2);font-family:inherit}
-.filter-btn.on{background:var(--bg2);border-color:var(--accent);color:var(--text);font-weight:500}
+.fbtn{padding:3px 9px;border:0.5px solid var(--border2);border-radius:20px;font-size:12px;cursor:pointer;background:var(--bg3);color:var(--text2);font-family:inherit}
+.fbtn.on{background:var(--bg2);border-color:var(--accent);color:var(--text);font-weight:500}
 .swatches{display:flex;gap:5px;flex-wrap:wrap}
 .sw{width:19px;height:19px;border-radius:50%;cursor:pointer;border:2px solid transparent}
 .sw.on{border-color:var(--text)}
@@ -161,11 +140,13 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .mc:hover{border-color:var(--border2)}
 .mc.out{opacity:0.22;pointer-events:none}
 .mc.s5{border-color:rgba(240,180,41,0.3)}
+/* season edit row */
+.season-row{display:flex;align-items:flex-start;gap:8px;padding:10px 0;border-bottom:0.5px solid var(--border)}
+.season-row:last-child{border-bottom:none}
 </style>
 </head>
 <body>
 
-<!-- 로그인 -->
 <div id="loginScreen">
   <div class="login-box">
     <h1>⚔️ 매트릭스 파티 편성</h1>
@@ -177,30 +158,22 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 </div>
 
-<!-- 메인 앱 -->
 <div id="app">
-  <!-- 상단바 -->
   <div class="top-bar">
     <h1>매트릭스 파티 편성</h1>
     <img class="user-avatar" id="userAvatar" src="" alt="">
     <button class="btn btn-sm" onclick="openCharMgr()"><i class="ti ti-users"></i> 공명자 관리</button>
-    <button class="btn btn-sm" onclick="openSaves()"><i class="ti ti-folder"></i> 파티 저장</button>
+    <button class="btn btn-sm" onclick="openSaves()"><i class="ti ti-folder"></i> 저장</button>
     <button class="btn btn-icon btn-sm" onclick="doSignOut()" title="로그아웃"><i class="ti ti-logout"></i></button>
   </div>
 
-  <!-- 시즌 탭 -->
-  <div class="season-bar" id="seasonBar">
-    <button class="season-add-btn" onclick="openSeasonMgr()"><i class="ti ti-plus"></i> 시즌 추가</button>
+  <div class="season-bar" id="seasonBar"></div>
+
+  <div id="noSeason" style="text-align:center;padding:60px 0;color:var(--text3);font-size:14px;display:none">
+    상단에서 시즌을 추가해주세요
   </div>
 
-  <!-- 시즌 없을 때 -->
-  <div id="noSeason" style="display:none;text-align:center;padding:60px 0;color:var(--text3);font-size:14px">
-    시즌을 먼저 추가해주세요
-  </div>
-
-  <!-- 메인 레이아웃 -->
   <div class="main-layout" id="mainLayout" style="display:none">
-    <!-- 왼쪽: 공명자 풀 + 파티 -->
     <div class="left-col">
       <div id="charPoolSection"></div>
       <div style="display:flex;gap:8px;align-items:center;margin:10px 0">
@@ -209,23 +182,18 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       </div>
       <div class="parties-area" id="partiesArea"></div>
     </div>
-
-    <!-- 오른쪽: 버프 + 보스 -->
     <div class="right-col">
-      <!-- 파티 버프 -->
       <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius2);padding:13px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <span style="font-size:13px;font-weight:500">파티 버프</span>
-          <button class="btn btn-sm btn-icon" onclick="openBuffMgr()" title="버프 관리"><i class="ti ti-settings"></i></button>
+          <button class="btn btn-sm btn-icon" onclick="openBuffMgr()"><i class="ti ti-settings"></i></button>
         </div>
         <div class="buff-grid" id="buffGrid"></div>
       </div>
-
-      <!-- 보스 -->
       <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius2);padding:13px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <span style="font-size:13px;font-weight:500">보스</span>
-          <button class="btn btn-sm" onclick="openBossMgr()"><i class="ti ti-plus"></i> 추가</button>
+          <button class="btn btn-sm" onclick="openAddBoss()"><i class="ti ti-plus"></i> 추가</button>
         </div>
         <div class="boss-list" id="bossList"></div>
       </div>
@@ -233,17 +201,117 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 </div>
 
-<!-- ══ 모달들 ══ -->
-
 <!-- 슬롯 선택 -->
 <div class="modal-bg" id="slotModal">
   <div class="modal">
     <div style="display:flex;align-items:center;margin-bottom:6px">
       <span class="modal-title" id="slotTitle">캐릭터 선택</span>
-      <button class="btn btn-sm" style="margin-left:auto" onclick="closeSlot()">닫기</button>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="closeM('slotModal')">닫기</button>
     </div>
     <p style="font-size:11px;color:var(--text3);margin-bottom:2px">흐린 캐릭터는 이미 최대 배치됨</p>
     <div id="slotTiers"></div>
+  </div>
+</div>
+
+<!-- 시즌 관리 -->
+<div class="modal-bg" id="seasonMgrModal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;margin-bottom:14px">
+      <span class="modal-title">시즌 관리</span>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="closeM('seasonMgrModal')">닫기</button>
+    </div>
+    <!-- 새 시즌 추가 -->
+    <p style="font-size:12px;color:var(--text2);margin-bottom:8px">새 시즌 추가</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <input class="field" id="newSName" placeholder="시즌 이름 (예: 시즌 1)">
+      <div style="display:flex;gap:8px;align-items:center">
+        <input class="field" id="newSStart" type="date" style="flex:1">
+        <span style="color:var(--text3);font-size:13px;flex-shrink:0">~</span>
+        <input class="field" id="newSEnd" type="date" style="flex:1">
+      </div>
+      <button class="btn btn-accent" style="justify-content:center" onclick="addSeason()"><i class="ti ti-plus"></i> 시즌 추가</button>
+    </div>
+    <!-- 기존 시즌 목록 -->
+    <p style="font-size:12px;color:var(--text2);margin-bottom:8px">등록된 시즌</p>
+    <div id="seasonList"></div>
+  </div>
+</div>
+
+<!-- 시즌 편집 -->
+<div class="modal-bg" id="seasonEditModal">
+  <div class="modal-sm">
+    <div style="display:flex;align-items:center;margin-bottom:14px">
+      <span class="modal-title">시즌 편집</span>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="closeM('seasonEditModal')">닫기</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <input class="field" id="editSName" placeholder="시즌 이름">
+      <div style="display:flex;gap:8px;align-items:center">
+        <input class="field" id="editSStart" type="date" style="flex:1">
+        <span style="color:var(--text3);font-size:13px;flex-shrink:0">~</span>
+        <input class="field" id="editSEnd" type="date" style="flex:1">
+      </div>
+      <button class="btn btn-accent" style="justify-content:center" onclick="saveSeasonEdit()"><i class="ti ti-device-floppy"></i> 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 버프 관리 -->
+<div class="modal-bg" id="buffMgrModal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;margin-bottom:12px">
+      <span class="modal-title">파티 버프 관리</span>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="closeM('buffMgrModal')">닫기</button>
+    </div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:10px">최대 4개. 각 파티에서 적용 버프를 선택할 수 있습니다.</p>
+    <div id="buffEditList"></div>
+    <div id="buffAddArea" style="margin-top:14px">
+      <p style="font-size:13px;font-weight:500;margin-bottom:8px">버프 추가</p>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <input class="field" id="bName" placeholder="버프 이름 (예: 회절 피해 +30%)">
+        <input class="field" id="bIcon" placeholder="아이콘 이모지 (예: ⚡🔥💧✨)">
+        <textarea class="textarea" id="bDesc" placeholder="버프 설명" style="min-height:56px"></textarea>
+        <button class="btn btn-accent" style="justify-content:center" onclick="addBuff()"><i class="ti ti-plus"></i> 추가</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 버프 편집 -->
+<div class="modal-bg" id="buffEditModal">
+  <div class="modal-sm">
+    <div style="display:flex;align-items:center;margin-bottom:12px">
+      <span class="modal-title">버프 편집</span>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="closeM('buffEditModal')">닫기</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <input class="field" id="ebName" placeholder="버프 이름">
+      <input class="field" id="ebIcon" placeholder="아이콘 이모지">
+      <textarea class="textarea" id="ebDesc" placeholder="버프 설명" style="min-height:56px"></textarea>
+      <button class="btn btn-accent" style="justify-content:center" onclick="saveBuffEdit()"><i class="ti ti-device-floppy"></i> 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 보스 추가/편집 -->
+<div class="modal-bg" id="bossMgrModal">
+  <div class="modal-sm">
+    <div style="display:flex;align-items:center;margin-bottom:12px">
+      <span class="modal-title" id="bossMgrTitle">보스 추가</span>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="closeM('bossMgrModal')">닫기</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <input class="field" id="bossName" placeholder="보스 이름">
+      <input class="field" id="bossUrl" placeholder="이미지 URL (선택)">
+      <div>
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:3px">파일 업로드</label>
+        <input type="file" id="bossFile" accept="image/*" style="font-size:12px;color:var(--text2)" onchange="prevBossUp()">
+        <img id="bossPrev" style="display:none;width:50px;height:50px;object-fit:cover;border-radius:8px;margin-top:5px">
+      </div>
+      <div><p style="font-size:12px;color:var(--text2);margin-bottom:5px">카드 색상</p><div class="swatches" id="bossSwatches"></div></div>
+      <textarea class="textarea" id="bossMemo" placeholder="보스 특징, 공략 메모..."></textarea>
+      <button class="btn btn-accent" style="justify-content:center" onclick="saveBoss()"><i class="ti ti-device-floppy"></i> 저장</button>
+    </div>
   </div>
 </div>
 
@@ -252,7 +320,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <div class="modal">
     <div style="display:flex;align-items:center;margin-bottom:12px">
       <span class="modal-title">공명자 관리</span>
-      <button class="btn btn-sm" style="margin-left:auto" onclick="closeCharMgr()">닫기</button>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="closeM('charMgrModal')">닫기</button>
     </div>
     <div class="tab-bar">
       <button class="tab active" onclick="cTab('list')">목록</button>
@@ -260,9 +328,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </div>
     <div class="pane active" id="cpane-list">
       <div class="filter-row">
-        <button class="filter-btn on" id="f-all" onclick="setFilter('all')">전체</button>
-        <button class="filter-btn" id="f-owned" onclick="setFilter('owned')">보유</button>
-        <button class="filter-btn" id="f-unowned" onclick="setFilter('unowned')">미보유</button>
+        <button class="fbtn on" id="f-all" onclick="setFilter('all')">전체</button>
+        <button class="fbtn" id="f-owned" onclick="setFilter('owned')">보유</button>
+        <button class="fbtn" id="f-unowned" onclick="setFilter('unowned')">미보유</button>
         <button class="btn btn-sm" style="margin-left:auto;font-size:11px" onclick="setAllOwned(true)">전체보유</button>
         <button class="btn btn-sm" style="font-size:11px" onclick="setAllOwned(false)">전체해제</button>
       </div>
@@ -275,7 +343,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <div>
           <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:3px">파일 업로드</label>
           <input type="file" id="nFile" accept="image/*" style="font-size:12px;color:var(--text2)" onchange="prevUp('n')">
-          <img id="nPrev" style="display:none;width:50px;height:50px;object-fit:cover;border-radius:8px;border:0.5px solid var(--border2);margin-top:5px">
+          <img id="nPrev" style="display:none;width:50px;height:50px;object-fit:cover;border-radius:8px;margin-top:5px">
         </div>
         <div><p style="font-size:12px;color:var(--text2);margin-bottom:5px">카드 색상</p><div class="swatches" id="nSwatches"></div></div>
         <div><p style="font-size:12px;color:var(--text2);margin-bottom:5px">속성</p><div class="apills" id="nAttrs"></div></div>
@@ -290,14 +358,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 </div>
 
-<!-- 공명자 개별 편집 -->
+<!-- 공명자 편집 -->
 <div class="modal-bg" id="editCharModal">
   <div class="modal-sm">
     <div style="display:flex;align-items:center;margin-bottom:12px">
       <span class="modal-title" id="editCharTitle">편집</span>
-      <button class="btn btn-sm" style="margin-left:auto" onclick="closeEditChar()">닫기</button>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="closeM('editCharModal')">닫기</button>
     </div>
-    <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;flex-direction:column;gap:9px">
       <div><p style="font-size:12px;color:var(--text2);margin-bottom:3px">이미지 URL</p><input class="field" id="eUrl" placeholder="https://..."></div>
       <div>
         <p style="font-size:12px;color:var(--text2);margin-bottom:3px">파일 업로드</p>
@@ -315,81 +383,19 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 </div>
 
-<!-- 메모 -->
+<!-- 공명자 메모 -->
 <div class="modal-bg" id="memoModal">
   <div class="modal-sm">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
       <div id="memoPortrait" style="width:40px;height:40px;border-radius:9px;overflow:hidden;flex-shrink:0"></div>
-      <div>
+      <div style="flex:1;min-width:0">
         <div style="font-size:14px;font-weight:600" id="memoCharName"></div>
         <div style="font-size:11px;color:var(--text2);margin-top:1px" id="memoCharAttr"></div>
       </div>
-      <button class="btn btn-sm" style="margin-left:auto" onclick="closeMemo()">닫기</button>
+      <button class="btn btn-sm" onclick="closeM('memoModal')">닫기</button>
     </div>
     <textarea class="textarea" id="memoText" placeholder="빌드, 공명 체인, 운영 팁..."></textarea>
     <button class="btn btn-accent" style="width:100%;justify-content:center;margin-top:9px" onclick="saveMemo()"><i class="ti ti-device-floppy"></i> 저장</button>
-  </div>
-</div>
-
-<!-- 시즌 관리 -->
-<div class="modal-bg" id="seasonMgrModal">
-  <div class="modal">
-    <div style="display:flex;align-items:center;margin-bottom:12px">
-      <span class="modal-title">시즌 관리</span>
-      <button class="btn btn-sm" style="margin-left:auto" onclick="closeSeasonMgr()">닫기</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
-      <input class="field" id="newSeasonName" placeholder="시즌 이름 (예: 시즌 1, S1 기계 시즌)">
-      <div style="display:flex;gap:8px">
-        <input class="field" id="newSeasonStart" type="date" style="flex:1">
-        <span style="align-self:center;color:var(--text3);font-size:13px">~</span>
-        <input class="field" id="newSeasonEnd" type="date" style="flex:1">
-      </div>
-      <button class="btn btn-accent" style="justify-content:center" onclick="addSeason()"><i class="ti ti-plus"></i> 시즌 추가</button>
-    </div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:8px">등록된 시즌</p>
-    <div id="seasonList"></div>
-  </div>
-</div>
-
-<!-- 버프 관리 -->
-<div class="modal-bg" id="buffMgrModal">
-  <div class="modal">
-    <div style="display:flex;align-items:center;margin-bottom:12px">
-      <span class="modal-title">파티 버프 관리</span>
-      <button class="btn btn-sm" style="margin-left:auto" onclick="closeBuffMgr()">닫기</button>
-    </div>
-    <p style="font-size:12px;color:var(--text3);margin-bottom:12px">이 시즌에 등록된 버프 슬롯 (최대 4개)</p>
-    <div id="buffEditList"></div>
-    <div id="buffAddForm" style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
-      <p style="font-size:13px;font-weight:500">버프 추가</p>
-      <input class="field" id="bName" placeholder="버프 이름 (예: 모든 피해량 +20%)">
-      <input class="field" id="bIcon" placeholder="아이콘 이모지 (예: ⚡🔥💧)">
-      <textarea class="textarea" id="bDesc" placeholder="버프 설명 (간단하게)" style="min-height:60px"></textarea>
-      <button class="btn btn-accent" style="justify-content:center" onclick="addBuff()"><i class="ti ti-plus"></i> 추가</button>
-    </div>
-  </div>
-</div>
-
-<!-- 보스 추가/편집 -->
-<div class="modal-bg" id="bossMgrModal">
-  <div class="modal-sm">
-    <div style="display:flex;align-items:center;margin-bottom:12px">
-      <span class="modal-title" id="bossMgrTitle">보스 추가</span>
-      <button class="btn btn-sm" style="margin-left:auto" onclick="closeBossMgr()">닫기</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:9px">
-      <input class="field" id="bossName" placeholder="보스 이름">
-      <input class="field" id="bossUrl" placeholder="이미지 URL (선택)">
-      <div>
-        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:3px">파일 업로드</label>
-        <input type="file" id="bossFile" accept="image/*" style="font-size:12px;color:var(--text2)" onchange="prevBossUp()">
-        <img id="bossPrev" style="display:none;width:50px;height:50px;object-fit:cover;border-radius:8px;margin-top:5px">
-      </div>
-      <div><p style="font-size:12px;color:var(--text2);margin-bottom:5px">카드 색상</p><div class="swatches" id="bossSwatches"></div></div>
-      <textarea class="textarea" id="bossMemo" placeholder="보스 특징, 공략 메모..."></textarea>
-      <button class="btn btn-accent" style="justify-content:center" onclick="saveBoss()"><i class="ti ti-device-floppy"></i> 저장</button>
-    </div>
   </div>
 </div>
 
@@ -398,7 +404,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <div class="modal">
     <div style="display:flex;align-items:center;margin-bottom:12px">
       <span class="modal-title">파티 저장 / 불러오기</span>
-      <button class="btn btn-sm" style="margin-left:auto" onclick="closeSaves()">닫기</button>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="closeM('savesModal')">닫기</button>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:1rem">
       <input class="field" id="saveName" placeholder="편성 이름">
@@ -411,174 +417,98 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
 <div class="toast" id="toast"></div>
 
-<!-- Firebase -->
+<!-- ══ Firebase (module) ══ -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut }
-  from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, addDoc, serverTimestamp, query, orderBy }
-  from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup,
+  onAuthStateChanged, signOut as fbSignOut
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc,
+  collection, getDocs, deleteDoc, addDoc,
+  serverTimestamp, query, orderBy, updateDoc
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyB0hxBZ4X-CB_x6DXwj73qEuJlBWp6trtw",
-  authDomain: "personal-apps-hty.firebaseapp.com",
-  projectId: "personal-apps-hty",
-  storageBucket: "personal-apps-hty.firebasestorage.app",
-  messagingSenderId: "1094404789428",
-  appId: "1:1094404789428:web:87efdfbbb9bc08a00433e1",
-  measurementId: "G-48CFC1W4ZR"
+const cfg = {
+  apiKey:"AIzaSyB0hxBZ4X-CB_x6DXwj73qEuJlBWp6trtw",
+  authDomain:"personal-apps-hty.firebaseapp.com",
+  projectId:"personal-apps-hty",
+  storageBucket:"personal-apps-hty.firebasestorage.app",
+  messagingSenderId:"1094404789428",
+  appId:"1:1094404789428:web:87efdfbbb9bc08a00433e1"
 };
+const fb = initializeApp(cfg);
+const auth = getAuth(fb);
+const db   = getFirestore(fb);
 
-const fbApp = initializeApp(firebaseConfig);
-const auth  = getAuth(fbApp);
-const db    = getFirestore(fbApp);
-let uid = null;
+// uid 전역 노출
+let _uid = null;
+const uDoc  = (...p) => doc(db,'users',_uid,...p);
+const uColl = (...p) => collection(db,'users',_uid,...p);
 
-const uDoc  = (...p) => doc(db,'users',uid,...p);
-const uColl = (...p) => collection(db,'users',uid,...p);
+// ── FB API를 window에 노출 (일반 스크립트에서 호출 가능) ──
+window.FB = {
+  ready: false,
+  async loadChars(){
+    const d = await getDoc(uDoc('ww','chars'));
+    return d.exists() ? d.data().list.map(c=>({attr:'회절',owned:true,memo:'',...c})) : null;
+  },
+  async saveChars(list){ await setDoc(uDoc('ww','chars'),{list}); },
+  async loadSeasons(){
+    const q = query(uColl('ww','seasons'), orderBy('ts','asc'));
+    const s = await getDocs(q);
+    return s.docs.map(d=>({id:d.id,...d.data()}));
+  },
+  async addSeason(data){
+    const ref = await addDoc(uColl('ww','seasons'),{...data, ts:serverTimestamp()});
+    return ref.id;
+  },
+  async updateSeason(id,data){ await updateDoc(uDoc('ww','seasons',id), data); },
+  async deleteSeason(id){ await deleteDoc(uDoc('ww','seasons',id)); },
+  async loadSeasonData(sid){
+    const d = await getDoc(uDoc('ww','seasons',sid,'data','main'));
+    return d.exists() ? d.data() : null;
+  },
+  async saveSeasonData(sid,data){ await setDoc(uDoc('ww','seasons',sid,'data','main'), data); },
+  async loadSaves(){
+    const q = query(uColl('ww','saves'), orderBy('ts','desc'));
+    const s = await getDocs(q);
+    return s.docs.map(d=>({id:d.id,...d.data()}));
+  },
+  async addSave(data){
+    await addDoc(uColl('ww','saves'),{...data, ts:serverTimestamp()});
+  },
+  async deleteSave(id){ await deleteDoc(uDoc('ww','saves',id)); },
+};
 
 window.signInGoogle = async () => {
   try { await signInWithPopup(auth, new GoogleAuthProvider()); }
-  catch(e){ showToast('로그인 실패'); }
+  catch(e){ showToast('로그인 실패: '+e.code); }
 };
 window.doSignOut = async () => {
-  await fbSignOut(auth); uid=null;
+  await fbSignOut(auth); _uid=null; window.FB.ready=false;
   document.getElementById('app').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
 };
 
 onAuthStateChanged(auth, async user => {
   if(user){
-    uid=user.uid;
+    _uid = user.uid;
+    window.FB.ready = true;
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('app').style.display='block';
-    document.getElementById('userAvatar').src=user.photoURL||'';
-    await loadAll();
+    document.getElementById('userAvatar').src = user.photoURL||'';
+    await appInit();
   } else {
     document.getElementById('loginScreen').style.display='flex';
     document.getElementById('app').style.display='none';
   }
 });
-
-// ── 로드 ──
-async function loadAll(){
-  // 공명자
-  const cd = await getDoc(uDoc('ww','chars'));
-  chars = cd.exists() ? cd.data().list.map(c=>({attr:'회절',owned:true,memo:'',...c})) : DC.map(c=>({...c}));
-  if(!cd.exists()) await saveChars();
-
-  // 시즌 목록
-  const sq = query(uColl('ww','seasons'), orderBy('ts','asc'));
-  const ss = await getDocs(sq);
-  seasons = ss.docs.map(d=>({id:d.id,...d.data()}));
-
-  if(seasons.length>0){
-    curSeasonId = seasons[0].id;
-    await loadSeason(curSeasonId);
-  }
-  renderSeasonBar();
-  renderAll();
-}
-
-async function loadSeason(sid){
-  const sd = await getDoc(uDoc('ww','seasons',sid,'data','main'));
-  if(sd.exists()){
-    const d=sd.data();
-    parties = d.parties||[{name:'파티 1',slots:[null,null,null],buffIdx:null}];
-    buffs   = d.buffs||[null,null,null,null];
-    bosses  = d.bosses||[];
-  } else {
-    parties=[{name:'파티 1',slots:[null,null,null],buffIdx:null}];
-    buffs=[null,null,null,null];
-    bosses=[];
-  }
-}
-
-async function saveChars(){ await setDoc(uDoc('ww','chars'),{list:chars}); }
-async function saveSeason(){
-  if(!curSeasonId) return;
-  await setDoc(uDoc('ww','seasons',curSeasonId,'data','main'),{parties,buffs,bosses});
-}
-async function persist(){ await saveSeason(); }
-
-// 시즌 CRUD
-window.addSeason = async () => {
-  const name=document.getElementById('newSeasonName').value.trim();
-  if(!name){showToast('시즌 이름을 입력하세요');return;}
-  const start=document.getElementById('newSeasonStart').value;
-  const end  =document.getElementById('newSeasonEnd').value;
-  const ref=await addDoc(uColl('ww','seasons'),{name,start,end,ts:serverTimestamp()});
-  seasons.push({id:ref.id,name,start,end});
-  document.getElementById('newSeasonName').value='';
-  document.getElementById('newSeasonStart').value='';
-  document.getElementById('newSeasonEnd').value='';
-  if(!curSeasonId){ curSeasonId=ref.id; await loadSeason(curSeasonId); }
-  renderSeasonBar(); renderSeasonList(); renderAll();
-  showToast(`${name} 추가됨`);
-};
-window.deleteSeason = async (id) => {
-  if(!confirm('이 시즌을 삭제할까요?')) return;
-  await deleteDoc(uDoc('ww','seasons',id));
-  seasons=seasons.filter(s=>s.id!==id);
-  if(curSeasonId===id){
-    curSeasonId=seasons[0]?.id||null;
-    if(curSeasonId) await loadSeason(curSeasonId);
-    else { parties=[]; buffs=[null,null,null,null]; bosses=[]; }
-  }
-  renderSeasonBar(); renderSeasonList(); renderAll();
-};
-
-// 파티 저장
-window.doSave = async () => {
-  const name=document.getElementById('saveName').value.trim()||`편성 ${new Date().toLocaleDateString('ko')}`;
-  await addDoc(uColl('ww','saves'),{
-    name, parties:JSON.parse(JSON.stringify(parties)),
-    seasonId:curSeasonId, date:new Date().toLocaleString('ko'), ts:serverTimestamp()
-  });
-  document.getElementById('saveName').value='';
-  renderSavesList(); showToast(`"${name}" 저장됨`);
-};
-window.loadSave = async (id) => {
-  const d=await getDoc(doc(db,'users',uid,'ww','saves',id));
-  if(d.exists()){ parties=d.data().parties; closeSaves(); await saveSeason(); renderAll(); showToast('불러옴'); }
-};
-window.delSave = async (id) => {
-  await deleteDoc(doc(db,'users',uid,'ww','saves',id));
-  renderSavesList();
-};
-window.renderSavesList = async () => {
-  const q=query(uColl('ww','saves'),orderBy('ts','desc'));
-  const snap=await getDocs(q);
-  const list=document.getElementById('savesList');
-  if(snap.empty){list.innerHTML='<p style="font-size:13px;color:var(--text3)">저장된 편성 없음</p>';return;}
-  list.innerHTML=snap.docs.map(d=>{
-    const s=d.data();
-    const sn=seasons.find(x=>x.id===s.seasonId);
-    return `<div class="si">
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px">${s.name}</div>
-        <div style="font-size:11px;color:var(--text3)">${s.date}${sn?' · '+sn.name:''}</div>
-      </div>
-      <button class="btn btn-sm btn-icon" onclick="loadSave('${d.id}')"><i class="ti ti-upload"></i></button>
-      <button class="btn btn-sm btn-icon" onclick="delSave('${d.id}')"><i class="ti ti-trash"></i></button>
-    </div>`;
-  }).join('');
-};
-
-window._persist     = persist;
-window._saveChars   = saveChars;
-window._saveSeason  = saveSeason;
-window._loadSeason  = loadSeason;
-window._getDocs     = getDocs;
-window._deleteDoc   = deleteDoc;
-window._addDoc      = addDoc;
-window._serverTS    = serverTimestamp;
 </script>
 
+<!-- ══ 앱 로직 ══ -->
 <script>
-// ══════════════════════════════════════
-//  앱 상태
-// ══════════════════════════════════════
 const ATTRS={
   '응결':{bg:'#1a3a52',text:'#7ecdf5'},
   '용융':{bg:'#3d2010',text:'#f5a35a'},
@@ -641,13 +571,147 @@ const DC=[
   {name:'양양',color:6,dupe:false,star5:false,attr:'기류',img:null,owned:true,memo:''},
 ];
 
+// ── 상태 ──
 let chars=[], parties=[], buffs=[null,null,null,null], bosses=[];
-let seasons=[], curSeasonId=null;
-let editCharIdx=null, memoIdx=null, editBossIdx=null, curFilter='all';
+let seasons=[], curSid=null;
+let editCharIdx=null, memoIdx=null, editBossIdx=null, editBuffIdx=null, editSid=null;
+let curFilter='all';
 let nC=COLS[0],nA='회절',eC=COLS[0],eA='회절',nUp=null,eUp=null;
-let bossC=COLS[0], bossUp=null;
+let bossC=COLS[0],bossUp=null;
 
-// ── 헬퍼 ──
+// ── 초기화 ──
+async function appInit(){
+  const saved = await window.FB.loadChars();
+  chars = saved || DC.map(c=>({...c}));
+  if(!saved) await window.FB.saveChars(chars);
+  seasons = await window.FB.loadSeasons();
+  if(seasons.length>0){
+    curSid = seasons[0].id;
+    await loadSeasonData(curSid);
+  }
+  renderSeasonBar();
+  renderAll();
+}
+
+async function loadSeasonData(sid){
+  const d = await window.FB.loadSeasonData(sid);
+  if(d){
+    parties = d.parties || [{name:'파티 1',slots:[null,null,null],buffIdx:null}];
+    buffs   = d.buffs   || [null,null,null,null];
+    bosses  = d.bosses  || [];
+  } else {
+    parties=[{name:'파티 1',slots:[null,null,null],buffIdx:null}];
+    buffs=[null,null,null,null];
+    bosses=[];
+  }
+}
+async function saveSeason(){ if(curSid) await window.FB.saveSeasonData(curSid,{parties,buffs,bosses}); }
+async function saveChars(){ await window.FB.saveChars(chars); }
+
+// ── 렌더 전체 ──
+function renderAll(){
+  const has = !!curSid;
+  document.getElementById('noSeason').style.display  = has?'none':'block';
+  document.getElementById('mainLayout').style.display= has?'grid':'none';
+  if(!has) return;
+  renderPool(); renderParties(); renderInfo(); renderBuffGrid(); renderBossList();
+}
+
+// ── 시즌바 ──
+function renderSeasonBar(){
+  const bar = document.getElementById('seasonBar');
+  const tabs = seasons.map(s=>{
+    const period = s.start&&s.end ? ` <span style="font-size:10px;opacity:.65">${s.start.slice(5)}~${s.end.slice(5)}</span>` : '';
+    return `<button class="s-tab${s.id===curSid?' active':''}" onclick="switchSeason('${s.id}')">${s.name}${period}</button>`;
+  }).join('');
+  bar.innerHTML = tabs + `<button class="s-tab" style="border-style:dashed;color:var(--text3)" onclick="openSeasonMgr()"><i class="ti ti-settings-2"></i> 시즌 관리</button>`;
+}
+
+async function switchSeason(sid){
+  curSid = sid;
+  await loadSeasonData(sid);
+  renderSeasonBar(); renderAll();
+}
+
+// ── 시즌 관리 ──
+function openSeasonMgr(){
+  document.getElementById('newSName').value='';
+  document.getElementById('newSStart').value='';
+  document.getElementById('newSEnd').value='';
+  renderSeasonList();
+  document.getElementById('seasonMgrModal').classList.add('open');
+}
+
+function renderSeasonList(){
+  const el = document.getElementById('seasonList');
+  if(!seasons.length){ el.innerHTML='<p style="font-size:13px;color:var(--text3)">등록된 시즌 없음</p>'; return; }
+  el.innerHTML = seasons.map(s=>{
+    const period = s.start&&s.end ? `<span style="font-size:11px;color:var(--text3);display:block;margin-top:2px">${s.start} ~ ${s.end}</span>` : '';
+    return `<div class="season-row">
+      <div style="flex:1;min-width:0">
+        <span style="font-size:13px;font-weight:500">${s.name}</span>${period}
+      </div>
+      <button class="btn btn-sm btn-icon" onclick="openSeasonEdit('${s.id}')" title="편집"><i class="ti ti-edit"></i></button>
+      <button class="btn btn-sm btn-icon" onclick="deleteSeason('${s.id}')" title="삭제"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }).join('');
+}
+
+async function addSeason(){
+  const name = document.getElementById('newSName').value.trim();
+  if(!name){ showToast('시즌 이름을 입력하세요'); return; }
+  const start = document.getElementById('newSStart').value;
+  const end   = document.getElementById('newSEnd').value;
+  const id = await window.FB.addSeason({name, start:start||'', end:end||''});
+  const newS = {id, name, start:start||'', end:end||''};
+  seasons.push(newS);
+  if(!curSid){
+    curSid = id;
+    await loadSeasonData(id);
+  }
+  document.getElementById('newSName').value='';
+  document.getElementById('newSStart').value='';
+  document.getElementById('newSEnd').value='';
+  renderSeasonList();
+  renderSeasonBar();
+  renderAll();
+  showToast(`${name} 추가됨`);
+}
+
+function openSeasonEdit(sid){
+  editSid = sid;
+  const s = seasons.find(x=>x.id===sid);
+  document.getElementById('editSName').value  = s.name;
+  document.getElementById('editSStart').value = s.start||'';
+  document.getElementById('editSEnd').value   = s.end||'';
+  document.getElementById('seasonEditModal').classList.add('open');
+}
+
+async function saveSeasonEdit(){
+  const s = seasons.find(x=>x.id===editSid);
+  s.name  = document.getElementById('editSName').value.trim()||s.name;
+  s.start = document.getElementById('editSStart').value;
+  s.end   = document.getElementById('editSEnd').value;
+  await window.FB.updateSeason(editSid,{name:s.name,start:s.start,end:s.end});
+  closeM('seasonEditModal');
+  renderSeasonList();
+  renderSeasonBar();
+  showToast('시즌 수정됨');
+}
+
+async function deleteSeason(sid){
+  if(!confirm('이 시즌을 삭제할까요?')) return;
+  await window.FB.deleteSeason(sid);
+  seasons = seasons.filter(s=>s.id!==sid);
+  if(curSid===sid){
+    curSid = seasons[0]?.id||null;
+    if(curSid) await loadSeasonData(curSid);
+    else { parties=[]; buffs=[null,null,null,null]; bosses=[]; }
+  }
+  renderSeasonList(); renderSeasonBar(); renderAll();
+}
+
+// ── 공명자 풀 ──
 function cc(c){ return (c.attr&&ATTRS[c.attr])?ATTRS[c.attr]:COLS[c.color%COLS.length]; }
 function mkBg(c,w,h){
   const col=cc(c);
@@ -656,53 +720,20 @@ function mkBg(c,w,h){
   if(c.img) return `<div style="width:${w}px;height:${h}px;position:relative;overflow:hidden;background:${col.bg}">${fb}<img src="${c.img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;z-index:1" onerror="this.style.display='none'"><div style="position:absolute;inset:0;z-index:2;pointer-events:none">${badge}</div></div>`;
   return `<div style="width:${w}px;height:${h}px;position:relative;overflow:hidden;background:${col.bg};display:flex;align-items:center;justify-content:center;font-size:${Math.floor(w*.28)}px;font-weight:500;color:${col.text}">${c.name.slice(0,2)}${badge}</div>`;
 }
-function mkColorBg(col,w,h,label){
-  return `<div style="width:${w}px;height:${h}px;display:flex;align-items:center;justify-content:center;font-size:${Math.floor(w*.3)}px;font-weight:500;background:${col.bg};color:${col.text}">${label||'?'}</div>`;
-}
-function getUsed(){
-  const u={};
-  parties.forEach(p=>p.slots.forEach(s=>{if(s!=null)u[s]=(u[s]||0)+1;}));
-  return u;
-}
+function getUsed(){ const u={}; parties.forEach(p=>p.slots.forEach(s=>{if(s!=null)u[s]=(u[s]||0)+1;})); return u; }
 
-// ── 렌더 메인 ──
-function renderAll(){
-  const hasSeason=!!curSeasonId;
-  document.getElementById('noSeason').style.display=hasSeason?'none':'block';
-  document.getElementById('mainLayout').style.display=hasSeason?'grid':'none';
-  if(!hasSeason) return;
-  renderPool(); renderParties(); renderInfo(); renderBuffGrid(); renderBossList();
-}
-
-// ── 시즌바 ──
-function renderSeasonBar(){
-  const bar=document.getElementById('seasonBar');
-  const tabs=seasons.map(s=>{
-    const period=s.start&&s.end?`<span style="font-size:10px;opacity:.7"> ${s.start.slice(5)}~${s.end.slice(5)}</span>`:'';
-    return `<button class="season-tab${s.id===curSeasonId?' active':''}" onclick="switchSeason('${s.id}')">${s.name}${period}</button>`;
-  }).join('');
-  bar.innerHTML=tabs+`<button class="season-add-btn" onclick="openSeasonMgr()"><i class="ti ti-settings-2"></i></button>`;
-}
-
-window.switchSeason = async (sid) => {
-  curSeasonId=sid;
-  await window._loadSeason(sid);
-  renderSeasonBar(); renderAll();
-};
-
-// ── 공명자 풀 ──
 function renderPool(){
   const used=getUsed(); let html='';
   const rT=(fn,lbl,lc)=>{
     if(!chars.some(c=>fn(c)&&c.owned)) return;
-    html+=`<p class="section-title"><span style="color:${lc}">${lbl}</span></p><div class="char-grid">`;
+    html+=`<p class="sec-title"><span style="color:${lc}">${lbl}</span></p><div class="char-grid">`;
     chars.forEach((c,i)=>{
       if(!fn(c)||!c.owned) return;
       const ex=(used[i]||0)>=(c.dupe?2:1);
       html+=`<div class="char-card${c.star5?' star5':''}${ex?' exhausted':''}" onclick="tip(${i})">
         ${c.star5?'<div class="star5-corner"></div>':''}${c.dupe?'<span class="dupe-tag">×2</span>':''}
         ${c.memo?'<div class="memo-dot"></div>':''}
-        <div class="portrait-wrap">${mkBg(c,64,64)}</div>
+        <div class="portrait-wrap">${mkBg(c,63,63)}</div>
         <div class="char-name">${c.name}</div>
       </div>`;
     });
@@ -717,16 +748,14 @@ function tip(i){ showToast(`${chars[i].name} — 파티 슬롯을 클릭해 배�
 // ── 파티 ──
 function renderParties(){
   const used=getUsed();
-  const validBuffs=buffs.filter(Boolean);
   document.getElementById('partiesArea').innerHTML=parties.map((p,pi)=>{
     const slots=p.slots.map((s,si)=>{
       if(s!==null&&chars[s]){
-        const c=chars[s];
-        const mp=c.memo?c.memo.split('\n')[0]:'';
+        const c=chars[s], mp=c.memo?c.memo.split('\n')[0]:'';
         return `<div class="slot filled${c.star5?' is5':''}" onclick="openSlot(${pi},${si})">
-          <div class="slot-portrait">${mkBg(c,70,64)}</div>
+          <div class="slot-portrait">${mkBg(c,70,62)}</div>
           <div class="slot-name">${c.name}</div>
-          ${mp?`<div class="slot-memo" title="${c.memo.replace(/"/g,"'")}">${mp}</div>`:''}
+          ${mp?`<div class="slot-memo">${mp}</div>`:''}
           <button class="rm" onclick="event.stopPropagation();rmSlot(${pi},${si})">×</button>
         </div>`;
       }
@@ -735,25 +764,17 @@ function renderParties(){
         <span style="font-size:9px;color:var(--text3);margin-top:3px">배치</span>
       </div>`;
     }).join('');
-
-    // 버프 선택 드롭다운
-    const buffOpts=`<option value="">버프 없음</option>`+
-      buffs.map((b,bi)=>b?`<option value="${bi}"${p.buffIdx===bi?' selected':''}>${b.icon||''}${b.name}</option>`:'').join('');
-    const selBuff=p.buffIdx!=null&&buffs[p.buffIdx]?buffs[p.buffIdx]:null;
-    const buffBar=selBuff?`<div class="applied-buff" style="background:var(--bg4)">
-      <span style="font-size:14px">${selBuff.icon||'🎯'}</span>
-      <span style="font-size:11px;color:var(--text2)">${selBuff.name}</span>
-    </div>`:'';
-
+    const buffOpts='<option value="">버프 없음</option>'+buffs.map((b,bi)=>b?`<option value="${bi}"${p.buffIdx===bi?' selected':''}>${b.icon||''}${b.name}</option>`:'').join('');
+    const selB=p.buffIdx!=null&&buffs[p.buffIdx]?buffs[p.buffIdx]:null;
     return `<div class="party-row">
       <div class="party-header">
         <span style="font-size:11px;color:var(--text3);font-weight:500">#${pi+1}</span>
         <input class="party-name-input" value="${p.name}" oninput="renameParty(${pi},this.value)">
-        ${validBuffs.length?`<select class="buff-select" onchange="setPartyBuff(${pi},this.value)">${buffOpts}</select>`:''}
-        ${parties.length>1?`<button class="remove-party" onclick="rmParty(${pi})"><i class="ti ti-trash"></i></button>`:''}
+        ${buffs.some(Boolean)?`<select class="buff-sel" onchange="setPartyBuff(${pi},this.value)">${buffOpts}</select>`:''}
+        ${parties.length>1?`<button class="rm-party" onclick="rmParty(${pi})"><i class="ti ti-trash"></i></button>`:''}
       </div>
       <div class="slots">${slots}</div>
-      ${buffBar}
+      ${selB?`<div class="applied-buff"><span style="font-size:14px">${selB.icon||'🎯'}</span><span style="font-size:11px;color:var(--text2)">${selB.name}</span></div>`:''}
     </div>`;
   }).join('');
 }
@@ -762,11 +783,11 @@ function renderInfo(){
   document.getElementById('info').textContent=t?`${t}명 배치 중`:'';
 }
 
-async function addParty(){ parties.push({name:`파티 ${parties.length+1}`,slots:[null,null,null],buffIdx:null}); renderAll(); await window._saveSeason(); }
-async function rmParty(pi){ parties.splice(pi,1); renderAll(); await window._saveSeason(); }
-async function renameParty(pi,v){ parties[pi].name=v; await window._saveSeason(); }
-async function rmSlot(pi,si){ parties[pi].slots[si]=null; renderAll(); await window._saveSeason(); }
-async function setPartyBuff(pi,val){ parties[pi].buffIdx=val===''?null:parseInt(val); renderAll(); await window._saveSeason(); }
+async function addParty(){ parties.push({name:`파티 ${parties.length+1}`,slots:[null,null,null],buffIdx:null}); renderAll(); await saveSeason(); }
+async function rmParty(pi){ parties.splice(pi,1); renderAll(); await saveSeason(); }
+async function renameParty(pi,v){ parties[pi].name=v; await saveSeason(); }
+async function rmSlot(pi,si){ parties[pi].slots[si]=null; renderAll(); await saveSeason(); }
+async function setPartyBuff(pi,v){ parties[pi].buffIdx=v===''?null:parseInt(v); renderAll(); await saveSeason(); }
 
 // ── 슬롯 선택 ──
 function openSlot(pi,si){
@@ -783,161 +804,129 @@ function openSlot(pi,si){
         <div style="font-size:10px;padding:2px;text-align:center;line-height:1.2">${c.name}</div>
       </div>`;
     });
-    return g?`<p class="section-title" style="margin-top:10px"><span style="color:${lc}">${lbl}</span></p><div class="mcgrid">${g}</div>`:'';
+    return g?`<p class="sec-title" style="margin-top:10px"><span style="color:${lc}">${lbl}</span></p><div class="mcgrid">${g}</div>`:'';
   };
   document.getElementById('slotTiers').innerHTML=mk(c=>c.star5,'★5','var(--gold)')+mk(c=>!c.star5,'★4','var(--text2)');
   document.getElementById('slotModal').classList.add('open');
 }
-async function pickChar(pi,si,i){ parties[pi].slots[si]=i; closeSlot(); renderAll(); await window._saveSeason(); }
-function closeSlot(){ document.getElementById('slotModal').classList.remove('open'); }
+async function pickChar(pi,si,i){ parties[pi].slots[si]=i; closeM('slotModal'); renderAll(); await saveSeason(); }
 
 // ── 버프 ──
 function renderBuffGrid(){
   document.getElementById('buffGrid').innerHTML=buffs.map((b,i)=>{
-    if(b) return `<div class="buff-card" onclick="">
-      <button class="buff-edit-btn" onclick="openEditBuff(${i})"><i class="ti ti-edit"></i></button>
+    if(b) return `<div class="buff-card">
+      <button style="position:absolute;top:5px;right:5px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px" onclick="openEditBuff(${i})"><i class="ti ti-edit"></i></button>
       <div class="buff-card-icon">${b.icon||'🎯'}</div>
       <div class="buff-card-name">${b.name}</div>
       <div class="buff-card-desc">${b.desc||''}</div>
     </div>`;
-    return `<div class="buff-card buff-slot-empty" onclick="openBuffMgr()">
-      <i class="ti ti-plus" style="font-size:18px;color:var(--text3)"></i>
-      <span>버프 추가</span>
-    </div>`;
+    return `<div class="buff-card buff-empty" onclick="openBuffMgr()"><i class="ti ti-plus" style="font-size:18px;color:var(--text3)"></i><span>버프 추가</span></div>`;
   }).join('');
 }
 
-function openBuffMgr(){ renderBuffEditList(); document.getElementById('buffMgrModal').classList.add('open'); }
-function closeBuffMgr(){ document.getElementById('buffMgrModal').classList.remove('open'); }
-
+function openBuffMgr(){
+  document.getElementById('bName').value='';document.getElementById('bIcon').value='';document.getElementById('bDesc').value='';
+  renderBuffEditList();
+  document.getElementById('buffMgrModal').classList.add('open');
+}
 function renderBuffEditList(){
-  const el=document.getElementById('buffEditList');
   const filled=buffs.filter(Boolean).length;
-  el.innerHTML=buffs.map((b,i)=>{
+  document.getElementById('buffEditList').innerHTML=buffs.map((b,i)=>{
     if(!b) return '';
     return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">
-      <span style="font-size:18px;flex-shrink:0">${b.icon||'🎯'}</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:500">${b.name}</div>
-        <div style="font-size:11px;color:var(--text3)">${b.desc||''}</div>
-      </div>
+      <span style="font-size:18px">${b.icon||'🎯'}</span>
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">${b.name}</div><div style="font-size:11px;color:var(--text3)">${b.desc||''}</div></div>
       <button class="btn btn-sm btn-icon" onclick="openEditBuff(${i})"><i class="ti ti-edit"></i></button>
       <button class="btn btn-sm btn-icon" onclick="removeBuff(${i})"><i class="ti ti-trash"></i></button>
     </div>`;
   }).join('')||'<p style="font-size:13px;color:var(--text3);padding:6px 0">등록된 버프 없음</p>';
-  document.getElementById('buffAddForm').style.display=filled>=4?'none':'flex';
+  document.getElementById('buffAddArea').style.display=filled>=4?'none':'block';
 }
-
-window.addBuff = async () => {
+async function addBuff(){
   const name=document.getElementById('bName').value.trim();
   if(!name){showToast('버프 이름을 입력하세요');return;}
   const slot=buffs.findIndex(b=>!b);
-  if(slot===-1){showToast('버프 슬롯이 꽉 찼습니다 (최대 4개)');return;}
+  if(slot===-1){showToast('최대 4개');return;}
   buffs[slot]={name,icon:document.getElementById('bIcon').value.trim(),desc:document.getElementById('bDesc').value.trim()};
   document.getElementById('bName').value='';document.getElementById('bIcon').value='';document.getElementById('bDesc').value='';
-  renderBuffEditList(); renderBuffGrid(); renderParties(); await window._saveSeason(); showToast('버프 추가됨');
-};
-
-let editBuffIdx=null;
-function openEditBuff(i){ editBuffIdx=i; const b=buffs[i]; document.getElementById('bName').value=b.name; document.getElementById('bIcon').value=b.icon||''; document.getElementById('bDesc').value=b.desc||''; openBuffMgr(); }
-window.removeBuff = async (i) => {
-  buffs[i]=null;
-  parties.forEach(p=>{if(p.buffIdx===i)p.buffIdx=null;});
-  renderBuffEditList(); renderBuffGrid(); renderParties(); await window._saveSeason();
-};
+  renderBuffEditList();renderBuffGrid();renderParties();await saveSeason();showToast('버프 추가됨');
+}
+function openEditBuff(i){
+  editBuffIdx=i; const b=buffs[i];
+  document.getElementById('ebName').value=b.name;document.getElementById('ebIcon').value=b.icon||'';document.getElementById('ebDesc').value=b.desc||'';
+  document.getElementById('buffEditModal').classList.add('open');
+}
+async function saveBuffEdit(){
+  const b=buffs[editBuffIdx];
+  b.name=document.getElementById('ebName').value.trim()||b.name;
+  b.icon=document.getElementById('ebIcon').value.trim();
+  b.desc=document.getElementById('ebDesc').value.trim();
+  closeM('buffEditModal');renderBuffEditList();renderBuffGrid();renderParties();await saveSeason();showToast('버프 수정됨');
+}
+async function removeBuff(i){
+  buffs[i]=null; parties.forEach(p=>{if(p.buffIdx===i)p.buffIdx=null;});
+  renderBuffEditList();renderBuffGrid();renderParties();await saveSeason();
+}
 
 // ── 보스 ──
 function renderBossList(){
   const el=document.getElementById('bossList');
-  if(!bosses.length){ el.innerHTML='<p style="font-size:13px;color:var(--text3)">등록된 보스 없음</p>'; return; }
+  if(!bosses.length){el.innerHTML='<p style="font-size:13px;color:var(--text3)">등록된 보스 없음</p>';return;}
   el.innerHTML=bosses.map((b,i)=>{
     const col=COLS[b.color%COLS.length];
-    const portrait=b.img
-      ?`<div class="boss-icon" style="background:${col.bg}"><img src="${b.img}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='${b.name.slice(0,1)}'"></div>`
+    const icon=b.img
+      ?`<div class="boss-icon" style="background:${col.bg}"><img src="${b.img}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='${b.name.slice(0,1)}'"></div>`
       :`<div class="boss-icon" style="background:${col.bg};color:${col.text}">${b.name.slice(0,1)}</div>`;
     return `<div class="boss-card">
-      <div class="boss-card-header">
-        ${portrait}
-        <span class="boss-name">${b.name}</span>
-        <div class="boss-actions">
-          <button class="btn btn-sm btn-icon" onclick="openEditBoss(${i})"><i class="ti ti-edit"></i></button>
-          <button class="btn btn-sm btn-icon" onclick="removeBoss(${i})"><i class="ti ti-trash"></i></button>
-        </div>
+      <div class="boss-hd">${icon}<span style="font-size:13px;font-weight:500;flex:1">${b.name}</span>
+        <button class="btn btn-sm btn-icon" onclick="openEditBoss(${i})"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-sm btn-icon" onclick="removeBoss(${i})"><i class="ti ti-trash"></i></button>
       </div>
-      ${b.memo?`<div class="boss-memo-text">${b.memo}</div>`:''}
+      ${b.memo?`<div class="boss-memo">${b.memo}</div>`:''}
     </div>`;
   }).join('');
 }
-
-function openBossMgr(){
-  editBossIdx=null;
+function renderPillsBoss(){ document.getElementById('bossSwatches').innerHTML=COLS.map((c,i)=>`<div class="sw${bossC===c?' on':''}" style="background:${c.bg};border-color:${c.text}" onclick="bossC=COLS[${i}];renderPillsBoss()"></div>`).join(''); }
+function openAddBoss(){
+  editBossIdx=null;bossUp=null;bossC=COLS[0];
   document.getElementById('bossMgrTitle').textContent='보스 추가';
-  document.getElementById('bossName').value='';
-  document.getElementById('bossUrl').value='';
-  document.getElementById('bossFile').value='';
-  document.getElementById('bossPrev').style.display='none';
-  document.getElementById('bossMemo').value='';
-  bossUp=null; bossC=COLS[0]; renderPillsBoss();
-  document.getElementById('bossMgrModal').classList.add('open');
+  ['bossName','bossUrl','bossMemo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('bossFile').value='';document.getElementById('bossPrev').style.display='none';
+  renderPillsBoss();document.getElementById('bossMgrModal').classList.add('open');
 }
 function openEditBoss(i){
-  editBossIdx=i; const b=bosses[i];
+  editBossIdx=i;bossUp=null; const b=bosses[i];
   document.getElementById('bossMgrTitle').textContent=`편집: ${b.name}`;
   document.getElementById('bossName').value=b.name;
   document.getElementById('bossUrl').value=b.img&&!b.img.startsWith('data:')?b.img:'';
   document.getElementById('bossFile').value='';
-  const p=document.getElementById('bossPrev');
-  if(b.img){p.src=b.img;p.style.display='block';}else p.style.display='none';
+  const p=document.getElementById('bossPrev');if(b.img){p.src=b.img;p.style.display='block';}else p.style.display='none';
   document.getElementById('bossMemo').value=b.memo||'';
-  bossUp=null; bossC=COLS[b.color%COLS.length]; renderPillsBoss();
+  bossC=COLS[b.color%COLS.length];renderPillsBoss();
   document.getElementById('bossMgrModal').classList.add('open');
 }
-function closeBossMgr(){ document.getElementById('bossMgrModal').classList.remove('open'); editBossIdx=null; bossUp=null; }
-window.saveBoss = async () => {
+async function saveBoss(){
   const name=document.getElementById('bossName').value.trim();
   if(!name){showToast('보스 이름을 입력하세요');return;}
   const url=document.getElementById('bossUrl').value.trim();
   const boss={name,img:bossUp||url||null,color:COLS.indexOf(bossC),memo:document.getElementById('bossMemo').value.trim()};
-  if(editBossIdx===null) bosses.push(boss);
-  else bosses[editBossIdx]=boss;
-  closeBossMgr(); renderBossList(); await window._saveSeason(); showToast('저장됨');
-};
-window.removeBoss = async (i) => { bosses.splice(i,1); renderBossList(); await window._saveSeason(); };
-
+  if(editBossIdx===null) bosses.push(boss); else bosses[editBossIdx]=boss;
+  closeM('bossMgrModal');renderBossList();await saveSeason();showToast('저장됨');
+}
+async function removeBoss(i){ bosses.splice(i,1);renderBossList();await saveSeason(); }
 function prevBossUp(){
   const f=document.getElementById('bossFile').files[0];if(!f)return;
   const r=new FileReader();r.onload=e=>{bossUp=e.target.result;const el=document.getElementById('bossPrev');el.src=bossUp;el.style.display='block';document.getElementById('bossUrl').value='';};r.readAsDataURL(f);
 }
-function renderPillsBoss(){
-  document.getElementById('bossSwatches').innerHTML=COLS.map((c,i)=>`<div class="sw${bossC===c?' on':''}" style="background:${c.bg};border-color:${c.text}" onclick="bossC=COLS[${i}];renderPillsBoss()"></div>`).join('');
-}
-
-// ── 시즌 관리 ──
-function openSeasonMgr(){ renderSeasonList(); document.getElementById('seasonMgrModal').classList.add('open'); }
-function closeSeasonMgr(){ document.getElementById('seasonMgrModal').classList.remove('open'); }
-function renderSeasonList(){
-  document.getElementById('seasonList').innerHTML=seasons.length
-    ?seasons.map(s=>{
-      const period=s.start&&s.end?` <span style="font-size:11px;color:var(--text3)">${s.start} ~ ${s.end}</span>`:'';
-      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">
-        <span style="flex:1;font-size:13px">${s.name}${period}</span>
-        <button class="btn btn-sm btn-icon" onclick="deleteSeason('${s.id}')"><i class="ti ti-trash"></i></button>
-      </div>`;
-    }).join('')
-    :'<p style="font-size:13px;color:var(--text3)">등록된 시즌 없음</p>';
-}
 
 // ── 공명자 관리 ──
-function openCharMgr(){ renderCharEditList(); renderPills('n'); document.getElementById('charMgrModal').classList.add('open'); }
-function closeCharMgr(){ document.getElementById('charMgrModal').classList.remove('open'); renderAll(); }
-
+function openCharMgr(){ renderCharEditList();renderPills('n');document.getElementById('charMgrModal').classList.add('open'); }
 function setFilter(f){
   curFilter=f;
   ['all','owned','unowned'].forEach(k=>document.getElementById('f-'+k).classList.toggle('on',k===f));
   renderCharEditList();
 }
-async function setAllOwned(v){ chars.forEach(c=>c.owned=v); renderCharEditList(); renderPool(); await window._saveChars(); showToast(v?'전체 보유':'전체 해제'); }
-
+async function setAllOwned(v){ chars.forEach(c=>c.owned=v);renderCharEditList();renderPool();await saveChars();showToast(v?'전체 보유':'전체 해제'); }
 function renderCharEditList(){
   const fil=chars.map((c,i)=>({c,i})).filter(({c})=>curFilter==='all'||(curFilter==='owned'&&c.owned)||(curFilter==='unowned'&&!c.owned));
   document.getElementById('charEditList').innerHTML=fil.length
@@ -957,30 +946,26 @@ function renderCharEditList(){
     }).join('')
     :'<p style="font-size:13px;color:var(--text3);padding:8px 0">해당하는 공명자 없음</p>';
 }
-
-async function togOwned(i,v){ chars[i].owned=v; renderCharEditList(); renderPool(); await window._saveChars(); }
-async function togDupe(i){ chars[i].dupe=!chars[i].dupe; renderCharEditList(); renderPool(); await window._saveChars(); }
-async function delChar(i){ chars.splice(i,1); parties.forEach(p=>p.slots=p.slots.map(s=>s===i?null:s>i?s-1:s)); renderCharEditList(); renderAll(); await window._saveChars(); await window._saveSeason(); }
-
+async function togOwned(i,v){ chars[i].owned=v;renderCharEditList();renderPool();await saveChars(); }
+async function togDupe(i){ chars[i].dupe=!chars[i].dupe;renderCharEditList();renderPool();await saveChars(); }
+async function delChar(i){ chars.splice(i,1);parties.forEach(p=>p.slots=p.slots.map(s=>s===i?null:s>i?s-1:s));renderCharEditList();renderAll();await saveChars();await saveSeason(); }
 function openEditChar(i){
-  editCharIdx=i; eUp=null; const c=chars[i];
+  editCharIdx=i;eUp=null; const c=chars[i];
   document.getElementById('editCharTitle').textContent=`편집: ${c.name}`;
   document.getElementById('eUrl').value=c.img&&!c.img.startsWith('data:')?c.img:'';
   document.getElementById('eFile').value='';
   const p=document.getElementById('ePrev');if(c.img){p.src=c.img;p.style.display='block';}else p.style.display='none';
-  document.getElementById('eDupe').checked=c.dupe; document.getElementById('eStar5').checked=c.star5;
-  eC=COLS[c.color%COLS.length]; eA=c.attr||'회절'; renderPills('e');
+  document.getElementById('eDupe').checked=c.dupe;document.getElementById('eStar5').checked=c.star5;
+  eC=COLS[c.color%COLS.length];eA=c.attr||'회절';renderPills('e');
   document.getElementById('editCharModal').classList.add('open');
 }
 async function saveEditChar(){
   if(editCharIdx===null) return;
-  const c=chars[editCharIdx]; const url=document.getElementById('eUrl').value.trim();
-  c.img=eUp||url||null; c.color=COLS.indexOf(eC); c.attr=eA;
-  c.dupe=document.getElementById('eDupe').checked; c.star5=document.getElementById('eStar5').checked;
-  closeEditChar(); renderCharEditList(); renderAll(); await window._saveChars(); showToast(`${c.name} 저장됨`);
+  const c=chars[editCharIdx],url=document.getElementById('eUrl').value.trim();
+  c.img=eUp||url||null;c.color=COLS.indexOf(eC);c.attr=eA;
+  c.dupe=document.getElementById('eDupe').checked;c.star5=document.getElementById('eStar5').checked;
+  closeM('editCharModal');renderCharEditList();renderAll();await saveChars();showToast(`${c.name} 저장됨`);
 }
-function closeEditChar(){ document.getElementById('editCharModal').classList.remove('open'); editCharIdx=null; eUp=null; }
-
 function openMemo(i){
   memoIdx=i; const c=chars[i]; const col=cc(c);
   document.getElementById('memoCharName').textContent=c.name;
@@ -995,10 +980,8 @@ function openMemo(i){
 async function saveMemo(){
   if(memoIdx===null) return;
   chars[memoIdx].memo=document.getElementById('memoText').value.trim();
-  closeMemo(); renderAll(); await window._saveChars(); showToast('메모 저장됨');
+  closeM('memoModal');renderAll();await saveChars();showToast('메모 저장됨');
 }
-function closeMemo(){ document.getElementById('memoModal').classList.remove('open'); memoIdx=null; }
-
 function prevUp(m){
   const f=document.getElementById(m==='n'?'nFile':'eFile').files[0];if(!f)return;
   const r=new FileReader();r.onload=e=>{
@@ -1006,45 +989,60 @@ function prevUp(m){
     else{eUp=e.target.result;const el=document.getElementById('ePrev');el.src=eUp;el.style.display='block';document.getElementById('eUrl').value='';}
   };r.readAsDataURL(f);
 }
-
 async function addChar(){
-  const name=document.getElementById('nName').value.trim();
-  if(!name){showToast('이름을 입력하세요');return;}
+  const name=document.getElementById('nName').value.trim();if(!name){showToast('이름을 입력하세요');return;}
   const url=document.getElementById('nUrl').value.trim();
   chars.push({name,img:nUp||url||null,color:COLS.indexOf(nC),attr:nA,memo:'',
     owned:document.getElementById('nOwned').checked,dupe:document.getElementById('nDupe').checked,star5:document.getElementById('nStar5').checked});
   ['nName','nUrl'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('nFile').value='';document.getElementById('nPrev').style.display='none';
   document.getElementById('nOwned').checked=true;document.getElementById('nDupe').checked=false;document.getElementById('nStar5').checked=false;
-  nUp=null;nA='회절';renderPills('n');renderCharEditList();renderAll();await window._saveChars();showToast(`${name} 추가됨`);
+  nUp=null;nA='회절';renderPills('n');renderCharEditList();renderAll();await saveChars();showToast(`${name} 추가됨`);
 }
-
 function renderPills(m){
   const isN=m==='n'; const selC=isN?nC:eC,selA=isN?nA:eA;
-  const cId=isN?'nSwatches':'eSwatches',aId=isN?'nAttrs':'eAttrs';
-  document.getElementById(cId).innerHTML=COLS.map((c,i)=>`<div class="sw${selC===c?' on':''}" style="background:${c.bg};border-color:${c.text}" onclick="${isN?'nC':'eC'}=COLS[${i}];renderPills('${m}')"></div>`).join('');
-  document.getElementById(aId).innerHTML=AK.map(k=>{const a=ATTRS[k];return `<div class="ap${selA===k?' on':''}" style="background:${a.bg};color:${a.text}" onclick="${isN?'nA':'eA'}='${k}';renderPills('${m}')">${k}</div>`;}).join('');
+  document.getElementById(isN?'nSwatches':'eSwatches').innerHTML=COLS.map((c,i)=>`<div class="sw${selC===c?' on':''}" style="background:${c.bg};border-color:${c.text}" onclick="${isN?'nC':'eC'}=COLS[${i}];renderPills('${m}')"></div>`).join('');
+  document.getElementById(isN?'nAttrs':'eAttrs').innerHTML=AK.map(k=>{const a=ATTRS[k];return `<div class="ap${selA===k?' on':''}" style="background:${a.bg};color:${a.text}" onclick="${isN?'nA':'eA'}='${k}';renderPills('${m}')">${k}</div>`;}).join('');
 }
-
 function cTab(t){
   const L={list:'목록',add:'추가'};
   document.querySelectorAll('#charMgrModal .tab').forEach(el=>el.classList.toggle('active',el.textContent.trim()===L[t]));
   document.querySelectorAll('#charMgrModal .pane').forEach(el=>el.classList.remove('active'));
   document.getElementById('cpane-'+t).classList.add('active');
-  if(t==='list') renderCharEditList();
-  if(t==='add') renderPills('n');
+  if(t==='list')renderCharEditList();if(t==='add')renderPills('n');
 }
 
-function openSaves(){ window.renderSavesList(); document.getElementById('savesModal').classList.add('open'); }
-function closeSaves(){ document.getElementById('savesModal').classList.remove('open'); }
+// ── 파티 저장 ──
+function openSaves(){ renderSavesList(); document.getElementById('savesModal').classList.add('open'); }
+async function doSave(){
+  const name=document.getElementById('saveName').value.trim()||`편성 ${new Date().toLocaleDateString('ko')}`;
+  await window.FB.addSave({name,parties:JSON.parse(JSON.stringify(parties)),seasonId:curSid,date:new Date().toLocaleString('ko')});
+  document.getElementById('saveName').value='';renderSavesList();showToast(`"${name}" 저장됨`);
+}
+async function renderSavesList(){
+  const saves=await window.FB.loadSaves();
+  const list=document.getElementById('savesList');
+  if(!saves.length){list.innerHTML='<p style="font-size:13px;color:var(--text3)">저장된 편성 없음</p>';return;}
+  list.innerHTML=saves.map(s=>{
+    const sn=seasons.find(x=>x.id===s.seasonId);
+    return `<div class="si">
+      <div style="flex:1;min-width:0"><div style="font-size:13px">${s.name}</div><div style="font-size:11px;color:var(--text3)">${s.date}${sn?' · '+sn.name:''}</div></div>
+      <button class="btn btn-sm btn-icon" onclick="loadSave('${s.id}')"><i class="ti ti-upload"></i></button>
+      <button class="btn btn-sm btn-icon" onclick="delSave('${s.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }).join('');
+}
+async function loadSave(id){
+  const saves=await window.FB.loadSaves();const s=saves.find(x=>x.id===id);
+  if(s){parties=s.parties;closeM('savesModal');await saveSeason();renderAll();showToast('불러옴');}
+}
+async function delSave(id){ await window.FB.deleteSave(id);renderSavesList(); }
 
+// ── 유틸 ──
+function closeM(id){ document.getElementById(id).classList.remove('open'); }
 function showToast(msg){ const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200); }
 
-document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{
-  if(e.target!==m)return;
-  const fn={slotModal:closeSlot,charMgrModal:closeCharMgr,editCharModal:closeEditChar,memoModal:closeMemo,seasonMgrModal:closeSeasonMgr,buffMgrModal:closeBuffMgr,bossMgrModal:closeBossMgr,savesModal:closeSaves};
-  (fn[m.id]||closeSlot)();
-}));
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }));
 </script>
 </body>
 </html>
