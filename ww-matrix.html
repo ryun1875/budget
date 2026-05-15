@@ -444,42 +444,47 @@ const auth = getAuth(fb);
 const db   = getFirestore(fb);
 
 let _uid = null;
-const uDoc  = (...p) => { if(!_uid) throw new Error('not-authenticated'); return doc(db,'users',_uid,...p); };
-const uColl = (...p) => { if(!_uid) throw new Error('not-authenticated'); return collection(db,'users',_uid,...p); };
+// Firestore 경로 헬퍼
+// doc:  uDoc('chars')          → users/{uid}/ww_data/chars
+// coll: uColl('seasons')       → users/{uid}/ww_seasons  (컬렉션, 홀수 세그먼트)
+const uDoc  = (...p) => { if(!_uid) throw new Error('not-authenticated'); return doc(db,'users',_uid,'ww_data',...p); };
+const uColl = (name) => { if(!_uid) throw new Error('not-authenticated'); return collection(db,'users',_uid,'ww_'+name); };
+const uSubColl = (sid, name) => { if(!_uid) throw new Error('not-authenticated'); return collection(db,'users',_uid,'ww_seasons',sid,name); };
+const uSubDoc  = (sid, ...p)  => { if(!_uid) throw new Error('not-authenticated'); return doc(db,'users',_uid,'ww_seasons',sid,...p); };
 
 // ── FB API를 window에 노출 (일반 스크립트에서 호출 가능) ──
 window.FB = {
   ready: false,
   async loadChars(){
-    const d = await getDoc(uDoc('ww','chars'));
+    const d = await getDoc(uDoc('chars'));
     return d.exists() ? d.data().list.map(c=>({attr:'회절',owned:true,memo:'',...c})) : null;
   },
-  async saveChars(list){ await setDoc(uDoc('ww','chars'),{list}); },
+  async saveChars(list){ await setDoc(uDoc('chars'),{list}); },
   async loadSeasons(){
-    const q = query(uColl('ww','seasons'), orderBy('ts','asc'));
+    const q = query(uColl('seasons'), orderBy('ts','asc'));
     const s = await getDocs(q);
     return s.docs.map(d=>({id:d.id,...d.data()}));
   },
   async addSeason(data){
-    const ref = await addDoc(uColl('ww','seasons'),{...data, ts:serverTimestamp()});
+    const ref = await addDoc(uColl('seasons'),{...data, ts:serverTimestamp()});
     return ref.id;
   },
-  async updateSeason(id,data){ await updateDoc(uDoc('ww','seasons',id), data); },
-  async deleteSeason(id){ await deleteDoc(uDoc('ww','seasons',id)); },
+  async updateSeason(id,data){ await updateDoc(doc(db,'users',_uid,'ww_seasons',id), data); },
+  async deleteSeason(id){ await deleteDoc(doc(db,'users',_uid,'ww_seasons',id)); },
   async loadSeasonData(sid){
-    const d = await getDoc(uDoc('ww','seasons',sid,'data','main'));
+    const d = await getDoc(uSubDoc(sid,'main'));
     return d.exists() ? d.data() : null;
   },
-  async saveSeasonData(sid,data){ await setDoc(uDoc('ww','seasons',sid,'data','main'), data); },
+  async saveSeasonData(sid,data){ await setDoc(uSubDoc(sid,'main'), data); },
   async loadSaves(){
-    const q = query(uColl('ww','saves'), orderBy('ts','desc'));
+    const q = query(uColl('saves'), orderBy('ts','desc'));
     const s = await getDocs(q);
     return s.docs.map(d=>({id:d.id,...d.data()}));
   },
   async addSave(data){
-    await addDoc(uColl('ww','saves'),{...data, ts:serverTimestamp()});
+    await addDoc(uColl('saves'),{...data, ts:serverTimestamp()});
   },
-  async deleteSave(id){ await deleteDoc(uDoc('ww','saves',id)); },
+  async deleteSave(id){ await deleteDoc(doc(db,'users',_uid,'ww_saves',id)); },
 };
 
 window.signInGoogle = async () => {
