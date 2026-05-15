@@ -369,7 +369,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </div>
     <div class="form-row">
       <div class="form-group"><label>날짜</label><input type="date" id="edit-date"></div>
-      <div class="form-group"><label>카테고리</label><select id="edit-cat"></select></div>
+      <div class="form-group"><label>카테고리</label><select id="edit-cat" onchange="rebuildSubCatSelect('edit-subcat',this.value)"></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>세부 카테고리</label><select id="edit-subcat"><option value="">선택 안 함</option></select></div>
     </div>
     <div class="form-row">
       <div class="form-group" style="flex:2"><label>내용</label><input type="text" id="edit-desc"></div>
@@ -587,7 +590,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         </div>
         <div class="form-row">
           <div class="form-group"><label>날짜</label><input type="date" id="inp-date"></div>
-          <div class="form-group"><label>카테고리</label><select id="inp-cat"></select></div>
+          <div class="form-group"><label>카테고리</label><select id="inp-cat" onchange="rebuildSubCatSelect('inp-subcat',this.value)"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>세부 카테고리</label><select id="inp-subcat"><option value="">선택 안 함</option></select></div>
         </div>
         <div class="form-row">
           <div class="form-group" style="flex:2"><label>내용</label><input type="text" id="inp-desc" placeholder="예: 점심 식사"></div>
@@ -745,7 +751,16 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="stat-item"><div class="s-lbl">총 지출 건수</div><div class="s-val" id="total-count">0건</div></div>
       <div class="stat-item"><div class="s-lbl">이번 달 남은 일수</div><div class="s-val" id="remain-days">—</div></div>
     </div>
-    <div class="chart-card"><h3>카테고리별 지출</h3><div class="chart-container"><canvas id="donut-chart"></canvas></div></div>
+    <div class="chart-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3>카테고리별 지출</h3>
+        <div style="display:flex;gap:4px">
+          <button id="cat-level-main" class="range-tab active" onclick="setCatLevel('main',this)">상위</button>
+          <button id="cat-level-sub" class="range-tab" onclick="setCatLevel('sub',this)">세부</button>
+        </div>
+      </div>
+      <div class="chart-container"><canvas id="donut-chart"></canvas></div>
+    </div>
     <div class="chart-card"><h3>일별 지출 추이</h3><div class="chart-container"><canvas id="bar-chart"></canvas></div></div>
     <div class="chart-card">
       <h3>월별 지출 비교</h3>
@@ -831,15 +846,48 @@ const FB={apiKey:"AIzaSyB0hxBZ4X-CB_x6DXwj73qEuJlBWp6trtw",authDomain:"personal-
 const app=initializeApp(FB),db=getFirestore(app),auth=getAuth(app),gp=new GoogleAuthProvider();
 
 const DEF_CATS=[
-  {id:'food',name:'식비',emoji:'🍱',color:'#ff6b6b'},
-  {id:'cafe',name:'카페/간식',emoji:'☕',color:'#ffb347'},
-  {id:'transport',name:'교통',emoji:'🚇',color:'#6bb5ff'},
-  {id:'shopping',name:'쇼핑',emoji:'🛍️',color:'#c8f04a'},
-  {id:'health',name:'건강/의료',emoji:'💊',color:'#a78bfa'},
-  {id:'culture',name:'문화/여가',emoji:'🎬',color:'#fb7185'},
-  {id:'beauty',name:'미용',emoji:'💄',color:'#f472b6'},
-  {id:'living',name:'생활용품',emoji:'🏠',color:'#34d399'},
-  {id:'etc',name:'기타',emoji:'📦',color:'#94a3b8'},
+  {id:'food',name:'식비',emoji:'🍱',color:'#ff6b6b',subs:[
+    {id:'food_delivery',name:'배달음식'},
+    {id:'food_out',name:'외식'},
+    {id:'food_grocery',name:'장보기'},
+    {id:'food_etc',name:'기타 식비'},
+  ]},
+  {id:'cafe',name:'카페/간식',emoji:'☕',color:'#ffb347',subs:[
+    {id:'cafe_coffee',name:'커피'},
+    {id:'cafe_snack',name:'간식/디저트'},
+  ]},
+  {id:'transport',name:'교통',emoji:'🚇',color:'#6bb5ff',subs:[
+    {id:'trans_public',name:'대중교통'},
+    {id:'trans_taxi',name:'택시'},
+    {id:'trans_fuel',name:'주유'},
+    {id:'trans_etc',name:'기타 교통'},
+  ]},
+  {id:'shopping',name:'쇼핑',emoji:'🛍️',color:'#c8f04a',subs:[
+    {id:'shop_clothes',name:'의류/패션'},
+    {id:'shop_online',name:'온라인쇼핑'},
+    {id:'shop_etc',name:'기타 쇼핑'},
+  ]},
+  {id:'health',name:'건강/의료',emoji:'💊',color:'#a78bfa',subs:[
+    {id:'health_hospital',name:'병원'},
+    {id:'health_pharmacy',name:'약국'},
+    {id:'health_fitness',name:'운동/헬스'},
+  ]},
+  {id:'culture',name:'문화/여가',emoji:'🎬',color:'#fb7185',subs:[
+    {id:'culture_movie',name:'영화/공연'},
+    {id:'culture_game',name:'게임'},
+    {id:'culture_travel',name:'여행'},
+    {id:'culture_etc',name:'기타 여가'},
+  ]},
+  {id:'beauty',name:'미용',emoji:'💄',color:'#f472b6',subs:[
+    {id:'beauty_hair',name:'미용실'},
+    {id:'beauty_cosmetic',name:'화장품'},
+  ]},
+  {id:'living',name:'생활용품',emoji:'🏠',color:'#34d399',subs:[
+    {id:'living_supply',name:'소모품'},
+    {id:'living_utility',name:'공과금'},
+    {id:'living_etc',name:'기타 생활'},
+  ]},
+  {id:'etc',name:'기타',emoji:'📦',color:'#94a3b8',subs:[]},
 ];
 const EMOJIS=['🍱','🍔','🍕','🍜','🍣','☕','🧋','🎂','🚇','🚗','🚕','✈️','🛍️','👗','👟','💄','💊','🏥','🎬','🎮','🎵','📚','🏠','🧹','⚡','💡','🐶','🌸','💰','📦','🎁','🏋️','⚽','🏊','💻','📱','🔧','🌙','☀️'];
 const COLORS=['#ff6b6b','#ff8c42','#ffb347','#ffd166','#c8f04a','#34d399','#6bb5ff','#a78bfa','#f472b6','#fb7185','#94a3b8','#4ade80','#22d3ee','#f59e0b','#ef4444','#8b5cf6'];
@@ -1054,6 +1102,36 @@ window.changeMonth=function(d){
   curMonth=`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}`;
   filterCat='all';setSyncStatus('syncing');subscribeMonth();
 };
+
+// 하위 카테고리 드롭다운 빌드
+function rebuildSubCatSelect(selId, catId){
+  const sel=document.getElementById(selId);if(!sel)return;
+  const prev=sel.value;
+  sel.innerHTML='<option value="">선택 안 함</option>';
+  const cat=CATS.find(c=>c.id===catId);
+  if(cat?.subs?.length){
+    cat.subs.forEach(s=>{
+      const o=document.createElement('option');
+      o.value=s.id;o.textContent=s.name;
+      sel.appendChild(o);
+    });
+  }
+  if(cat?.subs?.find(s=>s.id===prev))sel.value=prev;
+}
+window.rebuildSubCatSelect=rebuildSubCatSelect;
+
+// 상위 카테고리 찾기 (하위 ID로)
+function findCatBySubId(subId){
+  for(const cat of CATS){
+    if(cat.subs?.find(s=>s.id===subId))return cat;
+  }
+  return null;
+}
+// 하위 카테고리 찾기
+function findSubCat(catId, subId){
+  const cat=CATS.find(c=>c.id===catId);
+  return cat?.subs?.find(s=>s.id===subId)||null;
+}
 
 function rebuildCatSelects(){
   ['inp-cat','edit-cat','rec-cat'].forEach(id=>{
@@ -1684,14 +1762,15 @@ function renderList(){
     const rb=e.isRecurring?`<span class="rec-badge">고정</span>`:'';
     const pay=payMethods.find(p=>p.id===e.payId);
     const pb=pay?`<span style="font-size:9px;background:${pay.color||'#6bb5ff'}22;color:${pay.color||'#6bb5ff'};padding:2px 5px;border-radius:99px;border:1px solid ${pay.color||'#6bb5ff'}44">${pay.emoji||'💳'} ${pay.name}</span>`:'';
-    const loan=loans.find(l=>l.id===e.loanId);
+    const subCatObj=e.subCat?findSubCat(e.cat,e.subCat):null;
+    const subCatBadge=subCatObj?`<span style="font-size:9px;color:var(--text3);background:var(--surface2);padding:1px 5px;border-radius:99px">${subCatObj.name}</span>`:'';
     const lb=loan?`<span style="font-size:9px;background:rgba(255,107,107,.15);color:#ff6b6b;padding:2px 5px;border-radius:99px;border:1px solid rgba(255,107,107,.3)">🏦 ${loan.name}</span>`:'';
     const sb=e.tag==='store'?`<span style="font-size:9px;background:rgba(255,179,71,.15);color:#ffb347;padding:2px 5px;border-radius:99px;border:1px solid rgba(255,179,71,.3)">🏪 매장</span>`:'';
     div.innerHTML=`
       <div class="cat-dot" style="background:${cat.color}22">${cat.emoji}</div>
       <div class="exp-info">
-        <div class="exp-desc">${e.desc||cat.name} ${ib}${rb}${pb}${lb}${sb}</div>
-        <div class="exp-meta">${e.date} · ${cat.name}</div>
+        <div class="exp-desc">${e.desc||cat.name} ${ib}${rb}${pb}${lb}${sb}${subCatBadge}</div>
+        <div class="exp-meta">${e.date} · ${cat.name}${subCatObj?' > '+subCatObj.name:''}</div>
       </div>
       <div class="exp-amt">-${fmt(e.amount)}</div>
       <div class="act-btns">
@@ -1784,6 +1863,22 @@ function renderBudget(){
         <button class="act-btn del" onclick="removeFixedItem('${cat.id}',${i})">✕</button>
       </div>`).join('');
 
+    // 하위 카테고리 예산 행
+    const subRows=(cat.subs||[]).map(sub=>{
+      const subBudget=Number(budgets[sub.id])||0;
+      const subSpent=expenses.filter(e=>e.cat===cat.id&&e.subCat===sub.id).reduce((s,e)=>s+e.amount,0);
+      const subPct=subBudget>0?Math.min(Math.round(subSpent/subBudget*100),100):0;
+      return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:10px;color:var(--text3);width:10px">└</span>
+        <span style="font-size:12px;flex:1;color:var(--text2)">${sub.name}</span>
+        <span style="font-size:11px;color:var(--text3)">${fmt(subSpent)} 지출</span>
+        <input type="number" value="${subBudget||''}" placeholder="0"
+          style="width:80px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-size:11px;text-align:right;outline:none"
+          onblur="setBudget('${sub.id}',this.value)">
+        <span style="font-size:11px;color:var(--text3)">원</span>
+      </div>`;
+    }).join('');
+
     div.innerHTML=`
       <div class="budget-item-row">
         <div class="cat-dot" style="background:${cat.color}22;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">${cat.emoji}</div>
@@ -1800,6 +1895,10 @@ function renderBudget(){
         <button class="budget-expand-btn" onclick="toggleBudgetDetail('${cat.id}',this)" title="상세 펼치기">▾</button>
       </div>
       <div class="budget-detail" id="bd-${cat.id}">
+        ${cat.subs?.length?`<div style="margin-bottom:10px">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:6px">📊 세부 카테고리 예산</div>
+          ${subRows}
+        </div>`:''}
         <div style="font-size:10px;color:var(--text3);margin-bottom:6px;letter-spacing:.3px">📋 예상 지출</div>
         <div class="fixed-items" id="fi-${cat.id}">${fiRows}</div>
         ${fixedTotal>0?`<div class="fixed-total">고정 합계: <span>${fmt(fixedTotal)}</span></div>`:''}
@@ -1927,8 +2026,29 @@ async function renderChart(){
   document.getElementById('total-count').textContent=fe.length+'건';
   document.getElementById('remain-days').textContent=isThis?(dim-today.getDate())+'일':'—';
 
-  // 도넛
-  const ct=CATS.map(c=>({name:`${c.emoji} ${c.name}`,val:fe.filter(e=>e.cat===c.id).reduce((s,e)=>s+e.amount,0),color:c.color})).filter(c=>c.val>0);
+  // 도넛 - 상위/하위 전환
+  let ct;
+  if(catLevel==='sub'){
+    // 하위 카테고리별 집계
+    const subMap={};
+    fe.forEach(e=>{
+      if(e.subCat){
+        const sub=findSubCat(e.cat,e.subCat);
+        const cat=CATS.find(c=>c.id===e.cat);
+        const key=e.subCat;
+        if(!subMap[key])subMap[key]={name:sub?sub.name:e.subCat,val:0,color:cat?.color||'#94a3b8'};
+        subMap[key].val+=e.amount;
+      } else {
+        const cat=CATS.find(c=>c.id===e.cat);
+        const key='_'+e.cat;
+        if(!subMap[key])subMap[key]={name:(cat?.emoji||'')+(cat?.name||e.cat)+' (미분류)',val:0,color:cat?.color||'#94a3b8'};
+        subMap[key].val+=e.amount;
+      }
+    });
+    ct=Object.values(subMap).filter(c=>c.val>0).sort((a,b)=>b.val-a.val);
+  } else {
+    ct=CATS.map(c=>({name:`${c.emoji} ${c.name}`,val:fe.filter(e=>e.cat===c.id).reduce((s,e)=>s+e.amount,0),color:c.color})).filter(c=>c.val>0);
+  }
   if(donutChart){donutChart.destroy();donutChart=null;}
   if(ct.length){
     donutChart=new Chart(document.getElementById('donut-chart'),{type:'doughnut',
@@ -2002,7 +2122,14 @@ window.setRange=function(n,btn){
   renderCompareChart();
 };
 
-let chartStoreFilter='all'; // all / personal / store
+let chartStoreFilter='all',catLevel='main';
+
+window.setCatLevel=function(level,btn){
+  catLevel=level;
+  document.querySelectorAll('#cat-level-main,#cat-level-sub').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderChart();
+}; // all / personal / store
 
 window.setExpenseTag=function(tag){
   expenseTag=tag;
@@ -2184,17 +2311,44 @@ async function renderPayTrendChart(){
 function renderCatManage(){
   const le=document.getElementById('cat-manage-list');le.innerHTML='';
   CATS.forEach((cat,i)=>{
-    const div=document.createElement('div');div.className='cat-item';
+    const div=document.createElement('div');
+    div.style.cssText='margin-bottom:10px;background:var(--surface2);border-radius:10px;padding:10px';
+    // 상위 카테고리 행
     div.innerHTML=`
-      <div class="emoji-box" style="background:${cat.color}22" onclick="openEmojiPicker(${i})">${cat.emoji}</div>
-      <input class="cat-name-inp" value="${cat.name}" oninput="CATS[${i}].name=this.value;">
-      <div class="color-dot-btn" style="background:${cat.color}" onclick="openColorPicker(${i})"></div>
-      <button class="act-btn del" onclick="deleteCat(${i})">✕</button>`;
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+        <div class="emoji-box" style="background:${cat.color}22;flex-shrink:0" onclick="openEmojiPicker(${i})">${cat.emoji}</div>
+        <input class="cat-name-inp" value="${cat.name}" oninput="CATS[${i}].name=this.value;" style="flex:1">
+        <div class="color-dot-btn" style="background:${cat.color}" onclick="openColorPicker(${i})"></div>
+        <button class="act-btn del" onclick="deleteCat(${i})">✕</button>
+      </div>
+      <div id="subs-${i}" style="padding-left:8px;border-left:2px solid ${cat.color}44"></div>
+      <button onclick="addSubCat(${i})" style="width:100%;margin-top:6px;padding:5px;background:transparent;border:1px dashed ${cat.color}66;border-radius:7px;color:var(--text3);font-size:11px;cursor:pointer">+ 세부 카테고리 추가</button>`;
     le.appendChild(div);
+    // 하위 카테고리 행들
+    const subsEl=document.getElementById(`subs-${i}`);
+    (cat.subs||[]).forEach((sub,j)=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:5px;margin-bottom:5px';
+      row.innerHTML=`
+        <span style="font-size:11px;color:var(--text3);width:10px">└</span>
+        <input value="${sub.name}" oninput="CATS[${i}].subs[${j}].name=this.value"
+          style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:11px;outline:none">
+        <button onclick="deleteSubCat(${i},${j})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px">✕</button>`;
+      subsEl.appendChild(row);
+    });
   });
 }
+window.addSubCat=function(i){
+  if(!CATS[i].subs)CATS[i].subs=[];
+  const newId=CATS[i].id+'_'+uid().slice(0,6);
+  CATS[i].subs.push({id:newId,name:'새 세부 카테고리'});
+  renderCatManage();
+};
+window.deleteSubCat=function(i,j){
+  CATS[i].subs.splice(j,1);
+  renderCatManage();
+};
 window.addCategory=function(){
-  CATS.push({id:uid(),name:'새 카테고리',emoji:'📦',color:'#94a3b8'});
   renderCatManage();
 };
 window.deleteCat=function(i){
@@ -2278,6 +2432,8 @@ window.openEdit=function(id){
   document.getElementById('edit-amount').value=e.amount;
   rebuildCatSelects();rebuildPaySelects();rebuildLoanSelects();
   document.getElementById('edit-cat').value=e.cat;
+  rebuildSubCatSelect('edit-subcat',e.cat);
+  document.getElementById('edit-subcat').value=e.subCat||'';
   document.getElementById('edit-pay').value=e.payId||'';
   document.getElementById('edit-loan').value=e.loanId||'';
   editExpenseTag=e.tag||'personal';
@@ -2288,6 +2444,7 @@ window.saveEdit=async function(){
   if(!editId)return;
   const date=document.getElementById('edit-date').value;
   const cat=document.getElementById('edit-cat').value;
+  const subCat=document.getElementById('edit-subcat')?.value||'';
   const desc=document.getElementById('edit-desc').value.trim();
   const amount=parseInt(document.getElementById('edit-amount').value)||0;
   const payId=document.getElementById('edit-pay').value||'';
@@ -2295,7 +2452,7 @@ window.saveEdit=async function(){
   const tag=editExpenseTag||'personal';
   if(!amount){showToast('금액을 입력해주세요','warning');return;}
   try{
-    await updateDoc(doc(db,up('expenses'),editId),{date,cat,desc,amount,month:date.slice(0,7),payId,loanId,tag});
+    await updateDoc(doc(db,up('expenses'),editId),{date,cat,subCat,desc,amount,month:date.slice(0,7),payId,loanId,tag});
     closeModal('edit-modal');editId=null;showToast('수정됐어요 ✓','success');
   }catch(e){showToast('수정 실패','error');}
 };
@@ -2304,6 +2461,7 @@ window.saveEdit=async function(){
 window.addExpense=async function(){
   const date=document.getElementById('inp-date').value;
   const cat=document.getElementById('inp-cat').value;
+  const subCat=document.getElementById('inp-subcat')?.value||'';
   const desc=document.getElementById('inp-desc').value.trim();
   const total=parseInt(document.getElementById('inp-amount').value)||0;
   const payId=document.getElementById('inp-pay')?.value||'';
@@ -2330,7 +2488,7 @@ window.addExpense=async function(){
         const ma=i===0?first:base; // 첫 달은 올림 금액
         batch.set(doc(db,up('expenses'),uid()),{
           date:`${mo}-${String(dd).padStart(2,'0')}`,
-          cat,desc:desc||(CATS.find(c=>c.id===cat)?.name||''),
+          cat,subCat,desc:desc||(CATS.find(c=>c.id===cat)?.name||''),
           amount:ma,month:mo,payId,loanId,tag:expenseTag,
           installmentTotal:n,installmentCurrent:i+1,installmentGroupId:gid
         });
@@ -2338,7 +2496,7 @@ window.addExpense=async function(){
       await batch.commit();showToast(`${n}개월 할부로 추가됐어요 ✓ (1회차 ${fmt(first)})` ,'success');
       instOn=false;window.toggleInstallment();
     } else {
-      await setDoc(doc(db,up('expenses'),uid()),{date,cat,desc,amount:total,month:curMonth,payId,loanId,tag:expenseTag});
+      await setDoc(doc(db,up('expenses'),uid()),{date,cat,subCat,desc,amount:total,month:curMonth,payId,loanId,tag:expenseTag});
       const b=Number(budgets[cat])||0;
       if(b>0){
         const spent=expenses.filter(e=>e.cat===cat).reduce((s,e)=>s+e.amount,0)+total;
