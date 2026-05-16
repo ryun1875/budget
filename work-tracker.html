@@ -2701,18 +2701,16 @@ function showCalDetail(dateStr, cellEl) {
 function renderWeekSummary() {
   const container = document.getElementById('wsDays');
   if (!container) return;
-  // 이번 주 월요일 구하기
+  // 이번 주 월요일 구하기 (getMondayKey와 동일한 로직)
   const today = new Date();
-  const dow = today.getDay(); // 0=일, 1=월 ...
-  const diffToMon = dow === 0 ? -6 : 1 - dow;
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() + diffToMon); // 이번 주 월요일
+  const todayStr = today.toISOString().split('T')[0];
+  const monKey = getMondayKey(todayStr); // 이번 주 월요일 날짜 문자열
+  const weekStart = new Date(monKey + 'T00:00:00');
 
   const dayMap = {};
   records.forEach(r => { dayMap[r.date] = r; });
 
   const dayNames = ['월','화','수','목','금','토','일'];
-  const todayStr = today.toISOString().split('T')[0];
   let html = '';
   for (let i=0; i<7; i++) {
     const d = new Date(weekStart);
