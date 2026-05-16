@@ -1845,7 +1845,7 @@ document.querySelectorAll('.tab').forEach(btn => {
 
 // ── 날짜/시간 기본값 ──
 const now = new Date();
-document.getElementById('workDate').value = now.toISOString().split('T')[0];
+document.getElementById('workDate').value = toLocalDateStr(now);
 document.getElementById('startTime').value = '17:00';
 document.getElementById('endTime').value = '00:30';
 
@@ -2326,13 +2326,23 @@ function getMonthRecords() {
   }).sort((a, b) => b.date.localeCompare(a.date));
 }
 
-// 날짜가 속한 주의 월요일 날짜 문자열 반환 (주 키로 사용)
+// 로컬 기준 날짜 문자열 반환 헬퍼
+function toLocalDateStr(d) {
+  return [
+    d.getFullYear(),
+    String(d.getMonth()+1).padStart(2,'0'),
+    String(d.getDate()).padStart(2,'0')
+  ].join('-');
+}
+
+// 날짜가 속한 주의 월요일 날짜 문자열 반환 (로컬 기준)
 function getMondayKey(dateStr) {
-  const d = new Date(dateStr);
+  const parts = dateStr.split('-').map(Number);
+  const d = new Date(parts[0], parts[1]-1, parts[2]); // 로컬 기준 Date
   const day = d.getDay(); // 0=일, 1=월, ..., 6=토
-  const diff = day === 0 ? -6 : 1 - day; // 월요일로 이동
+  const diff = day === 0 ? -6 : 1 - day;
   d.setDate(d.getDate() + diff);
-  return d.toISOString().split('T')[0]; // YYYY-MM-DD
+  return toLocalDateStr(d);
 }
 
 // 월요일 키로부터 표시용 범위 문자열 반환
@@ -2403,7 +2413,7 @@ function renderRecords() {
   }
 
   // 이번 주 자동 열기 (월요일 기준)
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = toLocalDateStr(new Date());
   const todayMonKey = getMondayKey(todayStr);
   const todayMonth = new Date().getMonth();
   if (currentMonth === todayMonth && openWeekGroups.size === 0) {
@@ -2633,7 +2643,7 @@ function renderCalendar(list) {
 
   const firstDay = new Date(currentYear, currentMonth, 1).getDay();
   const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = toLocalDateStr(new Date());
 
   let html = DAYS.map(d => `<div class="cal-head">${d}</div>`).join('');
 
@@ -2702,19 +2712,13 @@ function renderWeekSummary() {
   const container = document.getElementById('wsDays');
   if (!container) return;
 
-  // 오늘 날짜 로컬 기준으로 YYYY-MM-DD 구하기
+  // 오늘 로컬 날짜
   const now = new Date();
-  const todayStr = [
-    now.getFullYear(),
-    String(now.getMonth()+1).padStart(2,'0'),
-    String(now.getDate()).padStart(2,'0')
-  ].join('-');
-
-  // 이번 주 월요일 날짜 계산 (getMondayKey 동일 로직, 로컬 기준)
-  const dow = now.getDay(); // 0=일, 1=월 ...
-  const diffToMon = dow === 0 ? -6 : 1 - dow;
-  const monDate = new Date(now);
-  monDate.setDate(now.getDate() + diffToMon);
+  const todayStr = toLocalDateStr(now);
+  // getMondayKey로 이번 주 월요일 구하기
+  const monKey = getMondayKey(todayStr);
+  const parts = monKey.split('-').map(Number);
+  const monDate = new Date(parts[0], parts[1]-1, parts[2]);
 
   const dayMap = {};
   records.forEach(r => { dayMap[r.date] = r; });
@@ -2724,11 +2728,7 @@ function renderWeekSummary() {
   for (let i = 0; i < 7; i++) {
     const d = new Date(monDate);
     d.setDate(monDate.getDate() + i);
-    const dateStr = [
-      d.getFullYear(),
-      String(d.getMonth()+1).padStart(2,'0'),
-      String(d.getDate()).padStart(2,'0')
-    ].join('-');
+    const dateStr = toLocalDateStr(d);
     const rec = dayMap[dateStr];
     const isToday = dateStr === todayStr;
     const isDayoff = rec?.isDayoff;
