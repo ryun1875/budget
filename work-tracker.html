@@ -2701,21 +2701,34 @@ function showCalDetail(dateStr, cellEl) {
 function renderWeekSummary() {
   const container = document.getElementById('wsDays');
   if (!container) return;
-  // 이번 주 월요일 구하기 (getMondayKey와 동일한 로직)
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-  const monKey = getMondayKey(todayStr); // 이번 주 월요일 날짜 문자열
-  const weekStart = new Date(monKey + 'T00:00:00');
+
+  // 오늘 날짜 로컬 기준으로 YYYY-MM-DD 구하기
+  const now = new Date();
+  const todayStr = [
+    now.getFullYear(),
+    String(now.getMonth()+1).padStart(2,'0'),
+    String(now.getDate()).padStart(2,'0')
+  ].join('-');
+
+  // 이번 주 월요일 날짜 계산 (getMondayKey 동일 로직, 로컬 기준)
+  const dow = now.getDay(); // 0=일, 1=월 ...
+  const diffToMon = dow === 0 ? -6 : 1 - dow;
+  const monDate = new Date(now);
+  monDate.setDate(now.getDate() + diffToMon);
 
   const dayMap = {};
   records.forEach(r => { dayMap[r.date] = r; });
 
   const dayNames = ['월','화','수','목','금','토','일'];
   let html = '';
-  for (let i=0; i<7; i++) {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    const dateStr = d.toISOString().split('T')[0];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monDate);
+    d.setDate(monDate.getDate() + i);
+    const dateStr = [
+      d.getFullYear(),
+      String(d.getMonth()+1).padStart(2,'0'),
+      String(d.getDate()).padStart(2,'0')
+    ].join('-');
     const rec = dayMap[dateStr];
     const isToday = dateStr === todayStr;
     const isDayoff = rec?.isDayoff;
@@ -2724,7 +2737,7 @@ function renderWeekSummary() {
     html += `<div class="ws-day ${rec&&!isDayoff?'worked':''} ${isDayoff?'dayoff-day':''} ${isToday?'today':''}">
       <div class="d-name" style="${i===6?'color:var(--accent2)':''}">${dayNames[i]}</div>
       <div class="d-dot" style="${isDayoff?'background:rgba(255,107,107,.15);border-color:rgba(255,107,107,.3);font-size:8px;color:var(--accent2)':''}">${isDayoff?'휴무':rec&&!isDayoff?h+'h':''}</div>
-      <div class="d-pay">${rec&&!isDayoff&&pay>0 ? '₩'+Math.round(pay/1000)+'k' : ''}</div>
+      <div class="d-pay">${rec&&!isDayoff&&pay>0?'₩'+Math.round(pay/1000)+'k':''}</div>
     </div>`;
   }
   container.innerHTML = html;
