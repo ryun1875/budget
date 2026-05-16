@@ -2720,10 +2720,28 @@ function renderWeekSummary() {
   const parts = monKey.split('-').map(Number);
   const monDate = new Date(parts[0], parts[1]-1, parts[2]);
 
+  // 현재 선택된 직원 기준으로 필터 (관리자가 특정 직원 선택 시)
+  const filteredRecords = isAdmin && selectedStaffUid
+    ? records.filter(r => r.ownerUid === selectedStaffUid)
+    : records;
+
   const dayMap = {};
-  records.forEach(r => { dayMap[r.date] = r; });
+  filteredRecords.forEach(r => {
+    // r.date가 정확히 'YYYY-MM-DD' 형식인지 보장
+    if (r.date && r.date.length === 10) dayMap[r.date] = r;
+  });
 
   const dayNames = ['월','화','수','목','금','토','일'];
+  // 이번 주 날짜 범위 확인
+  const weekDates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monDate);
+    d.setDate(monDate.getDate() + i);
+    weekDates.push(toLocalDateStr(d));
+  }
+  console.log('이번주 범위:', weekDates[0], '~', weekDates[6]);
+  console.log('records 날짜들:', Object.keys(dayMap).slice(0,5));
+
   let html = '';
   for (let i = 0; i < 7; i++) {
     const d = new Date(monDate);
