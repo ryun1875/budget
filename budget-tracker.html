@@ -376,7 +376,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </div>
     <div class="form-row">
       <div class="form-group"><label>결제수단</label><select id="edit-pay"></select></div>
-      <div class="form-group"><label>대출상환</label><select id="edit-loan"><option value="">해당없음</option></select></div>
     </div>
     <button class="btn-primary" onclick="saveEdit()">수정 완료</button>
   </div>
@@ -663,6 +662,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
   <!-- 목록 -->
   <div class="panel" id="panel-list">
+    <!-- 지출 유형 필터 -->
+    <div style="display:flex;gap:4px;margin-bottom:10px" id="list-type-tabs">
+      <button class="range-tab active" onclick="setListType('expense',this)">💸 지출</button>
+      <button class="range-tab" onclick="setListType('loan',this)">🏦 대출상환</button>
+      <button class="range-tab" onclick="setListType('invest',this)">📈 투자</button>
+    </div>
     <div class="cat-filter" id="cat-filter"></div>
     <div class="expense-list" id="expense-list"></div>
   </div>
@@ -1732,9 +1737,68 @@ function renderAll(){
   if(document.getElementById('panel-home').classList.contains('active'))renderHome();
 }
 
+let listType='expense';
+window.setListType=function(type,btn){
+  listType=type;
+  document.querySelectorAll('#list-type-tabs .range-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filterCat='all';
+  renderList();
+};
 function renderList(){
   if(isEditing())return;
   const fe=document.getElementById('cat-filter');fe.innerHTML='';
+  const le=document.getElementById('expense-list');le.innerHTML='';
+
+  // 대출상환 목록
+  if(listType==='loan'){
+    fe.style.display='none';
+    const items=expenses.filter(e=>e.isLoanPayment).sort((a,b)=>b.date.localeCompare(a.date));
+    if(!items.length){le.innerHTML=`<div class="empty-state"><div class="ic">🏦</div>대출 상환 기록이 없어요</div>`;return;}
+    items.forEach(e=>{
+      const loan=loans.find(l=>l.id===e.loanId);
+      const div=document.createElement('div');div.className='expense-item';
+      div.innerHTML=`
+        <div class="cat-dot" style="background:rgba(107,181,255,.15)">🏦</div>
+        <div class="exp-info">
+          <div class="exp-desc">${e.desc||loan?.name||'대출상환'}
+            <span style="font-size:9px;color:${e.isInterestOnly?'#ffb347':'var(--accent3)'};background:${e.isInterestOnly?'rgba(255,179,71,.15)':'rgba(107,181,255,.15)'};padding:2px 5px;border-radius:99px">${e.isInterestOnly?'이자':'원금'}</span>
+          </div>
+          <div class="exp-meta">${e.date}${loan?` · ${loan.name}`:''}</div>
+        </div>
+        <div class="exp-amt" style="color:var(--accent2)">-${fmt(e.amount)}</div>
+        <div class="act-btns"><button class="act-btn del" onclick="deleteExpense('${e.id}')">✕</button></div>`;
+      le.appendChild(div);
+    });
+    return;
+  }
+
+  // 투자 목록
+  if(listType==='invest'){
+    fe.style.display='none';
+    const typeColors={주식:'#c8f04a',ETF:'#6bb5ff',적금:'#34d399',예금:'#34d399',펀드:'#a78bfa',코인:'#ffb347',기타:'#94a3b8'};
+    if(!investments.length){le.innerHTML=`<div class="empty-state"><div class="ic">📈</div>투자 기록이 없어요</div>`;return;}
+    investments.slice().reverse().forEach(inv=>{
+      const color=typeColors[inv.type]||'#94a3b8';
+      const div=document.createElement('div');div.className='expense-item';
+      div.innerHTML=`
+        <div class="cat-dot" style="background:${color}22;color:${color};font-size:11px;font-weight:700">${inv.type||'투자'}</div>
+        <div class="exp-info">
+          <div class="exp-desc">${inv.name}${inv.broker?` <span style="font-size:9px;color:var(--text3);background:var(--surface2);padding:1px 5px;border-radius:99px">${inv.broker}</span>`:''}</div>
+          <div class="exp-meta">${inv.date||''} · ${inv.type||''}</div>
+        </div>
+        <div class="exp-amt" style="color:${color}">-${fmt(inv.amount)}</div>
+        <div class="act-btns">
+          <button class="act-btn" onclick="openInvEdit('${inv.id}')">✏️</button>
+          <button class="act-btn del" onclick="deleteInvestment('${inv.id}')">✕</button>
+        </div>`;
+      le.appendChild(div);
+    });
+    return;
+  }
+
+  // 일반 지출 목록
+  fe.style.display='';
   const all=document.createElement('div');
   all.className='cat-chip'+(filterCat==='all'?' active':'');
   all.textContent='전체';all.onclick=()=>{filterCat='all';renderList();};
@@ -1746,11 +1810,9 @@ function renderList(){
     chip.onclick=()=>{filterCat=c.id;renderList();};
     fe.appendChild(chip);
   });
-  const le=document.getElementById('expense-list');
-  let items=expenses.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  let items=expenses.filter(e=>!e.isLoanPayment&&!e.isInvestment).sort((a,b)=>b.date.localeCompare(a.date));
   if(filterCat!=='all')items=items.filter(e=>e.cat===filterCat);
   if(!items.length){le.innerHTML=`<div class="empty-state"><div class="ic">🗒️</div>지출 내역이 없어요</div>`;return;}
-  le.innerHTML='';
   items.forEach(e=>{
     const cat=CATS.find(c=>c.id===e.cat)||CATS[CATS.length-1];
     const div=document.createElement('div');div.className='expense-item';
@@ -2454,7 +2516,6 @@ window.openEdit=function(id){
   rebuildSubCatSelect('edit-subcat',e.cat);
   document.getElementById('edit-subcat').value=e.subCat||'';
   document.getElementById('edit-pay').value=e.payId||'';
-  document.getElementById('edit-loan').value=e.loanId||'';
   document.getElementById('edit-modal').classList.add('open');
 };
 window.saveEdit=async function(){
@@ -2465,11 +2526,10 @@ window.saveEdit=async function(){
   const desc=document.getElementById('edit-desc').value.trim();
   const amount=parseInt(document.getElementById('edit-amount').value)||0;
   const payId=document.getElementById('edit-pay').value||'';
-  const loanId=document.getElementById('edit-loan').value||'';
   const tag=editExpenseTag||'personal';
   if(!amount){showToast('금액을 입력해주세요','warning');return;}
   try{
-    await updateDoc(doc(db,up('expenses'),editId),{date,cat,subCat,desc,amount,month:date.slice(0,7),payId,loanId,tag});
+    await updateDoc(doc(db,up('expenses'),editId),{date,cat,subCat,desc,amount,month:date.slice(0,7),payId,tag});
     closeModal('edit-modal');editId=null;showToast('수정됐어요 ✓','success');
   }catch(e){showToast('수정 실패','error');}
 };
@@ -2884,7 +2944,6 @@ async function renderAsset(){
           </div>
           <div style="display:flex;gap:6px;align-items:center">
             <button onclick="openLoanEdit('${loan.id}')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 8px;color:var(--text2);font-size:11px;cursor:pointer">✏️ 수정</button>
-            <button onclick="toggleAssetForm('lp-form-${loan.id}',this)" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 8px;color:var(--text2);font-size:11px;cursor:pointer">납입 입력</button>
             <button class="act-btn del" onclick="deleteLoan('${loan.id}')">✕</button>
           </div>
         </div>
@@ -2945,24 +3004,14 @@ async function renderAsset(){
         <div style="height:5px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-bottom:8px">
           <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:99px;transition:width .5s ease"></div>
         </div>
-        <div id="lp-form-${loan.id}" style="display:none;background:var(--surface2);border-radius:9px;padding:10px;margin-bottom:8px">
-          <div style="display:flex;gap:6px;margin-bottom:6px">
-            <input type="number" id="lp-amount-${loan.id}" placeholder="납입금액 (원)" style="flex:2;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text);font-size:12px;outline:none">
-            <input type="date" id="lp-date-${loan.id}" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text);font-size:12px;outline:none">
-          </div>
-          <div style="display:flex;gap:6px">
-            <input type="text" id="lp-broker-${loan.id}" placeholder="거래처 (예: 국민은행)" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text);font-size:12px;outline:none">
-            <button style="background:var(--accent3);border:none;border-radius:7px;padding:7px 12px;color:#0f0f13;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0" onclick="addLoanPayment('${loan.id}')">납입</button>
-          </div>
-        </div>
-        <div id="lp-list-${loan.id}">
-          ${recentPays.map(p=>`
-            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);padding:3px 0;border-bottom:1px solid var(--border)">
+        <div id="lp-list-${loan.id}" style="margin-top:6px">
+          ${recentPays.length?recentPays.map(p=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--text3);padding:4px 0;border-bottom:1px solid var(--border)">
               <span>${p.date||''}${p.broker?` · ${p.broker}`:''}</span>
-              <span style="color:${p.isInterestOnly?'#ffb347':'var(--text3)'};">${p.isInterestOnly?'이자':p.payType==='principal'?'원금':'원금+이자'}</span>
+              <span style="color:${p.isInterestOnly?'#ffb347':'var(--accent3)'};">${p.isInterestOnly?'이자':'원금'}</span>
               <span style="color:var(--accent);font-family:'Gmarket Sans',sans-serif">-${fmt(p.amount)}</span>
               <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px" onclick="deleteLoanPayment('${p.id}')">✕</button>
-            </div>`).join('')}
+            </div>`).join(''):'<div style="font-size:10px;color:var(--text3);text-align:center;padding:8px">납입 기록이 없어요 · 입력 탭에서 추가하세요</div>'}
         </div>`;
       loanList.appendChild(div);
     });
