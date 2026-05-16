@@ -25,7 +25,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .google-btn{display:inline-flex;align-items:center;gap:10px;padding:12px 24px;background:#fff;color:#333;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}
 .google-btn:hover{opacity:.88}
 .google-btn img{width:20px;height:20px}
-#app{display:none;max-width:980px;margin:0 auto;padding:16px 14px 60px}
+#app{max-width:1400px;margin:0 auto;padding:12px 14px 0;height:100vh;display:none;flex-direction:column}
 .btn{padding:7px 13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:inherit;transition:background .15s}
 .btn:hover{background:var(--bg3)}
 .btn-accent{background:var(--accent2);border-color:var(--accent);color:#fff}
@@ -57,17 +57,20 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .top-bar h1{font-size:17px;font-weight:700;flex:1;min-width:0}
 .user-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover}
 /* season bar */
-.season-bar{display:flex;align-items:center;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;flex-wrap:wrap}
+.season-bar{display:flex;align-items:center;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;flex-wrap:wrap;flex-shrink:0}
 .s-tab{padding:5px 14px;border:0.5px solid var(--border2);border-radius:20px;font-size:13px;cursor:pointer;background:var(--bg3);color:var(--text2);white-space:nowrap;font-family:inherit;flex-shrink:0;transition:all .15s}
 .s-tab:hover{color:var(--text)}
 .s-tab.active{background:var(--accent2);border-color:var(--accent);color:#fff;font-weight:500}
-/* layout */
-.main-layout{display:grid;grid-template-columns:1fr 270px;gap:14px}
-@media(max-width:680px){.main-layout{grid-template-columns:1fr}}
-.left-col{min-width:0}
-.right-col{display:flex;flex-direction:column;gap:14px}
+/* 3-column layout */
+.main-layout{display:grid;grid-template-columns:220px 1fr 240px;gap:12px;height:calc(100vh - 120px);min-height:0}
+@media(max-width:900px){.main-layout{grid-template-columns:1fr;height:auto}}
+.col{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.col-inner{flex:1;overflow-y:auto;padding-right:2px}
+.col-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px;border-bottom:0.5px solid var(--border);flex-shrink:0}
+.col-header h2{font-size:13px;font-weight:600;color:var(--text)}
+.col-wrap{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius2);height:100%;display:flex;flex-direction:column;overflow:hidden}
 /* char grid */
-.char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(63px,1fr));gap:6px;margin-bottom:12px}
+.char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:5px;margin-bottom:10px}
 .char-card{border:0.5px solid var(--border);border-radius:var(--radius);text-align:center;cursor:pointer;background:var(--bg2);user-select:none;position:relative;overflow:hidden;transition:border-color .15s}
 .char-card:hover{border-color:var(--border2)}
 .char-card.star5{border-color:rgba(240,180,41,0.35)}
@@ -80,7 +83,13 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .star5-corner{position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 13px 13px 0;border-color:transparent var(--gold) transparent transparent;z-index:2}
 .char-name{font-size:10px;color:var(--text);padding:3px 2px;line-height:1.2;word-break:keep-all}
 /* parties */
-.parties-area{display:flex;flex-direction:column;gap:10px}
+.parties-area{display:flex;flex-direction:column;gap:8px}
+.party-row{touch-action:none}
+.party-row.dragging{opacity:0.45;border-style:dashed}
+.party-row.drag-over{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.drag-handle{cursor:grab;color:var(--text3);padding:0 4px;font-size:14px;flex-shrink:0;touch-action:none}
+.drag-handle:hover{color:var(--text2)}
+.drag-handle:active{cursor:grabbing}
 .party-row{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius2);padding:11px 13px}
 .party-header{display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap}
 .party-name-input{border:0.5px solid var(--border);border-radius:7px;padding:3px 8px;font-size:13px;background:var(--bg3);color:var(--text);width:110px;font-family:inherit}
@@ -162,43 +171,75 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <div class="top-bar">
     <h1>매트릭스 파티 편성</h1>
     <img class="user-avatar" id="userAvatar" src="" alt="">
-    <button class="btn btn-sm" onclick="openCharMgr()"><i class="ti ti-users"></i> 공명자 관리</button>
-    <button class="btn btn-sm" onclick="openSaves()"><i class="ti ti-folder"></i> 저장</button>
+    <button class="btn btn-sm" onclick="openSaves()"><i class="ti ti-folder"></i> 백업/복원</button>
     <button class="btn btn-icon btn-sm" onclick="doSignOut()" title="로그아웃"><i class="ti ti-logout"></i></button>
   </div>
 
   <div class="season-bar" id="seasonBar"></div>
 
-  <div id="noSeason" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 0;gap:16px">
+  <div id="noSeason" style="display:none;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px">
     <p style="color:var(--text3);font-size:14px">아직 등록된 시즌이 없어요</p>
     <button class="btn btn-accent" onclick="openSeasonMgr()"><i class="ti ti-plus"></i> 첫 시즌 추가하기</button>
   </div>
 
-  <div class="main-layout" id="mainLayout" style="display:none">
-    <div class="left-col">
-      <div id="charPoolSection"></div>
-      <div style="display:flex;gap:8px;align-items:center;margin:10px 0">
-        <button class="btn btn-accent btn-sm" onclick="addParty()"><i class="ti ti-plus"></i> 파티 추가</button>
-        <span id="info" style="font-size:12px;color:var(--text2)"></span>
-      </div>
-      <div class="parties-area" id="partiesArea"></div>
-    </div>
-    <div class="right-col">
-      <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius2);padding:13px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <span style="font-size:13px;font-weight:500">파티 버프</span>
-          <button class="btn btn-sm btn-icon" onclick="openBuffMgr()"><i class="ti ti-settings"></i></button>
+  <div class="main-layout" id="mainLayout" style="display:none;flex:1;min-height:0">
+
+    <!-- 왼쪽: 공명자 풀 -->
+    <div class="col">
+      <div class="col-wrap">
+        <div class="col-header">
+          <h2><i class="ti ti-users" style="margin-right:4px"></i>공명자</h2>
+          <button class="btn btn-sm btn-icon" onclick="openCharMgr()" title="관리"><i class="ti ti-settings"></i></button>
         </div>
-        <div class="buff-grid" id="buffGrid"></div>
-      </div>
-      <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius2);padding:13px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <span style="font-size:13px;font-weight:500">보스</span>
-          <button class="btn btn-sm" onclick="openAddBoss()"><i class="ti ti-plus"></i> 추가</button>
+        <div class="col-inner" style="padding:10px">
+          <div id="charPoolSection"></div>
         </div>
-        <div class="boss-list" id="bossList"></div>
       </div>
     </div>
+
+    <!-- 가운데: 파티 편성 -->
+    <div class="col">
+      <div class="col-wrap">
+        <div class="col-header">
+          <h2><i class="ti ti-sword" style="margin-right:4px"></i>파티 편성</h2>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span id="info" style="font-size:11px;color:var(--text2)"></span>
+            <button class="btn btn-accent btn-sm" onclick="addParty()"><i class="ti ti-plus"></i> 추가</button>
+          </div>
+        </div>
+        <div class="col-inner" style="padding:10px">
+          <div class="parties-area" id="partiesArea"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 버프 + 보스 -->
+    <div class="col">
+      <div class="col-wrap">
+        <div class="col-header">
+          <h2><i class="ti ti-shield" style="margin-right:4px"></i>시즌 정보</h2>
+        </div>
+        <div class="col-inner" style="padding:10px;display:flex;flex-direction:column;gap:14px">
+          <!-- 파티 버프 -->
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span style="font-size:12px;font-weight:500;color:var(--text2)">파티 버프</span>
+              <button class="btn btn-sm btn-icon" onclick="openBuffMgr()"><i class="ti ti-settings"></i></button>
+            </div>
+            <div class="buff-grid" id="buffGrid"></div>
+          </div>
+          <!-- 보스 -->
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span style="font-size:12px;font-weight:500;color:var(--text2)">보스</span>
+              <button class="btn btn-sm" onclick="openAddBoss()"><i class="ti ti-plus"></i> 추가</button>
+            </div>
+            <div class="boss-list" id="bossList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -528,7 +569,7 @@ onAuthStateChanged(auth, async user => {
     _uid = user.uid;
     window.FB.ready = true;
     document.getElementById('loginScreen').style.display='none';
-    document.getElementById('app').style.display='block';
+    document.getElementById('app').style.display='flex';
     document.getElementById('userAvatar').src = user.photoURL||'';
     console.log('uid set:', _uid);
     await appInit();
@@ -657,6 +698,8 @@ function renderAll(){
   if(!has) return;
   renderPool(); renderParties(); renderInfo(); renderBuffGrid(); renderBossList();
 }
+
+// renderPool은 공명자 관리 모달에서 직접 열 때도 쓰이므로 분리 유지
 
 // ── 시즌바 ──
 function renderSeasonBar(){
@@ -817,8 +860,11 @@ function renderParties(){
     }).join('');
     const buffOpts='<option value="">버프 없음</option>'+buffs.map((b,bi)=>b?`<option value="${bi}"${p.buffIdx===bi?' selected':''}>${b.icon||''}${b.name}</option>`:'').join('');
     const selB=p.buffIdx!=null&&buffs[p.buffIdx]?buffs[p.buffIdx]:null;
-    return `<div class="party-row">
+    return `<div class="party-row" draggable="true" data-pi="${pi}"
+      ondragstart="dragStart(event,${pi})" ondragover="dragOver(event,${pi})"
+      ondragleave="dragLeave(event)" ondrop="dragDrop(event,${pi})" ondragend="dragEnd()">
       <div class="party-header">
+        <span class="drag-handle" title="드래그해서 순서 변경"><i class="ti ti-grip-vertical"></i></span>
         <span style="font-size:11px;color:var(--text3);font-weight:500">#${pi+1}</span>
         <input class="party-name-input" value="${p.name}" oninput="renameParty(${pi},this.value)">
         ${buffs.some(Boolean)?`<select class="buff-sel" onchange="setPartyBuff(${pi},this.value)">${buffOpts}</select>`:''}
@@ -832,6 +878,36 @@ function renderParties(){
 function renderInfo(){
   const t=Object.values(getUsed()).reduce((a,b)=>a+b,0);
   document.getElementById('info').textContent=t?`${t}명 배치 중`:'';
+}
+
+// ── 드래그 정렬 ──
+let dragSrcIdx=null;
+function dragStart(e,pi){
+  dragSrcIdx=pi;
+  e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>e.currentTarget.classList.add('dragging'),0);
+}
+function dragOver(e,pi){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  if(pi!==dragSrcIdx) e.currentTarget.classList.add('drag-over');
+}
+function dragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+async function dragDrop(e,pi){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(dragSrcIdx===null||pi===dragSrcIdx) return;
+  const moved=parties.splice(dragSrcIdx,1)[0];
+  parties.splice(pi,0,moved);
+  dragSrcIdx=null;
+  renderAll();
+  await saveSeason();
+}
+function dragEnd(){
+  dragSrcIdx=null;
+  document.querySelectorAll('.party-row').forEach(r=>{
+    r.classList.remove('dragging','drag-over');
+  });
 }
 
 async function addParty(){ parties.push({name:`파티 ${parties.length+1}`,slots:[null,null,null],buffIdx:null}); renderAll(); await saveSeason(); }
