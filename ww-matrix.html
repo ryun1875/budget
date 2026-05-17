@@ -85,41 +85,56 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .star5-corner{position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 13px 13px 0;border-color:transparent var(--gold) transparent transparent;z-index:2}
 .char-name{font-size:10px;color:var(--text);padding:3px 2px;line-height:1.2;word-break:keep-all}
 /* parties */
-.parties-area{display:flex;flex-direction:column;gap:8px}
+.parties-area{display:flex;flex-direction:column;gap:7px}
 .party-row{touch-action:none}
 .party-row.dragging{opacity:0.45;border-style:dashed}
 .party-row.drag-over{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .drag-handle{cursor:grab;color:var(--text3);padding:0 4px;font-size:14px;flex-shrink:0;touch-action:none}
 .drag-handle:hover{color:var(--text2)}
 .drag-handle:active{cursor:grabbing}
-.party-row{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius2);padding:11px 13px}
-.party-header{display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap}
-.party-name-input{border:0.5px solid var(--border);border-radius:7px;padding:3px 8px;font-size:13px;background:var(--bg3);color:var(--text);width:110px;font-family:inherit}
+.party-row{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 10px}
+.party-header{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.party-name-input{border:0.5px solid var(--border);border-radius:6px;padding:2px 7px;font-size:12px;background:var(--bg3);color:var(--text);width:100px;font-family:inherit}
 .party-name-input:focus{outline:none;border-color:var(--border2)}
-.buff-sel{border:0.5px solid var(--border);border-radius:7px;padding:3px 7px;font-size:12px;background:var(--bg3);color:var(--text2);font-family:inherit;cursor:pointer;max-width:120px}
+.buff-sel{border:0.5px solid var(--border);border-radius:6px;padding:2px 6px;font-size:11px;background:var(--bg3);color:var(--text2);font-family:inherit;cursor:pointer;flex:1;min-width:0}
 .buff-sel:focus{outline:none;border-color:var(--accent)}
-.rm-party{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text3);padding:2px 4px;font-size:14px}
+.rm-party{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text3);padding:2px 4px;font-size:13px;flex-shrink:0}
 .rm-party:hover{color:var(--red)}
-.slots{display:flex;gap:7px;flex-wrap:wrap}
-.slot{width:70px;min-height:90px;border:1.5px dashed rgba(255,255,255,0.1);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--bg3);position:relative;overflow:hidden;transition:border-color .15s}
+.slots{display:flex;gap:6px}
+.slot{width:80px;height:98px;border:1.5px dashed rgba(255,255,255,0.1);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--bg3);position:relative;overflow:hidden;transition:border-color .15s;flex-shrink:0}
 .slot:hover{border-color:var(--border2)}
 .slot.filled{border-style:solid;border-color:var(--border);background:var(--bg2)}
 .slot.filled.is5{border-color:rgba(240,180,41,0.4)}
-.slot-portrait{width:100%;height:62px;overflow:hidden;position:relative}
+.slot-portrait{width:100%;height:68px;overflow:hidden;position:relative;flex-shrink:0}
 .slot-name{font-size:10px;text-align:center;padding:2px 2px 1px;line-height:1.2;width:100%}
-.slot-memo{font-size:9px;color:var(--text3);text-align:center;padding:0 3px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+.slot-memo{font-size:9px;color:var(--text3);text-align:center;padding:0 3px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
 .slot .rm{position:absolute;top:1px;right:2px;background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.3);font-size:11px;z-index:4;padding:1px 3px}
 .slot .rm:hover{color:var(--red)}
-.applied-buff{display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:6px;background:var(--bg4);margin-top:6px}
+.applied-buff{display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;background:var(--bg4);margin-top:5px}
+/* party record */
+.party-record{display:flex;gap:5px;align-items:center;margin-top:5px;flex-wrap:wrap}
+.party-record-field{display:flex;align-items:center;gap:4px;background:var(--bg4);border-radius:6px;padding:2px 6px}
+.party-record-label{font-size:9px;color:var(--text3);white-space:nowrap}
+.party-record-input{background:none;border:none;color:var(--text);font-size:11px;width:52px;font-family:inherit;padding:0}
+.party-record-input:focus{outline:none}
+.party-record-input::placeholder{color:var(--text3)}
+.boss-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:12px;background:var(--bg4);border:0.5px solid var(--border2);font-size:10px;cursor:pointer}
+.boss-chip.sel{background:rgba(108,142,245,0.15);border-color:var(--accent);color:var(--accent)}
+.boss-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+/* season score panel */
+.score-panel{background:var(--bg3);border-radius:var(--radius);padding:8px 10px;margin-top:2px}
+.score-total{font-size:16px;font-weight:700;color:var(--text)}
+.score-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:0.5px solid var(--border)}
+.score-row:last-child{border-bottom:none}
 /* buff */
-.buff-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.buff-card{background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius);padding:9px;position:relative;cursor:default}
-.buff-card-icon{font-size:20px;margin-bottom:3px}
-.buff-card-name{font-size:12px;font-weight:500;margin-bottom:2px}
-.buff-card-desc{font-size:10px;color:var(--text3);line-height:1.4}
-.buff-empty{border:1.5px dashed rgba(255,255,255,0.08);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:70px;cursor:pointer}
+.buff-grid{display:flex;gap:5px;flex-wrap:nowrap}
+.buff-card{background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius);padding:7px 6px;position:relative;cursor:default;flex:1;min-width:0;text-align:center}
+.buff-card-icon{font-size:16px;margin-bottom:2px}
+.buff-card-name{font-size:10px;font-weight:500;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.buff-card-desc{font-size:9px;color:var(--text3);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.buff-empty{border:1.5px dashed rgba(255,255,255,0.08);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;cursor:pointer;flex:1;border-radius:var(--radius)}
 .buff-empty:hover{border-color:var(--border2)}
-.buff-empty span{font-size:11px;color:var(--text3)}
+.buff-empty span{font-size:10px;color:var(--text3)}
 /* boss */
 .boss-list{display:flex;flex-direction:column;gap:6px}
 .boss-card{background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius);padding:9px 10px}
@@ -221,22 +236,33 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <div class="col-header">
           <h2><i class="ti ti-shield" style="margin-right:4px"></i>시즌 정보</h2>
         </div>
-        <div class="col-inner" style="padding:10px;display:flex;flex-direction:column;gap:14px">
+        <div class="col-inner" style="padding:10px;display:flex;flex-direction:column;gap:12px">
           <!-- 파티 버프 -->
           <div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
               <span style="font-size:12px;font-weight:500;color:var(--text2)">파티 버프</span>
               <button class="btn btn-sm btn-icon" onclick="openBuffMgr()"><i class="ti ti-settings"></i></button>
             </div>
             <div class="buff-grid" id="buffGrid"></div>
           </div>
+          <!-- 구분선 -->
+          <div style="height:0.5px;background:var(--border)"></div>
           <!-- 보스 -->
-          <div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
               <span style="font-size:12px;font-weight:500;color:var(--text2)">보스</span>
               <button class="btn btn-sm" onclick="openAddBoss()"><i class="ti ti-plus"></i> 추가</button>
             </div>
             <div class="boss-list" id="bossList"></div>
+          </div>
+          <!-- 구분선 -->
+          <div style="height:0.5px;background:var(--border)"></div>
+          <!-- 점수 합산 -->
+          <div>
+            <div style="display:flex;align-items:center;margin-bottom:6px">
+              <span style="font-size:12px;font-weight:500;color:var(--text2)">점수 합산</span>
+            </div>
+            <div class="score-panel" id="scorePanel"></div>
           </div>
         </div>
       </div>
@@ -307,7 +333,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <span class="modal-title">파티 버프 관리</span>
       <button class="btn btn-sm" style="margin-left:auto" onclick="closeM('buffMgrModal')">닫기</button>
     </div>
-    <p style="font-size:12px;color:var(--text3);margin-bottom:10px">최대 4개. 각 파티에서 적용 버프를 선택할 수 있습니다.</p>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:10px">버프를 자유롭게 추가하세요. 파티별로 적용 버프를 선택할 수 있습니다.</p>
     <div id="buffEditList"></div>
     <div id="buffAddArea" style="margin-top:14px">
       <p style="font-size:13px;font-weight:500;margin-bottom:8px">버프 추가</p>
@@ -652,7 +678,7 @@ const DC=[
 ];
 
 // ── 상태 ──
-let chars=[], parties=[], buffs=[null,null,null,null], bosses=[];
+let chars=[], parties=[], buffs=[], bosses=[];
 let seasons=[], curSid=null;
 let editCharIdx=null, memoIdx=null, editBossIdx=null, editBuffIdx=null, editSid=null;
 let curFilter='all';
@@ -683,12 +709,13 @@ async function appInit(){
 async function loadSeasonData(sid){
   const d = await window.FB.loadSeasonData(sid);
   if(d){
-    parties = d.parties || [{name:'파티 1',slots:[null,null,null],buffIdx:null}];
-    buffs   = d.buffs   || [null,null,null,null];
+    parties = (d.parties||[{name:'파티 1',slots:[null,null,null],buffIdx:null}])
+      .map(p=>({bossIdxs:[],score:'',hp:'',...p}));
+    buffs   = Array.isArray(d.buffs)?d.buffs:[];
     bosses  = d.bosses  || [];
   } else {
-    parties=[{name:'파티 1',slots:[null,null,null],buffIdx:null}];
-    buffs=[null,null,null,null];
+    parties=[{name:'파티 1',slots:[null,null,null],buffIdx:null,bossIdxs:[],score:'',hp:''}];
+    buffs=[];
     bosses=[];
   }
 }
@@ -805,7 +832,7 @@ async function deleteSeason(sid){
   if(curSid===sid){
     curSid = seasons[0]?.id||null;
     if(curSid) await loadSeasonData(curSid);
-    else { parties=[]; buffs=[null,null,null,null]; bosses=[]; }
+    else { parties=[]; buffs=[]; bosses=[]; }
   }
   renderSeasonList(); renderSeasonBar(); renderAll();
 }
@@ -860,7 +887,7 @@ function renderParties(){
       if(s!==null&&chars[s]){
         const c=chars[s], mp=c.memo?c.memo.split('\n')[0]:'';
         return `<div class="slot filled${c.star5?' is5':''}" onclick="openSlot(${pi},${si})">
-          <div class="slot-portrait">${mkBg(c,70,62)}</div>
+          <div class="slot-portrait">${mkBg(c,80,68)}</div>
           <div class="slot-name">${c.name}</div>
           ${mp?`<div class="slot-memo">${mp}</div>`:''}
           <button class="rm" onclick="event.stopPropagation();rmSlot(${pi},${si})">×</button>
@@ -871,26 +898,81 @@ function renderParties(){
         <span style="font-size:9px;color:var(--text3);margin-top:3px">배치</span>
       </div>`;
     }).join('');
-    const buffOpts='<option value="">버프 없음</option>'+buffs.map((b,bi)=>b?`<option value="${bi}"${p.buffIdx===bi?' selected':''}>${b.icon||''}${b.name}</option>`:'').join('');
+
+    // 버프 select
+    const buffOpts='<option value="">버프 없음</option>'+buffs.filter(Boolean).map((b,bi)=>{
+      const realBi=buffs.indexOf(b);
+      return `<option value="${realBi}"${p.buffIdx===realBi?' selected':''}>${b.icon||''}${b.name}</option>`;
+    }).join('');
     const selB=p.buffIdx!=null&&buffs[p.buffIdx]?buffs[p.buffIdx]:null;
+
+    // 보스 칩
+    const bossIdxs=p.bossIdxs||[];
+    const bossChips=bosses.length?bosses.map((b,bi)=>{
+      const sel=bossIdxs.includes(bi);
+      const col=COLS[b.color%COLS.length];
+      return `<span class="boss-chip${sel?' sel':''}" onclick="togglePartyBoss(${pi},${bi})">
+        ${b.img?`<img src="${b.img}" style="width:12px;height:12px;border-radius:2px;object-fit:cover" onerror="this.style.display='none'">`:''}
+        ${b.name}
+      </span>`;
+    }).join(''):'';
+
+    // 점수/HP
+    const score=p.score||'';
+    const hp=p.hp||'';
+
     return `<div class="party-row" draggable="true" data-pi="${pi}"
       ondragstart="dragStart(event,${pi})" ondragover="dragOver(event,${pi})"
       ondragleave="dragLeave(event)" ondrop="dragDrop(event,${pi})" ondragend="dragEnd()">
       <div class="party-header">
         <span class="drag-handle" title="드래그해서 순서 변경"><i class="ti ti-grip-vertical"></i></span>
-        <span style="font-size:11px;color:var(--text3);font-weight:500">#${pi+1}</span>
+        <span style="font-size:11px;color:var(--text3);font-weight:500;flex-shrink:0">#${pi+1}</span>
         <input class="party-name-input" value="${p.name}" oninput="renameParty(${pi},this.value)">
         ${buffs.some(Boolean)?`<select class="buff-sel" onchange="setPartyBuff(${pi},this.value)">${buffOpts}</select>`:''}
         ${parties.length>1?`<button class="rm-party" onclick="rmParty(${pi})"><i class="ti ti-trash"></i></button>`:''}
       </div>
       <div class="slots">${slots}</div>
-      ${selB?`<div class="applied-buff"><span style="font-size:14px">${selB.icon||'🎯'}</span><span style="font-size:11px;color:var(--text2)">${selB.name}</span></div>`:''}
+      ${bossChips?`<div class="boss-chips">${bossChips}</div>`:''}
+      <div class="party-record">
+        <div class="party-record-field">
+          <span class="party-record-label">점수</span>
+          <input class="party-record-input" type="number" placeholder="0" value="${score}"
+            oninput="setPartyScore(${pi},this.value)" onclick="event.stopPropagation()">
+        </div>
+        <div class="party-record-field">
+          <span class="party-record-label">HP%</span>
+          <input class="party-record-input" type="number" placeholder="100" min="0" max="100" value="${hp}"
+            oninput="setPartyHp(${pi},this.value)" onclick="event.stopPropagation()">
+          <span style="font-size:9px;color:var(--text3)">%</span>
+        </div>
+        ${selB?`<div class="applied-buff" style="margin-top:0"><span style="font-size:11px">${selB.icon||'🎯'}</span><span style="font-size:10px;color:var(--text2)">${selB.name}</span></div>`:''}
+      </div>
     </div>`;
   }).join('');
 }
 function renderInfo(){
   const t=Object.values(getUsed()).reduce((a,b)=>a+b,0);
   document.getElementById('info').textContent=t?`${t}명 배치 중`:'';
+  renderScorePanel();
+}
+function renderScorePanel(){
+  const el=document.getElementById('scorePanel');
+  if(!el) return;
+  const total=parties.reduce((sum,p)=>sum+(parseFloat(p.score)||0),0);
+  const rows=parties.map((p,pi)=>{
+    const sc=parseFloat(p.score)||0;
+    const bNames=(p.bossIdxs||[]).map(bi=>bosses[bi]?.name||'').filter(Boolean).join(', ');
+    return `<div class="score-row">
+      <span style="font-size:11px;color:var(--text2)">#${pi+1} ${p.name}${bNames?` <span style='color:var(--text3);font-size:10px'>(${bNames})</span>`:''}</span>
+      <span style="font-size:12px;font-weight:500;color:${sc>0?'var(--accent)':'var(--text3)'}">${sc>0?sc.toLocaleString():'-'}</span>
+    </div>`;
+  }).join('');
+  el.innerHTML=`
+    <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px">
+      <span style="font-size:11px;color:var(--text2)">시즌 합산</span>
+      <span class="score-total">${total>0?total.toLocaleString():'—'}</span>
+    </div>
+    ${rows}`;
 }
 
 // ── 드래그 정렬 ──
@@ -969,11 +1051,25 @@ function charDragEnd(){
   document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('char-dragging','char-drag-over'));
 }
 
-async function addParty(){ parties.push({name:`파티 ${parties.length+1}`,slots:[null,null,null],buffIdx:null}); renderAll(); await saveSeason(); }
+async function addParty(){ parties.push({name:`파티 ${parties.length+1}`,slots:[null,null,null],buffIdx:null,bossIdxs:[],score:'',hp:''}); renderAll(); await saveSeason(); }
 async function rmParty(pi){ parties.splice(pi,1); renderAll(); await saveSeason(); }
 async function renameParty(pi,v){ parties[pi].name=v; await saveSeason(); }
 async function rmSlot(pi,si){ parties[pi].slots[si]=null; renderAll(); await saveSeason(); }
 async function setPartyBuff(pi,v){ parties[pi].buffIdx=v===''?null:parseInt(v); renderAll(); await saveSeason(); }
+async function togglePartyBoss(pi,bi){
+  if(!parties[pi].bossIdxs) parties[pi].bossIdxs=[];
+  const idx=parties[pi].bossIdxs.indexOf(bi);
+  if(idx>=0) parties[pi].bossIdxs.splice(idx,1);
+  else parties[pi].bossIdxs.push(bi);
+  renderParties(); renderInfo(); renderScorePanel(); await saveSeason();
+}
+async function setPartyScore(pi,v){
+  parties[pi].score=v;
+  renderInfo(); renderScorePanel(); await saveSeason();
+}
+async function setPartyHp(pi,v){
+  parties[pi].hp=v; await saveSeason();
+}
 
 // ── 슬롯 선택 ──
 function openSlot(pi,si){
@@ -999,15 +1095,19 @@ async function pickChar(pi,si,i){ parties[pi].slots[si]=i; closeM('slotModal'); 
 
 // ── 버프 ──
 function renderBuffGrid(){
-  document.getElementById('buffGrid').innerHTML=buffs.map((b,i)=>{
-    if(b) return `<div class="buff-card">
-      <button style="position:absolute;top:5px;right:5px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px" onclick="openEditBuff(${i})"><i class="ti ti-edit"></i></button>
+  // 실제 버프만 + 추가 버튼 하나
+  const filled=buffs.filter(Boolean);
+  let html=filled.map((b,fi)=>{
+    const ri=buffs.indexOf(b);
+    return `<div class="buff-card" title="${b.name}${b.desc?' — '+b.desc:''}">
+      <button style="position:absolute;top:3px;right:3px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:1px" onclick="openEditBuff(${ri})"><i class="ti ti-edit"></i></button>
       <div class="buff-card-icon">${b.icon||'🎯'}</div>
       <div class="buff-card-name">${b.name}</div>
       <div class="buff-card-desc">${b.desc||''}</div>
     </div>`;
-    return `<div class="buff-card buff-empty" onclick="openBuffMgr()"><i class="ti ti-plus" style="font-size:18px;color:var(--text3)"></i><span>버프 추가</span></div>`;
   }).join('');
+  html+=`<div class="buff-card buff-empty" onclick="openBuffMgr()"><i class="ti ti-plus" style="font-size:14px;color:var(--text3)"></i><span>추가</span></div>`;
+  document.getElementById('buffGrid').innerHTML=html;
 }
 
 function openBuffMgr(){
@@ -1016,24 +1116,23 @@ function openBuffMgr(){
   document.getElementById('buffMgrModal').classList.add('open');
 }
 function renderBuffEditList(){
-  const filled=buffs.filter(Boolean).length;
-  document.getElementById('buffEditList').innerHTML=buffs.map((b,i)=>{
-    if(!b) return '';
-    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">
-      <span style="font-size:18px">${b.icon||'🎯'}</span>
-      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">${b.name}</div><div style="font-size:11px;color:var(--text3)">${b.desc||''}</div></div>
-      <button class="btn btn-sm btn-icon" onclick="openEditBuff(${i})"><i class="ti ti-edit"></i></button>
-      <button class="btn btn-sm btn-icon" onclick="removeBuff(${i})"><i class="ti ti-trash"></i></button>
-    </div>`;
-  }).join('')||'<p style="font-size:13px;color:var(--text3);padding:6px 0">등록된 버프 없음</p>';
-  document.getElementById('buffAddArea').style.display=filled>=4?'none':'block';
+  document.getElementById('buffEditList').innerHTML=buffs.filter(Boolean).length
+    ?buffs.map((b,i)=>{
+      if(!b) return '';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">
+        <span style="font-size:18px">${b.icon||'🎯'}</span>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">${b.name}</div><div style="font-size:11px;color:var(--text3)">${b.desc||''}</div></div>
+        <button class="btn btn-sm btn-icon" onclick="openEditBuff(${i})"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-sm btn-icon" onclick="removeBuff(${i})"><i class="ti ti-trash"></i></button>
+      </div>`;
+    }).join('')
+    :'<p style="font-size:13px;color:var(--text3);padding:6px 0">등록된 버프 없음</p>';
+  document.getElementById('buffAddArea').style.display='block';
 }
 async function addBuff(){
   const name=document.getElementById('bName').value.trim();
   if(!name){showToast('버프 이름을 입력하세요');return;}
-  const slot=buffs.findIndex(b=>!b);
-  if(slot===-1){showToast('최대 4개');return;}
-  buffs[slot]={name,icon:document.getElementById('bIcon').value.trim(),desc:document.getElementById('bDesc').value.trim()};
+  buffs.push({name,icon:document.getElementById('bIcon').value.trim(),desc:document.getElementById('bDesc').value.trim()});
   document.getElementById('bName').value='';document.getElementById('bIcon').value='';document.getElementById('bDesc').value='';
   renderBuffEditList();renderBuffGrid();renderParties();await saveSeason();showToast('버프 추가됨');
 }
@@ -1050,7 +1149,11 @@ async function saveBuffEdit(){
   closeM('buffEditModal');renderBuffEditList();renderBuffGrid();renderParties();await saveSeason();showToast('버프 수정됨');
 }
 async function removeBuff(i){
-  buffs[i]=null; parties.forEach(p=>{if(p.buffIdx===i)p.buffIdx=null;});
+  buffs.splice(i,1);
+  parties.forEach(p=>{
+    if(p.buffIdx===i) p.buffIdx=null;
+    else if(p.buffIdx!=null&&p.buffIdx>i) p.buffIdx--;
+  });
   renderBuffEditList();renderBuffGrid();renderParties();await saveSeason();
 }
 
@@ -1261,7 +1364,7 @@ async function loadSave(id){
       if(d.allSeasonData&&curSid&&d.allSeasonData[Object.keys(d.allSeasonData)[0]]){
         const firstSeasonData=d.allSeasonData[Object.keys(d.allSeasonData)[0]];
         parties=firstSeasonData.parties||[{name:'파티 1',slots:[null,null,null],buffIdx:null}];
-        buffs=firstSeasonData.buffs||[null,null,null,null];
+        buffs=Array.isArray(firstSeasonData.buffs)?firstSeasonData.buffs:[];
         bosses=firstSeasonData.bosses||[];
         await saveSeason();
       }
