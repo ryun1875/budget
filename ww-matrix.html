@@ -71,11 +71,13 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .col-wrap{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius2);height:100%;display:flex;flex-direction:column;overflow:hidden}
 /* char grid */
 .char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:5px;margin-bottom:10px}
-.char-card{border:0.5px solid var(--border);border-radius:var(--radius);text-align:center;cursor:pointer;background:var(--bg2);user-select:none;position:relative;overflow:hidden;transition:border-color .15s}
+.char-card{border:0.5px solid var(--border);border-radius:var(--radius);text-align:center;cursor:pointer;background:var(--bg2);user-select:none;position:relative;overflow:hidden;transition:border-color .15s,opacity .15s}
 .char-card:hover{border-color:var(--border2)}
 .char-card.star5{border-color:rgba(240,180,41,0.35)}
 .char-card.star5:hover{border-color:var(--gold)}
 .char-card.exhausted{opacity:0.28}
+.char-card.char-dragging{opacity:0.35;border-style:dashed}
+.char-card.char-drag-over{border-color:var(--accent);box-shadow:0 0 0 1.5px var(--accent)}
 .portrait-wrap{width:100%;aspect-ratio:1;position:relative;overflow:hidden}
 .attr-badge{position:absolute;bottom:2px;right:2px;font-size:9px;font-weight:500;padding:1px 4px;border-radius:3px;line-height:14px;z-index:2}
 .memo-dot{position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:var(--accent);z-index:3}
@@ -429,15 +431,18 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 <div class="modal-bg" id="memoModal">
   <div class="modal-sm">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-      <div id="memoPortrait" style="width:40px;height:40px;border-radius:9px;overflow:hidden;flex-shrink:0"></div>
+      <div id="memoPortrait" style="width:46px;height:46px;border-radius:10px;overflow:hidden;flex-shrink:0"></div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:14px;font-weight:600" id="memoCharName"></div>
-        <div style="font-size:11px;color:var(--text2);margin-top:1px" id="memoCharAttr"></div>
+        <div style="font-size:15px;font-weight:600" id="memoCharName"></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px" id="memoCharAttr"></div>
       </div>
       <button class="btn btn-sm" onclick="closeM('memoModal')">닫기</button>
     </div>
-    <textarea class="textarea" id="memoText" placeholder="빌드, 공명 체인, 운영 팁..."></textarea>
-    <button class="btn btn-accent" style="width:100%;justify-content:center;margin-top:9px" onclick="saveMemo()"><i class="ti ti-device-floppy"></i> 저장</button>
+    <textarea class="textarea" id="memoText" placeholder="빌드, 공명 체인 레벨, 운영 팁, 조합 등 자유롭게..." style="min-height:120px"></textarea>
+    <div style="display:flex;gap:8px;margin-top:9px">
+      <button class="btn btn-accent" style="flex:1;justify-content:center" onclick="saveMemo()"><i class="ti ti-device-floppy"></i> 저장</button>
+      <button class="btn" onclick="openEditChar(memoIdx);closeM('memoModal')" title="상세 편집"><i class="ti ti-edit"></i></button>
+    </div>
   </div>
 </div>
 
@@ -820,11 +825,20 @@ function renderPool(){
   const used=getUsed(); let html='';
   const rT=(fn,lbl,lc)=>{
     if(!chars.some(c=>fn(c)&&c.owned)) return;
-    html+=`<p class="sec-title"><span style="color:${lc}">${lbl}</span></p><div class="char-grid">`;
+    html+=`<p class="sec-title"><span style="color:${lc}">${lbl}</span></p><div class="char-grid" id="cgrid-${lc.replace(/[^a-z]/g,'')}">`;
     chars.forEach((c,i)=>{
       if(!fn(c)||!c.owned) return;
       const ex=(used[i]||0)>=(c.dupe?2:1);
-      html+=`<div class="char-card${c.star5?' star5':''}${ex?' exhausted':''}" onclick="tip(${i})">
+      html+=`<div class="char-card${c.star5?' star5':''}${ex?' exhausted':''}"
+        draggable="true"
+        data-ci="${i}"
+        onclick="openMemo(${i})"
+        ondragstart="charDragStart(event,${i})"
+        ondragover="charDragOver(event,${i})"
+        ondragleave="charDragLeave(event)"
+        ondrop="charDragDrop(event,${i})"
+        ondragend="charDragEnd()"
+        title="${c.name} — 클릭: 메모 | 드래그: 순서 변경">
         ${c.star5?'<div class="star5-corner"></div>':''}${c.dupe?'<span class="dupe-tag">×2</span>':''}
         ${c.memo?'<div class="memo-dot"></div>':''}
         <div class="portrait-wrap">${mkBg(c,63,63)}</div>
@@ -837,7 +851,6 @@ function renderPool(){
   rT(c=>!c.star5,'★4','var(--text2)');
   document.getElementById('charPoolSection').innerHTML=html||'<p style="font-size:13px;color:var(--text3);padding:8px 0">보유한 공명자가 없습니다</p>';
 }
-function tip(i){ showToast(`${chars[i].name} — 파티 슬롯을 클릭해 배치`); }
 
 // ── 파티 ──
 function renderParties(){
@@ -908,6 +921,52 @@ function dragEnd(){
   document.querySelectorAll('.party-row').forEach(r=>{
     r.classList.remove('dragging','drag-over');
   });
+}
+
+// ── 공명자 드래그 정렬 ──
+let charDragSrc=null;
+function charDragStart(e,ci){
+  charDragSrc=ci;
+  e.dataTransfer.effectAllowed='move';
+  e.stopPropagation();
+  setTimeout(()=>e.currentTarget.classList.add('char-dragging'),0);
+}
+function charDragOver(e,ci){
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect='move';
+  if(ci!==charDragSrc) e.currentTarget.classList.add('char-drag-over');
+}
+function charDragLeave(e){
+  e.currentTarget.classList.remove('char-drag-over');
+}
+async function charDragDrop(e,ci){
+  e.preventDefault();
+  e.stopPropagation();
+  e.currentTarget.classList.remove('char-drag-over');
+  if(charDragSrc===null||ci===charDragSrc) return;
+  // 파티 슬롯의 인덱스 매핑도 함께 업데이트
+  const moved=chars.splice(charDragSrc,1)[0];
+  chars.splice(ci,0,moved);
+  // 파티 슬롯 인덱스 재매핑
+  const lo=Math.min(charDragSrc,ci), hi=Math.max(charDragSrc,ci);
+  parties.forEach(p=>{
+    p.slots=p.slots.map(s=>{
+      if(s===null) return null;
+      if(s===charDragSrc) return ci;
+      if(charDragSrc<ci){ if(s>charDragSrc&&s<=ci) return s-1; }
+      else { if(s>=ci&&s<charDragSrc) return s+1; }
+      return s;
+    });
+  });
+  charDragSrc=null;
+  renderAll();
+  await saveChars();
+  await saveSeason();
+}
+function charDragEnd(){
+  charDragSrc=null;
+  document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('char-dragging','char-drag-over'));
 }
 
 async function addParty(){ parties.push({name:`파티 ${parties.length+1}`,slots:[null,null,null],buffIdx:null}); renderAll(); await saveSeason(); }
