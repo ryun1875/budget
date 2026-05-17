@@ -112,6 +112,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .party-row{touch-action:none}
 .party-row.dragging{opacity:0.45;border-style:dashed}
 .party-row.drag-over{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.party-memo-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;margin-left:3px;vertical-align:middle}
 .drag-handle{cursor:grab;color:var(--text3);padding:0 4px;font-size:14px;flex-shrink:0;touch-action:none}
 .drag-handle:hover{color:var(--text2)}
 .drag-handle:active{cursor:grabbing}
@@ -526,6 +527,18 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 </div>
 
+<!-- 파티 메모 -->
+<div class="modal-bg" id="partyMemoModal">
+  <div class="modal-sm">
+    <div style="display:flex;align-items:center;margin-bottom:12px">
+      <span class="modal-title" id="partyMemoTitle">파티 메모</span>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="closeM('partyMemoModal')">닫기</button>
+    </div>
+    <textarea class="textarea" id="partyMemoText" placeholder="파티 운용 가이드, 스킬 순서, 팁 등..." style="min-height:140px"></textarea>
+    <button class="btn btn-accent" style="width:100%;justify-content:center;margin-top:9px" onclick="savePartyMemo()"><i class="ti ti-device-floppy"></i> 저장</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- ══ Firebase (module) ══ -->
@@ -748,7 +761,7 @@ async function loadSeasonData(sid){
   const d = await window.FB.loadSeasonData(sid);
   if(d){
     parties = (d.parties||[{name:'파티 1',slots:[null,null,null],buffIdx:null}])
-      .map(p=>({bossIdxs:[],score:'',hp:'',...p}));
+      .map(p=>({bossIdxs:[],score:'',hp:'',memo:'',...p}));
     buffs   = Array.isArray(d.buffs)?d.buffs:[];
     bosses  = d.bosses  || [];
   } else {
@@ -969,6 +982,10 @@ function renderParties(){
         <span style="font-size:11px;color:var(--text3);font-weight:500;flex-shrink:0">#${pi+1}</span>
         <input class="party-name-input" value="${p.name}" oninput="renameParty(${pi},this.value)">
         ${buffs.some(Boolean)?`<select class="buff-sel" onchange="setPartyBuff(${pi},this.value)">${buffOpts}</select>`:''}
+        <button class="btn btn-sm btn-icon" style="position:relative;flex-shrink:0" onclick="openPartyMemo(${pi})" title="파티 메모">
+          <i class="ti ti-note"></i>
+          ${p.memo?`<span class="party-memo-dot" style="position:absolute;top:-2px;right:-2px;width:5px;height:5px"></span>`:''}
+        </button>
         ${parties.length>1?`<button class="rm-party" onclick="rmParty(${pi})"><i class="ti ti-trash"></i></button>`:''}
       </div>
       <div class="slots">${slots}</div>
@@ -1096,7 +1113,7 @@ function charDragEnd(){
   document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('char-dragging','char-drag-over'));
 }
 
-async function addParty(){ parties.push({name:`파티 ${parties.length+1}`,slots:[null,null,null],buffIdx:null,bossIdxs:[],score:'',hp:''}); renderAll(); await saveSeason(); }
+async function addParty(){ parties.push({name:`파티 ${parties.length+1}`,slots:[null,null,null],buffIdx:null,bossIdxs:[],score:'',hp:'',memo:''}); renderAll(); await saveSeason(); }
 async function rmParty(pi){ parties.splice(pi,1); renderAll(); await saveSeason(); }
 async function renameParty(pi,v){ parties[pi].name=v; await saveSeason(); }
 async function rmSlot(pi,si){ parties[pi].slots[si]=null; renderAll(); await saveSeason(); }
@@ -1325,6 +1342,26 @@ async function saveMemo(){
   if(memoIdx===null) return;
   chars[memoIdx].memo=document.getElementById('memoText').value.trim();
   closeM('memoModal');renderAll();await saveChars();showToast('메모 저장됨');
+}
+
+// ── 파티 메모 ──
+let partyMemoIdx=null;
+function openPartyMemo(pi){
+  partyMemoIdx=pi;
+  const p=parties[pi];
+  document.getElementById('partyMemoTitle').textContent=`#${pi+1} ${p.name} 메모`;
+  document.getElementById('partyMemoText').value=p.memo||'';
+  document.getElementById('partyMemoModal').classList.add('open');
+  setTimeout(()=>document.getElementById('partyMemoText').focus(),80);
+}
+async function savePartyMemo(){
+  if(partyMemoIdx===null) return;
+  parties[partyMemoIdx].memo=document.getElementById('partyMemoText').value.trim();
+  closeM('partyMemoModal');
+  partyMemoIdx=null;
+  renderParties();
+  await saveSeason();
+  showToast('파티 메모 저장됨');
 }
 function prevUp(m){
   const f=document.getElementById(m==='n'?'nFile':'eFile').files[0];if(!f)return;
