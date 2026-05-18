@@ -895,6 +895,8 @@ const COLORS=['#ff6b6b','#ff8c42','#ffb347','#ffd166','#c8f04a','#34d399','#6bb5
 
 let curMonth,filterCat='all',chartFilter='all',expenses=[],budgets={},recurring=[],budgetMeta={},payMethods=[],investments=[],loans=[],loanPayments=[],portfolio=[],portCategories=[],minusAccounts=[];
 let CATS=[...DEF_CATS];
+// 인라인 oninput에서 접근 가능하도록 전역 노출
+Object.defineProperty(window,'CATS',{get:()=>CATS,set:(v)=>{CATS=v;}});
 let donutChart=null,barChart=null,compareChart=null,budgetCompareChart=null,trendChart=null,payTrendChart=null,assetChart=null,loanChart=null;
 let trendCatId=null, trendPayId=null;
 let unsubExp=null,unsubBudget=null,unsubCats=null,unsubRec=null;
@@ -1140,7 +1142,13 @@ function rebuildCatSelects(){
     const prev=sel.value;sel.innerHTML='';
     CATS.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=`${c.emoji} ${c.name}`;sel.appendChild(o);});
     if(CATS.find(c=>c.id===prev))sel.value=prev;
+    else if(CATS.length)sel.value=CATS[0].id;
   });
+  // 하위 카테고리도 갱신
+  const inpCat=document.getElementById('inp-cat')?.value;
+  if(inpCat)rebuildSubCatSelect('inp-subcat',inpCat);
+  const editCat=document.getElementById('edit-cat')?.value;
+  if(editCat)rebuildSubCatSelect('edit-subcat',editCat);
 }
 
 // ── 할부 ──────────────────────────────────────────────────
@@ -3864,9 +3872,9 @@ window.deletePortItem=async function(id){
 };
 
 window.switchNav=function(name,btn){
-  // 카테고리 탭에서 떠날 때 최신 데이터 로드
+  // 카테고리 탭에서 떠날 때 저장된 CATS 반영
   if(document.getElementById('panel-cats').classList.contains('active')){
-    getDocs(doc(db,up('settings'),'categories')).catch(()=>{});
+    syncCatInputs();
   }
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -3890,6 +3898,12 @@ window.switchNav=function(name,btn){
     if(name==='home')renderHome();
     if(name==='asset')renderAsset();
     if(name==='portfolio')renderPortfolio();
+    if(name==='input'){
+      // 입력 탭 진입 시 카테고리/하위카테고리 드롭다운 갱신
+      rebuildCatSelects();
+      const curCat=document.getElementById('inp-cat')?.value;
+      if(curCat)rebuildSubCatSelect('inp-subcat',curCat);
+    }
   }
 };
 
